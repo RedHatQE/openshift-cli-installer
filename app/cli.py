@@ -241,7 +241,13 @@ def main(
     """
     Create/Destroy Openshift cluster/s
     """
-    set_and_verify_aws_credentials()
+    _aws_region = None
+    # Set _aws_region with one of the used regions specified
+    for cluster_config in cluster:
+        _aws_region = cluster_config.get("region")
+        if _aws_region:
+            break
+    set_and_verify_aws_credentials(region_name=_aws_region)
 
     clusters = generate_cluster_dir_path(
         clusters=cluster, base_directory=clusters_install_data_directory
