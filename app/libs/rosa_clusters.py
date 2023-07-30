@@ -35,9 +35,13 @@ def tts(ts):
         int: Time in seconds
     """
     try:
-        time_and_unit = re.match(r'(?P<val>\d+(\.\d+)?)(?P<unit>\w?)', str(ts)).groupdict()
+        time_and_unit = re.match(
+            r"(?P<val>\d+(\.\d+)?)(?P<unit>\w?)", str(ts)
+        ).groupdict()
     except AttributeError:
-        raise AttributeError(f"Time format is not valid. Expecting <time_value><time_unit>, got '{ts}'.")
+        raise AttributeError(
+            f"Time format is not valid. Expecting <time_value><time_unit>, got '{ts}'."
+        )
 
     _unit = time_and_unit["unit"].lower() or "s"
     time_ref = {"s": "seconds", "m": "minutes", "h": "hours"}
