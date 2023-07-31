@@ -1135,12 +1135,13 @@ signedtoken = ["cryptography (>=3.0.0)", "pyjwt (>=2.0.0,<3)"]
 
 [[package]]
 name = "openshift"
-version = "0.13.1"
+version = "0.13.2"
 description = "OpenShift python client"
 optional = false
 python-versions = "*"
 files = [
-    {file = "openshift-0.13.1.tar.gz", hash = "sha256:a060afb7565dda18b2749857867d80ab22b2f4143264519f493a9cabccc3b8a8"},
+    {file = "openshift-0.13.2-py3-none-any.whl", hash = "sha256:f1459006fc7f96ff7d2f6c0c00bdef5cb2e75a1b466f601997d9084a816a8949"},
+    {file = "openshift-0.13.2.tar.gz", hash = "sha256:f55789fce56fcbf7e2cd9377a68c4a99ab406074d3324b9abcca98477d101471"},
 ]
 
 [package.dependencies]
@@ -1206,23 +1207,23 @@ PyYAML = "*"
 
 [[package]]
 name = "openshift-python-wrapper"
-version = "4.14.3"
+version = "4.14.4"
 description = "Wrapper around https://github.com/openshift/openshift-restclient-python"
 optional = false
-python-versions = ">=3.7"
+python-versions = ">=3.8,<4.0"
 files = [
-    {file = "openshift-python-wrapper-4.14.3.tar.gz", hash = "sha256:db7b1a605e73a613c034afb108ebff8b575c34dc19c301398010283ce78dabb4"},
+    {file = "openshift_python_wrapper-4.14.4-py3-none-any.whl", hash = "sha256:6e8eb4c346f88248f06000ceeef23b165377217c07017c8ad58688fe85100b3e"},
+    {file = "openshift_python_wrapper-4.14.4.tar.gz", hash = "sha256:020dfd4bcd0eaee94941afce6a190c9918c846f86e5e4981995c4a672f52dc95"},
 ]
 
 [package.dependencies]
-colorlog = "*"
-kubernetes = "*"
-openshift = "*"
-packaging = "*"
-python-benedict = "*"
-python-simple-logger = "*"
-urllib3 = "*"
-xmltodict = "*"
+colorlog = ">=6.7.0,<7.0.0"
+kubernetes = ">=27.2.0,<28.0.0"
+openshift = ">=0.13.2,<0.14.0"
+packaging = ">=23.1,<24.0"
+python-benedict = ">=0.32.0,<0.33.0"
+python-simple-logger = ">=1.0.5,<2.0.0"
+xmltodict = ">=0.13.0,<0.14.0"
 
 [[package]]
 name = "openshift-python-wrapper-data-collector"
