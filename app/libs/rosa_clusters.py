@@ -21,28 +21,27 @@ def tts(ts):
 
     Args:
         ts (str): time string to convert, can be and int followed by s/m/h
-            if only numbers was sent return int(ts). (Non-decimal seconds value will be converted to int).
+            if only numbers was sent return int(ts).
 
     Example:
         >>> tts(ts="1h")
         3600
         >>> tts(ts="3600")
         3600
-        >>> tts(ts="1.5H")
-        5400
 
     Returns:
         int: Time in seconds
     """
     try:
-        time_and_unit = re.match(r'(?P<val>\d+(\.\d+)?)(?P<unit>\w?)', str(ts)).groupdict()
+        _val, _unit = re.match(r'(?P<val>\d+)(?P<unit>$|[smhSMH])', str(ts)).groupdict().values()
     except AttributeError:
-        raise AttributeError(f"Time format is not valid. Expecting <time_value><time_unit>, got '{ts}'.")
+        print(f"Time format is not valid. Expecting <time_value><time_unit>, got '{ts}'.")
+        raise
 
-    _unit = time_and_unit["unit"].lower() or "s"
-    time_ref = {"s": "seconds", "m": "minutes", "h": "hours"}
-    kwarg = {time_ref[_unit]: float(time_and_unit["val"])}
-    return int(timedelta(**kwarg).total_seconds())
+    time_ref = {"s": 1, "m": 60, "h": 60*60}
+    if _unit:
+        return int(_val) * time_ref[_unit.lower()]
+    return int(_val)
 
 
 def remove_leftovers(res, ocm_env_url, ocm_token, aws_region):
