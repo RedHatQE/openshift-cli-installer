@@ -21,7 +21,7 @@ def tts(ts):
 
     Args:
         ts (str): time string to convert, can be and int followed by s/m/h
-            if only numbers was sent return int(ts).
+            if only numbers was sent return int(ts)
 
     Example:
         >>> tts(ts="1h")

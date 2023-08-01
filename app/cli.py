@@ -260,7 +260,6 @@ def main(
     is_platform_supported(clusters=cluster)
     create = action == "create"
     ocm_client = None
-    clusters = []
     kwargs = {}
 
     aws_ipi_clusters, rosa_clusters, hypershift_clusters = get_clusters_by_type(
@@ -287,28 +286,28 @@ def main(
             set_and_verify_aws_credentials(region_name=_region)
 
     if aws_ipi_clusters:
-        clusters = generate_cluster_dirs_path(
+        aws_ipi_clusters = generate_cluster_dirs_path(
             clusters=aws_ipi_clusters, base_directory=clusters_install_data_directory
         )
 
-        clusters = download_openshift_install_binary(
-            clusters=clusters, registry_config_file=registry_config_file
+        aws_ipi_clusters = download_openshift_install_binary(
+            clusters=aws_ipi_clusters, registry_config_file=registry_config_file
         )
         if create:
-            clusters = create_install_config_file(
-                clusters=cluster,
+            aws_ipi_clusters = create_install_config_file(
+                clusters=aws_ipi_clusters,
                 registry_config_file=registry_config_file,
                 ssh_key_file=ssh_key_file,
             )
 
     if aws_managed_clusters:
         abort_no_ocm_token(ocm_token)
-        clusters = generate_cluster_dirs_path(
+        aws_managed_clusters = generate_cluster_dirs_path(
             clusters=aws_managed_clusters,
             base_directory=clusters_install_data_directory,
         )
-        clusters = prepare_managed_clusters_data(
-            clusters=clusters,
+        aws_managed_clusters = prepare_managed_clusters_data(
+            clusters=aws_managed_clusters,
             ocm_token=ocm_token,
             ocm_env=ocm_env,
         )
@@ -321,7 +320,7 @@ def main(
     processes = []
     action_func = create_openshift_cluster if create else destroy_openshift_cluster
 
-    for _cluster in clusters:
+    for _cluster in aws_ipi_clusters + aws_managed_clusters:
         kwargs["cluster_data"] = _cluster
         if parallel:
             proc = multiprocessing.Process(

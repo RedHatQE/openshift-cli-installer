@@ -125,7 +125,7 @@ def download_openshift_install_binary(clusters, registry_config_file):
 
 
 def create_or_destroy_aws_ipi_cluster(
-    cluster_data, action, s3_bucket_name=None, s3_bucket_path=None
+    cluster_data, action, s3_bucket_name=None, s3_bucket_path=None, cleanup=False
 ):
     install_dir = cluster_data["install-dir"]
     binary_path = cluster_data["openshift-install-binary"]
@@ -141,6 +141,13 @@ def create_or_destroy_aws_ipi_cluster(
             s3_bucket_path=s3_bucket_path,
         )
 
+    if not res and not cleanup:
+        click.echo(f"Failed to run cluster {action}\n\tERR: {err}\n\tOUT: {out}.")
+        if action == "create":
+            click.echo("Cleaning leftovers.")
+            create_or_destroy_aws_ipi_cluster(
+                cluster_data=cluster_data, action="destroy", cleanup=True
+            )
+
     if not res:
-        click.echo(f"Failed to run cluster {action}\nERR: {err}\nOUT: {out}")
         raise click.Abort()
