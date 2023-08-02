@@ -34,17 +34,17 @@ def tts(ts):
     """
     try:
         _val, _unit = (
-            re.match(r"(?P<val>\d+)(?P<unit>$|[smhSMH])", str(ts)).groupdict().values()
+            re.match(r"(?P<val>\d+)(?P<unit>$|[smh])", str(ts)).groupdict().values()
         )
     except AttributeError:
         print(
-            f"Time format is not valid. Expecting <time_value><time_unit>, got '{ts}'."
+            f"Time format is not valid. Expecting s/m/h time value or int, got '{ts}'."
         )
         raise
 
     time_ref = {"s": 1, "m": 60, "h": 60 * 60}
     if _unit:
-        return int(_val) * time_ref[_unit.lower()]
+        return int(_val) * time_ref[_unit]
     return int(_val)
 
 
