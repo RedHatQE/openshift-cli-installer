@@ -89,7 +89,7 @@ def wait_for_osd_cluster_ready_job(ocp_client):
         namespace="openshift-monitoring",
     )
     job.wait_for_condition(
-        condition=job.Condition.COMPLETE, status="True", timeout=tts(ts="40m")
+        condition=job.Condition.COMPLETE, status="True", timeout=tts(ts="1h")
     )
 
 
