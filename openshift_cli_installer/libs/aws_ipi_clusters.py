@@ -142,19 +142,22 @@ def create_or_destroy_aws_ipi_cluster(
         check=False,
     )
 
-    _shortuuid = cluster_shortuuid()
-    cluster_data["s3_object_name"] = bucket_object_name(
-        cluster_data=cluster_data, _shortuuid=_shortuuid, s3_bucket_path=s3_bucket_path
-    )
-    dump_cluster_data_to_file(cluster_data=cluster_data)
-
-    if action == CREATE_STR and s3_bucket_name:
-        zip_and_upload_to_s3(
-            install_dir=install_dir,
-            s3_bucket_name=s3_bucket_name,
+    if action == CREATE_STR:
+        _shortuuid = cluster_shortuuid()
+        cluster_data["s3_object_name"] = bucket_object_name(
+            cluster_data=cluster_data,
+            _shortuuid=_shortuuid,
             s3_bucket_path=s3_bucket_path,
-            uuid=_shortuuid,
         )
+        dump_cluster_data_to_file(cluster_data=cluster_data)
+
+        if s3_bucket_name:
+            zip_and_upload_to_s3(
+                install_dir=install_dir,
+                s3_bucket_name=s3_bucket_name,
+                s3_bucket_path=s3_bucket_path,
+                uuid=_shortuuid,
+            )
 
     if not res and not cleanup:
         click.echo(f"Failed to run cluster {action}\n\tERR: {err}\n\tOUT: {out}.")
