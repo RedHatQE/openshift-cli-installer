@@ -265,6 +265,8 @@ def rosa_create_cluster(cluster_data, s3_bucket_name=None, s3_bucket_path=None):
         "aws-access-key-id",
         "aws-secret-access-key",
         "aws-account-id",
+        "multi-az",
+        "ocm-client",
     )
     ocm_token, ocm_env_url = extract_ocm_data_from_cluster_data(cluster_data)
     command = "create cluster --sts "

@@ -230,7 +230,7 @@ def verify_user_input(
         if not (aws_account_id and aws_secret_access_key and aws_access_key_id):
             click.secho(
                 "--aws-account_id and --aws-secret-access-key and aws-access-key-id"
-                " required for AWS installations.",
+                " required for AWS OSD installations.",
                 fg="red",
             )
             raise click.Abort()
@@ -332,7 +332,7 @@ File must include token for `registry.ci.openshift.org`
 @click.option(
     "--aws-account-id",
     help="AWS account-id, needed for OSD AWS cluster.",
-    default=os.environ.get("AWS_ACCOUNT-ID"),
+    default=os.environ.get("AWS_ACCOUNT_ID"),
 )
 @click.option(
     "-c",
