@@ -449,12 +449,14 @@ def main(
     if hypershift_clusters or rosa_clusters or aws_osd_clusters:
         ocm_client = get_ocm_client(ocm_token=ocm_token, ocm_env=ocm_env)
         if create:
-            rosa_check_existing_clusters(
-                clusters=hypershift_clusters + rosa_clusters, ocm_client=ocm_client
-            )
-            osd_check_existing_clusters(
-                clusters=aws_osd_clusters, ocm_client=ocm_client
-            )
+            if hypershift_clusters or rosa_clusters:
+                rosa_check_existing_clusters(
+                    clusters=hypershift_clusters + rosa_clusters, ocm_client=ocm_client
+                )
+            if aws_osd_clusters:
+                osd_check_existing_clusters(
+                    clusters=aws_osd_clusters, ocm_client=ocm_client
+                )
 
     if hypershift_clusters:
         is_region_support_hypershift(
