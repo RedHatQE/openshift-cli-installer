@@ -23,14 +23,24 @@ To pull the image: `podman pull quay.io/openshift-cli-installer`
 * AWS IPI clusters:
   * The installer output is saved in the <cluster directory>.
   * The data is used for cluster destroy.
-  * `base_domain` cluster parameter is mandatory
+  * `platform=aws`: Must pass in cluster parameters
+  * `base_domain`: cluster parameter is mandatory
   * `--registry-config-file`: registry-config json file path, can be obtained from [openshift local cluster](https://console.redhat.com/openshift/create/local)
   * `--docker-config-file`: Path to Docker config.json file, defaults to `~/.docker/config.json`. File must include token for `registry.ci.openshift.org`
   * `--ssh-key-file`: id_rsa file path
 
 * ROSA / Hypershift clusters:
+  * `platform=rosa`: Must pass in cluster parameters
   * `--ocm-token`: OCM token, defaults to `OCM_TOKEN` environment variable.
   * `--ocm-env`: OCM environment to deploy the cluster; available options: `stage` or `production` (defaults to `stage`)
+
+* AWS OSD clusters:
+  * `platform=aws-osd`: Must pass in cluster parameters
+  * `--ocm-token`: OCM token, defaults to `OCM_TOKEN` environment variable.
+  * `--ocm-env`: OCM environment to deploy the cluster; available options: `stage` or `production` (defaults to `stage`)
+  * `--aws-access-key-id`: AWS access key ID
+  * `--aws-secret-access-key`: AWS secret access key
+  * `--aws-account-id`: AWS account ID
 
 ### Cluster parameters
 Every call to the openshift installer cli must have at least one `--cluster` option.  

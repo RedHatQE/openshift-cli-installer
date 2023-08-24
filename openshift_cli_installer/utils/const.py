@@ -1,5 +1,6 @@
 AWS_STR = "aws"
 ROSA_STR = "rosa"
+AWS_OSD_STR = "aws-osd"
 HYPERSHIFT_STR = "hypershift"
 CLUSTER_DATA_YAML_FILENAME = "cluster_data.yaml"
 DESTROY_STR = "destroy"

@@ -12,8 +12,6 @@ from ocp_resources.job import Job
 from ocp_resources.utils import TimeoutSampler
 from python_terraform import IsNotFlagged, Terraform, TerraformCommandError
 
-from openshift_cli_installer.tests.all_rosa_versions import BASE_AVAILABLE_VERSIONS_DICT
-from openshift_cli_installer.utils.cluster_versions import set_clusters_versions
 from openshift_cli_installer.utils.const import (
     CLUSTER_DATA_YAML_FILENAME,
     HYPERSHIFT_STR,
@@ -24,7 +22,6 @@ from openshift_cli_installer.utils.helpers import (
     cluster_shortuuid,
     dump_cluster_data_to_file,
     get_manifests_path,
-    get_ocm_client,
     zip_and_upload_to_s3,
 )
 
@@ -65,7 +62,8 @@ def tts(ts):
 
 def remove_leftovers(res, ocm_env_url, ocm_token, aws_region):
     leftovers = re.search(
-        r"INFO: Once the cluster is uninstalled use the following commands to remove the above "
+        r"INFO: Once the cluster is uninstalled use the following commands to remove"
+        r" the above "
         r"aws resources(.*?)INFO:",
         res.get("out", ""),
         re.DOTALL,
@@ -112,12 +110,11 @@ def create_oidc(cluster_data):
     aws_region = cluster_data["region"]
     oidc_prefix = cluster_data["cluster-name"]
     ocm_token, ocm_env, _ = extract_ocm_data_from_cluster_data(cluster_data)
-    ocm_client = get_ocm_client(ocm_token, ocm_env)
 
     res = rosa.cli.execute(
         command=f"create oidc-config --managed=false --prefix={oidc_prefix}",
         aws_region=aws_region,
-        ocm_client=ocm_client,
+        ocm_client=cluster_data["ocm-client"],
     )
     oidc_id = re.search(r'"id": "([a-z0-9]+)",', res["out"])
     if not oidc_id:
@@ -194,7 +191,8 @@ def prepare_hypershift_vpc(cluster_data):
         return cluster_data
     except TerraformCommandError:
         click.secho(
-            f"Create hypershift VPC for cluster {cluster_data['name']} failed, rolling back."
+            f"Create hypershift VPC for cluster {cluster_data['name']} failed, rolling"
+            " back."
         )
         delete_oidc(cluster_data=cluster_data)
         # Clean up already created resources from the plan
@@ -208,29 +206,33 @@ def extract_ocm_data_from_cluster_data(cluster_data):
     ocm_env_url = (
         None if ocm_env == "production" else f"https://api.{ocm_env}.openshift.com"
     )
-    return ocm_token, ocm_env, ocm_env_url
+    return ocm_token, ocm_env_url
 
 
-def get_cluster_object(ocm_token, ocm_env, cluster_data):
-    ocm_client = get_ocm_client(ocm_token, ocm_env)
+def get_cluster_object(cluster_data):
     for sample in TimeoutSampler(
         wait_timeout=tts(ts="5m"),
         sleep=1,
         func=Cluster,
-        client=ocm_client,
+        client=cluster_data["ocm-client"],
         name=cluster_data["cluster-name"],
     ):
         if sample and sample.exists:
             return sample
 
 
-def prepare_managed_clusters_data(clusters, ocm_token, ocm_env):
+def prepare_managed_clusters_data(
+    clusters, ocm_client, aws_account_id, aws_secret_access_key, aws_access_key_id
+):
     for _cluster in clusters:
         _cluster["cluster-name"] = _cluster["name"]
-        _cluster["ocm-token"] = ocm_token
-        _cluster["ocm-env"] = ocm_env
         _cluster["timeout"] = tts(ts=_cluster.get("timeout", "30m"))
         _cluster["channel-group"] = _cluster.get("channel-group", "stable")
+        _cluster["aws-access-key-id"] = aws_access_key_id
+        _cluster["aws-secret-access-key"] = aws_secret_access_key
+        _cluster["aws-account-id"] = aws_account_id
+        _cluster["multi-az"] = _cluster.get("multi-az", False)
+        _cluster["ocm-client"] = ocm_client
         if _cluster["platform"] == HYPERSHIFT_STR:
             _cluster["hosted-cp"] = "true"
             _cluster["tags"] = "dns:external"
@@ -239,9 +241,9 @@ def prepare_managed_clusters_data(clusters, ocm_token, ocm_env):
         expiration_time = _cluster.get("expiration-time")
         if expiration_time:
             _expiration_time = tts(ts=expiration_time)
-            _cluster[
-                "expiration-time"
-            ] = f"{(datetime.now() + timedelta(seconds=_expiration_time)).isoformat()}Z"
+            _cluster["expiration-time"] = (
+                f"{(datetime.now() + timedelta(seconds=_expiration_time)).isoformat()}Z"
+            )
 
     return clusters
 
@@ -260,8 +262,11 @@ def rosa_create_cluster(cluster_data, s3_bucket_name=None, s3_bucket_path=None):
         "cidr",
         "private_subnets",
         "public_subnets",
+        "aws-access-key-id",
+        "aws-secret-access-key",
+        "aws-account-id",
     )
-    ocm_token, ocm_env, ocm_env_url = extract_ocm_data_from_cluster_data(cluster_data)
+    ocm_token, ocm_env_url = extract_ocm_data_from_cluster_data(cluster_data)
     command = "create cluster --sts "
 
     if _platform == HYPERSHIFT_STR:
@@ -294,9 +299,7 @@ def rosa_create_cluster(cluster_data, s3_bucket_name=None, s3_bucket_path=None):
             aws_region=cluster_data["region"],
         )
 
-        cluster_object = get_cluster_object(
-            ocm_token=ocm_token, ocm_env=ocm_env, cluster_data=cluster_data
-        )
+        cluster_object = get_cluster_object(cluster_data=cluster_data)
         cluster_object.wait_for_cluster_ready(wait_timeout=cluster_data["timeout"])
         set_cluster_auth(cluster_data=cluster_data, cluster_object=cluster_object)
 
@@ -308,7 +311,7 @@ def rosa_create_cluster(cluster_data, s3_bucket_name=None, s3_bucket_path=None):
             f"Failed to run cluster create for cluster {cluster_data['name']}\n{ex}",
             fg="red",
         )
-        if s3_bucket_name:
+        if s3_bucket_name and _platform == HYPERSHIFT_STR:
             zip_and_upload_to_s3(
                 uuid=_shortuuid,
                 install_dir=cluster_data["install-dir"],
@@ -333,7 +336,7 @@ def rosa_delete_cluster(cluster_data):
 
     _cluster_data = base_cluster_data or cluster_data
     aws_region = _cluster_data["region"]
-    ocm_token, ocm_env, ocm_env_url = extract_ocm_data_from_cluster_data(_cluster_data)
+    ocm_token, ocm_env_url = extract_ocm_data_from_cluster_data(_cluster_data)
     command = f"delete cluster --cluster={_cluster_data['cluster-name']}"
     try:
         res = rosa.cli.execute(
@@ -342,9 +345,7 @@ def rosa_delete_cluster(cluster_data):
             token=ocm_token,
             aws_region=aws_region,
         )
-        cluster_object = get_cluster_object(
-            ocm_token=ocm_token, ocm_env=ocm_env, cluster_data=_cluster_data
-        )
+        cluster_object = get_cluster_object(cluster_data=_cluster_data)
         cluster_object.wait_for_cluster_deletion(wait_timeout=_cluster_data["timeout"])
         remove_leftovers(
             res=res, ocm_env_url=ocm_env_url, ocm_token=ocm_token, aws_region=aws_region
@@ -360,26 +361,3 @@ def rosa_delete_cluster(cluster_data):
     if should_raise:
         click.secho(f"Failed to run cluster destroy\n{should_raise}", fg="red")
         raise click.Abort()
-
-
-def update_rosa_clusters_versions(clusters, ocm_env, ocm_token, _test=False):
-    if _test:
-        base_available_versions_dict = BASE_AVAILABLE_VERSIONS_DICT
-    else:
-        base_available_versions_dict = {}
-        for cluster_data in clusters:
-            channel_group = cluster_data["channel-group"]
-            base_available_versions = rosa.cli.execute(
-                command=f"list versions --channel-group={channel_group} "
-                f"{'--hosted-cp' if cluster_data['platform'] == HYPERSHIFT_STR else ''}",
-                aws_region=cluster_data["region"],
-                ocm_env=ocm_env,
-                token=ocm_token,
-            )["out"]
-            _all_versions = [ver["raw_id"] for ver in base_available_versions]
-            base_available_versions_dict[channel_group] = _all_versions
-
-    return set_clusters_versions(
-        clusters=clusters,
-        base_available_versions=base_available_versions_dict,
-    )

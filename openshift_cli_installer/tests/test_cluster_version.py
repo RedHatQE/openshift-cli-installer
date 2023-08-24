@@ -2,7 +2,7 @@ import click
 import pytest
 
 from openshift_cli_installer.libs.aws_ipi_clusters import update_aws_clusters_versions
-from openshift_cli_installer.libs.rosa_clusters import update_rosa_clusters_versions
+from openshift_cli_installer.utils.helpers import update_rosa_osd_clusters_versions
 
 
 @pytest.mark.parametrize(
@@ -272,7 +272,7 @@ def test_aws_cluster_version(clusters, expected):
 )
 def test_rosa_cluster_version(clusters, expected):
     try:
-        res = update_rosa_clusters_versions(
+        res = update_rosa_osd_clusters_versions(
             clusters=clusters, _test=True, ocm_env=None, ocm_token=None
         )
         assert res == expected

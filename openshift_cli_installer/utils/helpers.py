@@ -5,12 +5,21 @@ from importlib.util import find_spec
 from time import sleep
 
 import click
+import rosa.cli
 import shortuuid
 import yaml
 from clouds.aws.session_clients import s3_client
 from ocm_python_wrapper.ocm_client import OCMPythonClient
+from ocm_python_wrapper.versions import Versions
 
-from openshift_cli_installer.utils.const import CLUSTER_DATA_YAML_FILENAME
+from openshift_cli_installer.tests.all_rosa_versions import BASE_AVAILABLE_VERSIONS_DICT
+from openshift_cli_installer.utils.cluster_versions import set_clusters_versions
+from openshift_cli_installer.utils.const import (
+    AWS_OSD_STR,
+    CLUSTER_DATA_YAML_FILENAME,
+    HYPERSHIFT_STR,
+    ROSA_STR,
+)
 
 
 # TODO: Move to own repository.
@@ -99,7 +108,9 @@ def dump_cluster_data_to_file(cluster_data):
 
 
 def bucket_object_name(cluster_data, _shortuuid, s3_bucket_path=None):
-    return f"{f'{s3_bucket_path}/' if s3_bucket_path else ''}{cluster_data['name']}-{_shortuuid}.zip"
+    return (
+        f"{f'{s3_bucket_path}/' if s3_bucket_path else ''}{cluster_data['name']}-{_shortuuid}.zip"
+    )
 
 
 def get_manifests_path():
@@ -110,3 +121,34 @@ def get_manifests_path():
             "manifests",
         )
     return manifests_path
+
+
+def update_rosa_osd_clusters_versions(clusters, ocm_env, ocm_token, _test=False):
+    if _test:
+        base_available_versions_dict = BASE_AVAILABLE_VERSIONS_DICT
+    else:
+        base_available_versions_dict = {}
+        for cluster_data in clusters:
+            if cluster_data["platform"] == AWS_OSD_STR:
+                base_available_versions_dict = Versions(
+                    client=cluster_data["ocm-client"]
+                ).get(channel_group=cluster_data["channel-group"])
+
+            elif cluster_data["platform"] in (ROSA_STR, HYPERSHIFT_STR):
+                channel_group = cluster_data["channel-group"]
+                base_available_versions = rosa.cli.execute(
+                    command=(
+                        f"list versions --channel-group={channel_group} "
+                        f"{'--hosted-cp' if cluster_data['platform'] == HYPERSHIFT_STR else ''}"
+                    ),
+                    aws_region=cluster_data["region"],
+                    ocm_env=ocm_env,
+                    token=ocm_token,
+                )["out"]
+                _all_versions = [ver["raw_id"] for ver in base_available_versions]
+                base_available_versions_dict[channel_group] = _all_versions
+
+    return set_clusters_versions(
+        clusters=clusters,
+        base_available_versions=base_available_versions_dict,
+    )

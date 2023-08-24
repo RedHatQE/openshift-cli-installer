@@ -3,7 +3,12 @@ import re
 import click
 import semver
 
-from openshift_cli_installer.utils.const import AWS_STR, HYPERSHIFT_STR, ROSA_STR
+from openshift_cli_installer.utils.const import (
+    AWS_OSD_STR,
+    AWS_STR,
+    HYPERSHIFT_STR,
+    ROSA_STR,
+)
 
 
 def set_clusters_versions(clusters, base_available_versions):
@@ -56,7 +61,8 @@ def set_clusters_versions(clusters, base_available_versions):
                 cluster_data["version_url"] = version_url[0]
             else:
                 click.secho(
-                    f"Cluster version url not found for {cluster_version} in {base_available_versions.keys()}",
+                    f"Cluster version url not found for {cluster_version} in"
+                    f" {base_available_versions.keys()}",
                     fg="red",
                 )
                 raise click.Abort()
@@ -73,7 +79,7 @@ def filter_versions(version, base_versions_dict, platform, stream):
     versions_dict[stream] = {version_key: {"versions": set(), "latest": ""}}
 
     for _source, versions in base_versions_dict.items():
-        if platform in (HYPERSHIFT_STR, ROSA_STR) and stream != _source:
+        if platform in (HYPERSHIFT_STR, ROSA_STR, AWS_OSD_STR) and stream != _source:
             continue
 
         reg_stream = get_regex_str_for_version_match(
