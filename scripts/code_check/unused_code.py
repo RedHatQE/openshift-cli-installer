@@ -48,8 +48,8 @@ def get_unused_functions():
             used = int(_used.strip())
             if used < 2:
                 _unused_functions.append(
-                    f"{os.path.relpath(py_file)}:{func.name}:{func.lineno}:{func.col_offset}"
-                    f" Is not used anywhere in the code."
+                    f"{os.path.relpath(py_file)}:{func.name}:{func.lineno}:{func.col_offset} Is"
+                    " not used anywhere in the code."
                 )
 
     return _unused_functions

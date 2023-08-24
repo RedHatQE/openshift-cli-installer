@@ -128,7 +128,8 @@ def download_openshift_install_binary(clusters, registry_config_file):
         )
         if not rc:
             click.secho(
-                f"Failed to get {openshift_install_str} for version {version_url}, error: {err}",
+                f"Failed to get {openshift_install_str} for version {version_url},"
+                f" error: {err}",
                 fg="red",
             )
             raise click.Abort()
