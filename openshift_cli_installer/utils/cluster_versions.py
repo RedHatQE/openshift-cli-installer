@@ -56,7 +56,8 @@ def set_clusters_versions(clusters, base_available_versions):
                 cluster_data["version_url"] = version_url[0]
             else:
                 click.secho(
-                    f"Cluster version url not found for {cluster_version} in {base_available_versions.keys()}",
+                    f"Cluster version url not found for {cluster_version} in"
+                    f" {base_available_versions.keys()}",
                     fg="red",
                 )
                 raise click.Abort()

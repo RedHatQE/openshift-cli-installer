@@ -65,7 +65,8 @@ def tts(ts):
 
 def remove_leftovers(res, ocm_env_url, ocm_token, aws_region):
     leftovers = re.search(
-        r"INFO: Once the cluster is uninstalled use the following commands to remove the above "
+        r"INFO: Once the cluster is uninstalled use the following commands to remove"
+        r" the above "
         r"aws resources(.*?)INFO:",
         res.get("out", ""),
         re.DOTALL,
@@ -194,7 +195,8 @@ def prepare_hypershift_vpc(cluster_data):
         return cluster_data
     except TerraformCommandError:
         click.secho(
-            f"Create hypershift VPC for cluster {cluster_data['name']} failed, rolling back."
+            f"Create hypershift VPC for cluster {cluster_data['name']} failed, rolling"
+            " back."
         )
         delete_oidc(cluster_data=cluster_data)
         # Clean up already created resources from the plan
@@ -239,9 +241,9 @@ def prepare_managed_clusters_data(clusters, ocm_token, ocm_env):
         expiration_time = _cluster.get("expiration-time")
         if expiration_time:
             _expiration_time = tts(ts=expiration_time)
-            _cluster[
-                "expiration-time"
-            ] = f"{(datetime.now() + timedelta(seconds=_expiration_time)).isoformat()}Z"
+            _cluster["expiration-time"] = (
+                f"{(datetime.now() + timedelta(seconds=_expiration_time)).isoformat()}Z"
+            )
 
     return clusters
 
@@ -370,8 +372,10 @@ def update_rosa_clusters_versions(clusters, ocm_env, ocm_token, _test=False):
         for cluster_data in clusters:
             channel_group = cluster_data["channel-group"]
             base_available_versions = rosa.cli.execute(
-                command=f"list versions --channel-group={channel_group} "
-                f"{'--hosted-cp' if cluster_data['platform'] == HYPERSHIFT_STR else ''}",
+                command=(
+                    f"list versions --channel-group={channel_group} "
+                    f"{'--hosted-cp' if cluster_data['platform'] == HYPERSHIFT_STR else ''}"
+                ),
                 aws_region=cluster_data["region"],
                 ocm_env=ocm_env,
                 token=ocm_token,

@@ -99,7 +99,9 @@ def dump_cluster_data_to_file(cluster_data):
 
 
 def bucket_object_name(cluster_data, _shortuuid, s3_bucket_path=None):
-    return f"{f'{s3_bucket_path}/' if s3_bucket_path else ''}{cluster_data['name']}-{_shortuuid}.zip"
+    return (
+        f"{f'{s3_bucket_path}/' if s3_bucket_path else ''}{cluster_data['name']}-{_shortuuid}.zip"
+    )
 
 
 def get_manifests_path():

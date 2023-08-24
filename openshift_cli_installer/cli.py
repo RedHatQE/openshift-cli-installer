@@ -168,7 +168,8 @@ def verify_user_input(
 ):
     if not action:
         click.secho(
-            f"'action' must be provided, supported actions: `{CREATE_STR}`, `{DESTROY_STR}`",
+            f"'action' must be provided, supported actions: `{CREATE_STR}`,"
+            f" `{DESTROY_STR}`",
             fg="red",
         )
         raise click.Abort()
@@ -180,21 +181,24 @@ def verify_user_input(
     if any([_cluster["platform"] == AWS_STR for _cluster in cluster]):
         if not os.path.exists(ssh_key_file):
             click.secho(
-                f"SSH file is required for AWS installations. {ssh_key_file} file does not exist.",
+                f"SSH file is required for AWS installations. {ssh_key_file} file does"
+                " not exist.",
                 fg="red",
             )
             raise click.Abort()
 
         if not os.path.exists(docker_config_file):
             click.secho(
-                f"Docker config file is required for AWS installations. {docker_config_file} file does not exist.",
+                "Docker config file is required for AWS installations."
+                f" {docker_config_file} file does not exist.",
                 fg="red",
             )
             raise click.Abort()
 
         if not registry_config_file or not os.path.exists(registry_config_file):
             click.secho(
-                f"Registry config file is required for AWS installations. {registry_config_file} file does not exist.",
+                "Registry config file is required for AWS installations."
+                f" {registry_config_file} file does not exist.",
                 fg="red",
             )
             raise click.Abort()
@@ -351,7 +355,8 @@ def main(
     """
     if destroy_clusters_from_config_files and not s3_bucket_name:
         click.secho(
-            "`--s3-bucket-name` must be provided when running with `--destroy-clusters-from-config-files`",
+            "`--s3-bucket-name` must be provided when running with"
+            " `--destroy-clusters-from-config-files`",
             fg="red",
         )
         raise click.Abort()
