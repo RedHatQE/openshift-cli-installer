@@ -2,6 +2,12 @@ import click
 import pytest
 
 from openshift_cli_installer.libs.aws_ipi_clusters import update_aws_clusters_versions
+from openshift_cli_installer.tests.all_osd_versions import (
+    BASE_AVAILABLE_OSD_VERSIONS_DICT,
+)
+from openshift_cli_installer.tests.all_rosa_versions import (
+    BASE_AVAILABLE_ROSA_VERSIONS_DICT,
+)
 from openshift_cli_installer.utils.helpers import update_rosa_osd_clusters_versions
 
 
@@ -273,7 +279,174 @@ def test_aws_cluster_version(clusters, expected):
 def test_rosa_cluster_version(clusters, expected):
     try:
         res = update_rosa_osd_clusters_versions(
-            clusters=clusters, _test=True, ocm_env=None, ocm_token=None
+            clusters=clusters,
+            _test=True,
+            ocm_env=None,
+            ocm_token=None,
+            _test_versions_dict=BASE_AVAILABLE_ROSA_VERSIONS_DICT,
+        )
+        assert res == expected
+    except click.Abort:
+        if expected == "error":
+            return
+        else:
+            raise
+
+
+@pytest.mark.parametrize(
+    "clusters, expected",
+    [
+        (
+            [
+                {
+                    "version": "4.13",
+                    "channel-group": "stable",
+                    "platform": "aws-osd",
+                }
+            ],
+            [
+                {
+                    "version": "4.13.9",
+                    "channel-group": "stable",
+                    "platform": "aws-osd",
+                }
+            ],
+        ),
+        (
+            [
+                {
+                    "version": "4.13",
+                    "channel-group": "nightly",
+                    "platform": "aws-osd",
+                }
+            ],
+            [
+                {
+                    "version": "4.13.0-0.nightly-2023-08-25-012257",
+                    "channel-group": "nightly",
+                    "platform": "aws-osd",
+                }
+            ],
+        ),
+        (
+            [
+                {
+                    "version": "4.13",
+                    "channel-group": "candidate",
+                    "platform": "aws-osd",
+                }
+            ],
+            [
+                {
+                    "version": "4.13.9",
+                    "channel-group": "candidate",
+                    "platform": "aws-osd",
+                }
+            ],
+        ),
+        (
+            [
+                {
+                    "version": "4.13.9",
+                    "channel-group": "stable",
+                    "platform": "aws-osd",
+                }
+            ],
+            [
+                {
+                    "version": "4.13.9",
+                    "channel-group": "stable",
+                    "platform": "aws-osd",
+                }
+            ],
+        ),
+        (
+            [
+                {
+                    "version": "4.13",
+                    "channel-group": "stable",
+                    "platform": "aws-osd",
+                },
+                {
+                    "version": "4.13",
+                    "channel-group": "nightly",
+                    "platform": "aws-osd",
+                },
+            ],
+            [
+                {
+                    "version": "4.13.9",
+                    "channel-group": "stable",
+                    "platform": "aws-osd",
+                },
+                {
+                    "version": "4.13.0-0.nightly-2023-08-25-012257",
+                    "channel-group": "nightly",
+                    "platform": "aws-osd",
+                },
+            ],
+        ),
+        (
+            [
+                {
+                    "version": "4",
+                    "channel-group": "stable",
+                    "platform": "aws-osd",
+                }
+            ],
+            "error",
+        ),
+        (
+            [
+                {
+                    "version": "100.5.1",
+                    "channel-group": "stable",
+                    "platform": "aws-osd",
+                }
+            ],
+            "error",
+        ),
+        (
+            [
+                {
+                    "version": "100.5",
+                    "channel-group": "stable",
+                    "platform": "aws-osd",
+                }
+            ],
+            "error",
+        ),
+        (
+            [
+                {
+                    "version": "4.13.40",
+                    "channel-group": "stable",
+                    "platform": "aws-osd",
+                }
+            ],
+            "error",
+        ),
+    ],
+    ids=[
+        "aws_osd_4.13_stable",
+        "aws_osd_4.13_nightly",
+        "aws_osd_4.13_candidate",
+        "aws_osd_4.13.6_stable",
+        "aws_osd_4.13_stable_and_nightly",
+        "aws_osd_4_stable_negative",
+        "aws_osd_100.5.1_stable_negative",
+        "aws_osd_100.5_stable_negative",
+        "aws_osd_4.13.40_stable_negative",
+    ],
+)
+def test_osd_cluster_version(clusters, expected):
+    try:
+        res = update_rosa_osd_clusters_versions(
+            clusters=clusters,
+            _test=True,
+            ocm_env=None,
+            ocm_token=None,
+            _test_versions_dict=BASE_AVAILABLE_OSD_VERSIONS_DICT,
         )
         assert res == expected
     except click.Abort:

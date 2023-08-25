@@ -12,7 +12,6 @@ from clouds.aws.session_clients import s3_client
 from ocm_python_wrapper.ocm_client import OCMPythonClient
 from ocm_python_wrapper.versions import Versions
 
-from openshift_cli_installer.tests.all_rosa_versions import BASE_AVAILABLE_VERSIONS_DICT
 from openshift_cli_installer.utils.cluster_versions import set_clusters_versions
 from openshift_cli_installer.utils.const import (
     AWS_OSD_STR,
@@ -123,9 +122,11 @@ def get_manifests_path():
     return manifests_path
 
 
-def update_rosa_osd_clusters_versions(clusters, ocm_env, ocm_token, _test=False):
+def update_rosa_osd_clusters_versions(
+    clusters, ocm_env, ocm_token, _test=False, _test_versions_dict=None
+):
     if _test:
-        base_available_versions_dict = BASE_AVAILABLE_VERSIONS_DICT
+        base_available_versions_dict = _test_versions_dict
     else:
         base_available_versions_dict = {}
         for cluster_data in clusters:
