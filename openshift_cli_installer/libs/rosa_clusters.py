@@ -24,7 +24,6 @@ from openshift_cli_installer.utils.helpers import (
     get_ocm_client,
     set_cluster_auth,
     tts,
-    wait_for_cluster_exists,
     zip_and_upload_to_s3,
 )
 
@@ -224,7 +223,6 @@ def rosa_create_cluster(cluster_data, s3_bucket_name=None, s3_bucket_path=None):
         )
 
         cluster_object = Cluster(name=cluster_data["name"], client=ocm_client)
-        wait_for_cluster_exists(cluster_object=cluster_object)
         cluster_object.wait_for_cluster_ready(wait_timeout=cluster_data["timeout"])
         set_cluster_auth(cluster_data=cluster_data, cluster_object=cluster_object)
 
