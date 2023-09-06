@@ -14,7 +14,7 @@ Image locate at [openshift-cli-installer](https://quay.io/repository/redhat_msi/
 To pull the image: `podman pull quay.io/openshift-cli-installer`
 
 ### Create clusters from YAML file
-User can create clusters by sending YAML file instead with CLI args
+User can create/destroy clusters by sending YAML file instead with CLI args
 Example YAML file can be found [here](openshift_cli_installer/manifests/clusters.example.yaml)
 
 ### Global CLI configuration

@@ -6,7 +6,7 @@ import click
 import rosa.cli
 import yaml
 from ocm_python_wrapper.cluster import Cluster
-from python_terraform import IsNotFlagged, Terraform, TerraformCommandError
+from python_terraform import IsNotFlagged, Terraform
 
 from openshift_cli_installer.utils.clusters import (
     add_cluster_info_to_cluster_data,
@@ -103,39 +103,44 @@ def terraform_init(cluster_data):
 
 
 def destroy_hypershift_vpc(cluster_data):
-    click.echo(f"Destroy hypershift VPC for cluster {cluster_data['name']}")
+    click.echo(f"Destroy hypershift VPCs for cluster {cluster_data['name']}")
     terraform = terraform_init(cluster_data)
-    terraform.destroy(
+    rc, _, err = terraform.destroy(
         force=IsNotFlagged,
         auto_approve=True,
         capture_output=True,
-        raise_on_error=True,
     )
+    if rc != 0:
+        click.secho(
+            f"Failed to destroy hypershift VPCs for cluster {cluster_data['name']} with"
+            f" error: {err}"
+        )
+        raise click.Abort()
 
 
 def prepare_hypershift_vpc(cluster_data):
     shutil.copy(
         os.path.join(get_manifests_path(), "setup-vpc.tf"), cluster_data["install-dir"]
     )
+    click.echo(f"Preparing hypershift VPCs for cluster {cluster_data['name']}")
     terraform = terraform_init(cluster_data=cluster_data)
-    try:
-        click.echo(f"Preparing hypershift VPC for cluster {cluster_data['name']}")
-        terraform.plan(dir_or_plan="rosa.plan")
-        terraform.apply(capture_output=True, skip_plan=True, raise_on_error=True)
-        terraform_output = terraform.output()
-        private_subnet = terraform_output["cluster-private-subnet"]["value"]
-        public_subnet = terraform_output["cluster-public-subnet"]["value"]
-        cluster_data["subnet-ids"] = f'"{public_subnet},{private_subnet}"'
-        return cluster_data
-    except TerraformCommandError:
+    terraform.plan(dir_or_plan="hypershift.plan")
+    rc, _, err = terraform.apply(capture_output=True, skip_plan=True, auto_approve=True)
+    if rc != 0:
         click.secho(
-            f"Create hypershift VPC for cluster {cluster_data['name']} failed, rolling"
-            " back."
+            f"Create hypershift VPC for cluster {cluster_data['name']} failed with"
+            f" error: {err}, rolling back."
         )
         delete_oidc(cluster_data=cluster_data)
         # Clean up already created resources from the plan
         destroy_hypershift_vpc(cluster_data=cluster_data)
-        raise
+        raise click.Abort()
+
+    terraform_output = terraform.output()
+    private_subnet = terraform_output["cluster-private-subnet"]["value"]
+    public_subnet = terraform_output["cluster-public-subnet"]["value"]
+    cluster_data["subnet-ids"] = f'"{public_subnet},{private_subnet}"'
+    return cluster_data
 
 
 def rosa_create_cluster(cluster_data, s3_bucket_name=None, s3_bucket_path=None):

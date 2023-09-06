@@ -1,3 +1,4 @@
+action: "create" # destroy
 registry_config_file: !ENV "${HOME}/registry-config.json"
 parallel: True
 clusters_install_data_directory: "/tmp/clusters-data"
@@ -21,7 +22,7 @@ clusters:
   replicas: 2
   fips: True
   ocm-env: stage
-  expiration_time: 1h
+  expiration-time: 1h
 
 - name: rosa-c1
   platform: rosa
@@ -33,7 +34,6 @@ clusters:
   replicas: 2
   fips: True
   ocm-env: stage
-  expiration_time: 1h
 
 - name: hyper-c1
   platform: hypershift
@@ -45,10 +45,14 @@ clusters:
   replicas: 2
   fips: True
   ocm-env: stage
-  expiration_time: 1h
-  private_subnets: 10.1.1.0/24,10.1.2.0/24
-  public_subnets: 10.1.10.0/24,10.1.20.0/24
-  cidr: 1.1.0.0/16
+  expiration-time: 1h
+  private_subnets:
+    - 10.0.1.0/24
+    - 10.0.2.0/24
+  public_subnets:
+    - 10.0.101.0/24
+    - 10.0.102.0/24
+  cidr: 10.0.0.0/16
 
 - name: aws-ipi-c1
   base_domain: aws.domain.example.com

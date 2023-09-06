@@ -430,7 +430,7 @@ def main(
         yaml_config_data = parse_config(path=clusters_yaml_config_file)
         clusters = yaml_config_data["clusters"]
         parallel = yaml_config_data["parallel"]
-        action = CREATE_STR
+        action = yaml_config_data["action"]
         ssh_key_file = yaml_config_data.get("ssh_key_file")
         docker_config_file = yaml_config_data.get("docker_config_file")
         registry_config_file = yaml_config_data.get("registry_config_file")
