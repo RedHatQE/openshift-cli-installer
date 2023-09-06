@@ -1,5 +1,5 @@
-registry_config_file: !ENV "${HOME}/.docker/config.json"
-parallel: False
+registry_config_file: !ENV "${HOME}/work/CSPI/docker-secrets.json"
+parallel: True
 clusters_install_data_directory: "/tmp/clusters-data"
 s3_bucket_name: "openshift-cli-installer"
 s3_bucket_path: "openshift-ci"
@@ -14,7 +14,7 @@ clusters:
 - name: osd-c1
   platform: aws-osd
   region: us-east-2
-  version: 4.13
+  version: "4.13"
   channel-group: stable
   compute-machine-type: m5.4xlarge
   timeout: 90m
@@ -26,7 +26,7 @@ clusters:
 - name: rosa-c1
   platform: rosa
   region: us-east-2
-  version: 4.13
+  version: "4.13"
   channel-group: stable
   compute-machine-type: m5.4xlarge
   timeout: 90m
@@ -37,8 +37,8 @@ clusters:
 
 - name: hyper-c1
   platform: hypershift
-  region: us-east-2
-  version: 4.13
+  region: us-west-2
+  version: "4.13"
   channel-group: stable
   compute-machine-type: m5.4xlarge
   timeout: 90m
@@ -51,10 +51,10 @@ clusters:
   cidr: 1.1.0.0/16
 
 - name: aws-ipi-c1
-  base_domain: aws.domain.example.com
+  base_domain: aws.interop.ccitredhat.com
   platform: aws
   region: us-east-2
-  version: 4.13
+  version: "4.13"
   stream: stable
   timeout: 1h
   worker_replicas: 2

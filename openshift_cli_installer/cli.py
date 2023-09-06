@@ -185,7 +185,6 @@ def verify_user_input(
     aws_secret_access_key,
     aws_account_id,
     ocm_token,
-    **kwargs,
 ):
     if not action:
         click.secho(
@@ -429,25 +428,31 @@ def main(
 
     if clusters_yaml_config_file:
         yaml_config_data = parse_config(path=clusters_yaml_config_file)
-        yaml_config_data["action"] = "create"
         clusters = yaml_config_data["clusters"]
-        verify_user_input(**yaml_config_data)
+        parallel = yaml_config_data["parallel"]
+        action = CREATE_STR
+        ssh_key_file = yaml_config_data.get("ssh_key_file")
+        docker_config_file = yaml_config_data.get("docker_config_file")
+        registry_config_file = yaml_config_data.get("registry_config_file")
+        aws_access_key_id = yaml_config_data.get("aws_access_key_id")
+        aws_secret_access_key = yaml_config_data.get("aws_secret_access_key")
+        aws_account_id = yaml_config_data.get("aws_account_id")
+        ocm_token = yaml_config_data.get("ocm_token")
         clusters_install_data_directory = yaml_config_data[
             "clusters_install_data_directory"
         ]
 
-    else:
-        verify_user_input(
-            action=action,
-            clusters=clusters,
-            ssh_key_file=ssh_key_file,
-            docker_config_file=docker_config_file,
-            registry_config_file=registry_config_file,
-            aws_access_key_id=aws_access_key_id,
-            aws_secret_access_key=aws_secret_access_key,
-            aws_account_id=aws_account_id,
-            ocm_token=ocm_token,
-        )
+    verify_user_input(
+        action=action,
+        clusters=clusters,
+        ssh_key_file=ssh_key_file,
+        docker_config_file=docker_config_file,
+        registry_config_file=registry_config_file,
+        aws_access_key_id=aws_access_key_id,
+        aws_secret_access_key=aws_secret_access_key,
+        aws_account_id=aws_account_id,
+        ocm_token=ocm_token,
+    )
 
     clusters_install_data_directory = (
         clusters_install_data_directory
