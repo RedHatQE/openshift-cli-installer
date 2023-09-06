@@ -50,13 +50,15 @@ def osd_create_cluster(cluster_data):
 
 def osd_delete_cluster(cluster_data):
     try:
+        name = cluster_data["name"]
         Cluster(
             client=cluster_data["ocm-client"],
-            name=cluster_data["name"],
+            name=name,
         ).delete(timeout=cluster_data["timeout"])
+        click.echo(f"Cluster {name} destroyed successfully")
     except Exception as ex:
         click.secho(
-            f"Failed to run cluster delete cluster {cluster_data['name']}\n{ex}",
+            f"Failed to run cluster delete cluster {name}\n{ex}",
             fg="red",
         )
         raise click.Abort()

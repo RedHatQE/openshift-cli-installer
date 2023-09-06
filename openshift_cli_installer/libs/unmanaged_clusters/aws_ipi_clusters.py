@@ -147,6 +147,7 @@ def create_or_destroy_aws_ipi_cluster(
     s3_bucket_path=None,
     cleanup=False,
 ):
+    name = cluster_data["name"]
     install_dir = cluster_data["install-dir"]
     binary_path = cluster_data["openshift-install-binary"]
     res, out, err = run_command(
@@ -169,7 +170,7 @@ def create_or_destroy_aws_ipi_cluster(
             )
             dump_cluster_data_to_file(cluster_data=cluster_data)
 
-            click.echo(f"Cluster {cluster_data['name']} created successfully")
+            click.echo(f"Cluster {name} created successfully")
 
         if s3_bucket_name:
             zip_and_upload_to_s3(
@@ -194,6 +195,9 @@ def create_or_destroy_aws_ipi_cluster(
                 )
 
         raise click.Abort()
+    else:
+        if action == DESTROY_STR:
+            click.echo(f"Cluster {name} destroyed successfully")
 
 
 @functools.cache

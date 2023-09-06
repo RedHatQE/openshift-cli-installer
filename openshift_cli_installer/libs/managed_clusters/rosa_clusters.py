@@ -260,3 +260,5 @@ def rosa_delete_cluster(cluster_data):
     if should_raise:
         click.secho(f"Failed to run cluster destroy\n{should_raise}", fg="red")
         raise click.Abort()
+
+    click.echo(f"Cluster {name} destroyed successfully")
