@@ -122,7 +122,7 @@ def generate_cluster_dirs_path(clusters, base_directory):
 
 def abort_no_ocm_token(ocm_token):
     if not ocm_token:
-        click.secho("--ocm-token is required for managed clusters", fg="red")
+        click.secho("--ocm-token is required for clusters", fg="red")
         raise click.Abort()
 
 
@@ -195,7 +195,7 @@ def verify_user_input(
         raise click.Abort()
 
     if not clusters:
-        click.secho("At least one 'clusters' option must be provided.", fg="red")
+        click.secho("At least one '--cluster' option must be provided.", fg="red")
         raise click.Abort()
 
     if any([_cluster["platform"] == AWS_STR for _cluster in clusters]):
@@ -241,7 +241,7 @@ def verify_user_input(
     "-a",
     "--action",
     type=click.Choice([CREATE_STR, DESTROY_STR]),
-    help="Action to perform Openshift clusters/s",
+    help="Action to perform Openshift cluster/s",
 )
 @click.option(
     "-p",
@@ -336,10 +336,10 @@ Format to pass is:
     'name=cluster1;base_domain=aws.domain.com;platform=aws;region=us-east-2;version=4.14.0-ec.2'
 Required parameters:
     name: Cluster name.
-    base_domain: Base domain for the clusters.
-    platform: Cloud platform to install the clusters on, supported platforms are: aws, rosa and hypershift.
+    base_domain: Base domain for the cluster.
+    platform: Cloud platform to install the cluster on, supported platforms are: aws, rosa and hypershift.
     region: Region to use for the cloud platform.
-    version: Openshift clusters version to install
+    version: Openshift cluster version to install
 \b
 Check install-config-template.j2 for variables that can be overwritten by the user.
 For example:
@@ -400,7 +400,7 @@ def main(
     clusters_yaml_config_file,
 ):
     """
-    Create/Destroy Openshift clusters/s
+    Create/Destroy Openshift cluster/s
     """
     if destroy_clusters_from_config_files and not s3_bucket_name:
         click.secho(
