@@ -52,7 +52,7 @@ Every call to the openshift installer cli must have at least one `--cluster` opt
   * region: The region to deploy the cluster
 * Optional parameters:
   * Parameter names should be separated by semicolons (`;`)
-  * To set cluster create / destroy timeout, pass `--cluster ...timeout=1h'`; default is 30 minutes.
+  * To set cluster create / destroy timeout (not applicable for AWS IPI clusters), pass `--cluster ...timeout=1h'`; default is 60 minutes.
   * `timeout` and `expiration-time` format examples: `1h`, `30m`, `3600s`
   * `ocm-env`: OCM environment to deploy the cluster; available options: `stage` or `production` (defaults to `stage`). AWS-IPI clusters only use `production`.
   * AWS IPI:

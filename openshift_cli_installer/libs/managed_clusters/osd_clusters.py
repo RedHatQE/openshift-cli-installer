@@ -1,7 +1,7 @@
 import click
 from ocm_python_wrapper.cluster import Cluster
 
-from openshift_cli_installer.utils.helpers import (
+from openshift_cli_installer.utils.clusters import (
     add_cluster_info_to_cluster_data,
     dump_cluster_data_to_file,
     set_cluster_auth,

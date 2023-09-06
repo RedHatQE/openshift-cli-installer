@@ -7,23 +7,30 @@ import rosa.cli
 from clouds.aws.aws_utils import set_and_verify_aws_credentials
 from pyaml_env import parse_config
 
-from openshift_cli_installer.libs.aws_ipi_clusters import (
+from openshift_cli_installer.libs.destroy_clusters import destroy_clusters
+from openshift_cli_installer.libs.managed_clusters.helpers import (
+    prepare_managed_clusters_data,
+)
+from openshift_cli_installer.libs.managed_clusters.osd_clusters import (
+    osd_create_cluster,
+    osd_delete_cluster,
+)
+from openshift_cli_installer.libs.managed_clusters.rosa_clusters import (
+    rosa_create_cluster,
+    rosa_delete_cluster,
+)
+from openshift_cli_installer.libs.unmanaged_clusters.aws_ipi_clusters import (
     create_install_config_file,
     create_or_destroy_aws_ipi_cluster,
     download_openshift_install_binary,
     update_aws_clusters_versions,
 )
-from openshift_cli_installer.libs.destroy_clusters import destroy_clusters
-from openshift_cli_installer.libs.osd_clusters import (
-    osd_create_cluster,
-    osd_delete_cluster,
-)
-from openshift_cli_installer.libs.rosa_clusters import (
-    prepare_managed_clusters_data,
-    rosa_create_cluster,
-    rosa_delete_cluster,
-)
 from openshift_cli_installer.utils.click_dict_type import DictParamType
+from openshift_cli_installer.utils.clusters import (
+    add_ocm_client_to_cluster_dict,
+    check_existing_clusters,
+    update_rosa_osd_clusters_versions,
+)
 from openshift_cli_installer.utils.const import (
     AWS_OSD_STR,
     AWS_STR,
@@ -34,11 +41,6 @@ from openshift_cli_installer.utils.const import (
     PRODUCTION_STR,
     ROSA_STR,
     STAGE_STR,
-)
-from openshift_cli_installer.utils.helpers import (
-    add_ocm_client_to_cluster_dict,
-    check_existing_clusters,
-    update_rosa_osd_clusters_versions,
 )
 
 

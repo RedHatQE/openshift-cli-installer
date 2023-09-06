@@ -7,11 +7,13 @@ import click
 import yaml
 from clouds.aws.session_clients import s3_client
 
-from openshift_cli_installer.libs.aws_ipi_clusters import (
+from openshift_cli_installer.libs.managed_clusters.rosa_clusters import (
+    rosa_delete_cluster,
+)
+from openshift_cli_installer.libs.unmanaged_clusters.aws_ipi_clusters import (
     create_or_destroy_aws_ipi_cluster,
     download_openshift_install_binary,
 )
-from openshift_cli_installer.libs.rosa_clusters import rosa_delete_cluster
 from openshift_cli_installer.utils.const import (
     AWS_STR,
     CLUSTER_DATA_YAML_FILENAME,

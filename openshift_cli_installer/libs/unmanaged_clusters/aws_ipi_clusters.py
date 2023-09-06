@@ -9,14 +9,15 @@ from jinja2 import DebugUndefined, Environment, FileSystemLoader, meta
 from ocp_utilities.utils import run_command
 
 from openshift_cli_installer.utils.cluster_versions import set_clusters_versions
-from openshift_cli_installer.utils.const import CREATE_STR, DESTROY_STR
-from openshift_cli_installer.utils.helpers import (
+from openshift_cli_installer.utils.clusters import (
     add_cluster_info_to_cluster_data,
-    bucket_object_name,
     cluster_shortuuid,
     dump_cluster_data_to_file,
+)
+from openshift_cli_installer.utils.const import CREATE_STR, DESTROY_STR
+from openshift_cli_installer.utils.general import (
+    bucket_object_name,
     get_manifests_path,
-    get_ocm_client,
     zip_and_upload_to_s3,
 )
 
@@ -230,12 +231,3 @@ def get_all_versions(_test=None):
         base_available_versions = get_aws_versions()
 
     return base_available_versions
-
-
-def prepare_base_aws_cluster_data(aws_ipi_clusters, ocm_token):
-    for _cluster in aws_ipi_clusters:
-        _cluster["ocm-client"] = get_ocm_client(
-            ocm_token=ocm_token, ocm_env=_cluster["ocm_env"]
-        )
-
-    return aws_ipi_clusters
