@@ -5,6 +5,7 @@ from pathlib import Path
 import click
 import rosa.cli
 from clouds.aws.aws_utils import set_and_verify_aws_credentials
+from pyaml_env import parse_config
 
 from openshift_cli_installer.libs.aws_ipi_clusters import (
     create_install_config_file,
@@ -119,7 +120,7 @@ def generate_cluster_dirs_path(clusters, base_directory):
 
 def abort_no_ocm_token(ocm_token):
     if not ocm_token:
-        click.secho("--ocm-token is required for managed cluster", fg="red")
+        click.secho("--ocm-token is required for managed clusters", fg="red")
         raise click.Abort()
 
 
@@ -174,7 +175,7 @@ def destroy_openshift_cluster(cluster_data):
 
 def verify_user_input(
     action,
-    cluster,
+    clusters,
     ssh_key_file,
     docker_config_file,
     registry_config_file,
@@ -182,6 +183,7 @@ def verify_user_input(
     aws_secret_access_key,
     aws_account_id,
     ocm_token,
+    **kwargs,
 ):
     if not action:
         click.secho(
@@ -191,11 +193,11 @@ def verify_user_input(
         )
         raise click.Abort()
 
-    if not cluster:
-        click.secho("At least one 'cluster' option must be provided.", fg="red")
+    if not clusters:
+        click.secho("At least one 'clusters' option must be provided.", fg="red")
         raise click.Abort()
 
-    if any([_cluster["platform"] == AWS_STR for _cluster in cluster]):
+    if any([_cluster["platform"] == AWS_STR for _cluster in clusters]):
         if not os.path.exists(ssh_key_file):
             click.secho(
                 f"SSH file is required for AWS installations. {ssh_key_file} file does"
@@ -220,7 +222,7 @@ def verify_user_input(
             )
             raise click.Abort()
 
-    if any([_cluster["platform"] == AWS_OSD_STR for _cluster in cluster]):
+    if any([_cluster["platform"] == AWS_OSD_STR for _cluster in clusters]):
         if not (aws_account_id and aws_secret_access_key and aws_access_key_id):
             click.secho(
                 "--aws-account_id and --aws-secret-access-key and aws-access-key-id"
@@ -229,7 +231,7 @@ def verify_user_input(
             )
             raise click.Abort()
 
-    is_platform_supported(clusters=cluster)
+    is_platform_supported(clusters=clusters)
     abort_no_ocm_token(ocm_token=ocm_token)
 
 
@@ -238,7 +240,7 @@ def verify_user_input(
     "-a",
     "--action",
     type=click.Choice([CREATE_STR, DESTROY_STR]),
-    help="Action to perform Openshift cluster/s",
+    help="Action to perform Openshift clusters/s",
 )
 @click.option(
     "-p",
@@ -258,9 +260,9 @@ def verify_user_input(
     "--clusters-install-data-directory",
     help="""
 \b
-Path to cluster install data.
+Path to clusters install data.
     For install this will be used to store the install data.
-    For uninstall this will be used to uninstall the cluster.
+    For uninstall this will be used to uninstall the clusters.
     Also used to store clusters kubeconfig.
     Default: "/openshift-cli-installer/clusters-install-data"
 """,
@@ -278,7 +280,7 @@ registry-config file, can be obtained from https://console.redhat.com/openshift/
 (Needed only for AWS IPI clusters)
     """,
     default=os.environ.get("PULL_SECRET"),
-    type=click.Path(exists=True),
+    type=click.Path(),
     show_default=True,
 )
 @click.option(
@@ -309,17 +311,17 @@ File must include token for `registry.ci.openshift.org`
 )
 @click.option(
     "--aws-access-key-id",
-    help="AWS access-key-id, needed for OSD AWS cluster.",
+    help="AWS access-key-id, needed for OSD AWS clusters.",
     default=os.environ.get("AWS_ACCESS_KEY_ID"),
 )
 @click.option(
     "--aws-secret-access-key",
-    help="AWS secret-access-key, needed for OSD AWS cluster.",
+    help="AWS secret-access-key, needed for OSD AWS clusters.",
     default=os.environ.get("AWS_SECRET_ACCESS_KEY"),
 )
 @click.option(
     "--aws-account-id",
-    help="AWS account-id, needed for OSD AWS cluster.",
+    help="AWS account-id, needed for OSD AWS clusters.",
     default=os.environ.get("AWS_ACCOUNT_ID"),
 )
 @click.option(
@@ -333,10 +335,10 @@ Format to pass is:
     'name=cluster1;base_domain=aws.domain.com;platform=aws;region=us-east-2;version=4.14.0-ec.2'
 Required parameters:
     name: Cluster name.
-    base_domain: Base domain for the cluster.
-    platform: Cloud platform to install the cluster on, supported platforms are: aws, rosa and hypershift.
+    base_domain: Base domain for the clusters.
+    platform: Cloud platform to install the clusters on, supported platforms are: aws, rosa and hypershift.
     region: Region to use for the cloud platform.
-    version: Openshift cluster version to install
+    version: Openshift clusters version to install
 \b
 Check install-config-template.j2 for variables that can be overwritten by the user.
 For example:
@@ -370,6 +372,14 @@ For example:
     """,
     show_default=True,
 )
+@click.option(
+    "--clusters-yaml-config-file",
+    help="""
+    \b
+    Yaml file with configuration to create clusters, when using YAML file all other user options are ignored
+    """,
+    type=click.Path(exists=True),
+)
 def main(
     action,
     registry_config_file,
@@ -386,9 +396,10 @@ def main(
     aws_access_key_id,
     aws_secret_access_key,
     aws_account_id,
+    clusters_yaml_config_file,
 ):
     """
-    Create/Destroy Openshift cluster/s
+    Create/Destroy Openshift clusters/s
     """
     if destroy_clusters_from_config_files and not s3_bucket_name:
         click.secho(
@@ -408,24 +419,40 @@ def main(
             destroy_all_clusters=destroy_all_clusters,
         )
 
-    verify_user_input(
-        action=action,
-        cluster=cluster,
-        ssh_key_file=ssh_key_file,
-        docker_config_file=docker_config_file,
-        registry_config_file=registry_config_file,
-        aws_access_key_id=aws_access_key_id,
-        aws_secret_access_key=aws_secret_access_key,
-        aws_account_id=aws_account_id,
-        ocm_token=ocm_token,
-    )
+    if action and clusters_yaml_config_file:
+        click.secho("Either send `--clusters-yaml-config-file` or `--action`")
+        raise click.Abort()
+
+    clusters = cluster
+
+    if clusters_yaml_config_file:
+        yaml_config_data = parse_config(path=clusters_yaml_config_file)
+        yaml_config_data["action"] = "create"
+        clusters = yaml_config_data["clusters"]
+        verify_user_input(**yaml_config_data)
+        clusters_install_data_directory = yaml_config_data[
+            "clusters_install_data_directory"
+        ]
+
+    else:
+        verify_user_input(
+            action=action,
+            clusters=clusters,
+            ssh_key_file=ssh_key_file,
+            docker_config_file=docker_config_file,
+            registry_config_file=registry_config_file,
+            aws_access_key_id=aws_access_key_id,
+            aws_secret_access_key=aws_secret_access_key,
+            aws_account_id=aws_account_id,
+            ocm_token=ocm_token,
+        )
 
     clusters_install_data_directory = (
         clusters_install_data_directory
         or "/openshift-cli-installer/clusters-install-data"
     )
 
-    clusters = add_ocm_client_to_cluster_dict(clusters=cluster, ocm_token=ocm_token)
+    clusters = add_ocm_client_to_cluster_dict(clusters=clusters, ocm_token=ocm_token)
     create = action == CREATE_STR
     kwargs = {}
 

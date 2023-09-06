@@ -165,21 +165,21 @@ def update_rosa_osd_clusters_versions(clusters, _test=False, _test_versions_dict
 
 def add_cluster_info_to_cluster_data(cluster_data, cluster_object=None):
     """
-    Adds cluster information to the given cluster data dictionary.
+    Adds clusters information to the given clusters data dictionary.
 
-    `cluster-id`, `api-url` and `console-url` (when available) will be added to `cluster_data`.
+    `clusters-id`, `api-url` and `console-url` (when available) will be added to `cluster_data`.
 
     Args:
-        cluster_data (dict): A dictionary containing cluster data.
-        cluster_object (ClusterObject, optional): An object representing a cluster.
+        cluster_data (dict): A dictionary containing clusters data.
+        cluster_object (ClusterObject, optional): An object representing a clusters.
             Relevant for ROSA, Hypershift and OSD clusters.
 
     Returns:
-        dict: The updated cluster data dictionary.
+        dict: The updated clusters data dictionary.
     """
     if cluster_object:
         ocp_client = cluster_object.ocp_client
-        cluster_data["cluster-id"] = cluster_object.cluster_id
+        cluster_data["clusters-id"] = cluster_object.cluster_id
     else:
         ocp_client = get_client(config_file=f"{cluster_data['auth-dir']}/kubeconfig")
 
@@ -276,7 +276,7 @@ def check_existing_clusters(clusters):
 
     if existing_clusters_list:
         click.secho(
-            f"At least one cluster already exists: {existing_clusters_list}",
+            f"At least one clusters already exists: {existing_clusters_list}",
             fg="red",
         )
         raise click.Abort()

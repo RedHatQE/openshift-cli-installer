@@ -27,7 +27,7 @@ from openshift_cli_installer.utils.helpers import (
 
 def remove_leftovers(res, cluster_data):
     leftovers = re.search(
-        r"INFO: Once the cluster is uninstalled use the following commands to remove"
+        r"INFO: Once the clusters is uninstalled use the following commands to remove"
         r" the above "
         r"aws resources(.*?)INFO:",
         res.get("out", ""),
@@ -38,7 +38,7 @@ def remove_leftovers(res, cluster_data):
             _line = line.strip()
             if _line.startswith("rosa"):
                 base_command = _line.split(maxsplit=1)[-1]
-                command = base_command.replace("-c ", "--cluster=")
+                command = base_command.replace("-c ", "--clusters=")
                 command = command.replace("--prefix ", "--prefix=")
                 command = command.replace("--oidc-config-id ", "--oidc-config-id=")
                 rosa.cli.execute(
@@ -49,7 +49,7 @@ def remove_leftovers(res, cluster_data):
 
 
 def create_oidc(cluster_data):
-    oidc_prefix = cluster_data["cluster-name"]
+    oidc_prefix = cluster_data["clusters-name"]
 
     res = rosa.cli.execute(
         command=f"create oidc-config --managed=false --prefix={oidc_prefix}",
@@ -59,7 +59,7 @@ def create_oidc(cluster_data):
     oidc_id = re.search(r'"id": "([a-z0-9]+)",', res["out"])
     if not oidc_id:
         click.secho(
-            f"Failed to get OIDC config for cluster {cluster_data['name']}", fg="red"
+            f"Failed to get OIDC config for clusters {cluster_data['name']}", fg="red"
         )
         raise click.Abort()
 
@@ -82,7 +82,7 @@ def terraform_init(cluster_data):
     cluster_parameters = {
         "aws_region": aws_region,
         "az_ids": [f"{az_id_prefix}-az1", f"{az_id_prefix}-az2"],
-        "cluster_name": cluster_data["cluster-name"],
+        "cluster_name": cluster_data["clusters-name"],
     }
     cidr = cluster_data.get("cidr")
     private_subnets = cluster_data.get("private_subnets")
@@ -103,7 +103,7 @@ def terraform_init(cluster_data):
 
 
 def destroy_hypershift_vpc(cluster_data):
-    click.echo(f"Destroy hypershift VPC for cluster {cluster_data['name']}")
+    click.echo(f"Destroy hypershift VPC for clusters {cluster_data['name']}")
     terraform = terraform_init(cluster_data)
     terraform.destroy(
         force=IsNotFlagged,
@@ -119,17 +119,17 @@ def prepare_hypershift_vpc(cluster_data):
     )
     terraform = terraform_init(cluster_data=cluster_data)
     try:
-        click.echo(f"Preparing hypershift VPC for cluster {cluster_data['name']}")
+        click.echo(f"Preparing hypershift VPC for clusters {cluster_data['name']}")
         terraform.plan(dir_or_plan="rosa.plan")
         terraform.apply(capture_output=True, skip_plan=True, raise_on_error=True)
         terraform_output = terraform.output()
-        private_subnet = terraform_output["cluster-private-subnet"]["value"]
-        public_subnet = terraform_output["cluster-public-subnet"]["value"]
+        private_subnet = terraform_output["clusters-private-subnet"]["value"]
+        public_subnet = terraform_output["clusters-public-subnet"]["value"]
         cluster_data["subnet-ids"] = f'"{public_subnet},{private_subnet}"'
         return cluster_data
     except TerraformCommandError:
         click.secho(
-            f"Create hypershift VPC for cluster {cluster_data['name']} failed, rolling"
+            f"Create hypershift VPC for clusters {cluster_data['name']} failed, rolling"
             " back."
         )
         delete_oidc(cluster_data=cluster_data)
@@ -145,7 +145,7 @@ def prepare_managed_clusters_data(
     aws_access_key_id,
 ):
     for _cluster in clusters:
-        _cluster["cluster-name"] = _cluster["name"]
+        _cluster["clusters-name"] = _cluster["name"]
         _cluster["timeout"] = tts(ts=_cluster.get("timeout", "30m"))
         _cluster["channel-group"] = _cluster.get("channel-group", "stable")
         _cluster["aws-access-key-id"] = aws_access_key_id
@@ -187,7 +187,7 @@ def rosa_create_cluster(cluster_data, s3_bucket_name=None, s3_bucket_path=None):
         "multi-az",
         "ocm-client",
     )
-    command = "create cluster --sts "
+    command = "create clusters --sts "
 
     if _platform == HYPERSHIFT_STR:
         cluster_data = create_oidc(cluster_data=cluster_data)
@@ -232,7 +232,7 @@ def rosa_create_cluster(cluster_data, s3_bucket_name=None, s3_bucket_path=None):
 
     except Exception as ex:
         click.secho(
-            f"Failed to run cluster create for cluster {cluster_data['name']}\n{ex}",
+            f"Failed to run clusters create for clusters {cluster_data['name']}\n{ex}",
             fg="red",
         )
 
@@ -261,8 +261,8 @@ def rosa_delete_cluster(cluster_data):
         base_cluster_data.update(cluster_data)
 
     _cluster_data = base_cluster_data or cluster_data
-    name = _cluster_data["cluster-name"]
-    command = f"delete cluster --cluster={name}"
+    name = _cluster_data["clusters-name"]
+    command = f"delete clusters --clusters={name}"
     try:
         ocm_client = _cluster_data["ocm-client"]
         res = rosa.cli.execute(
@@ -282,5 +282,5 @@ def rosa_delete_cluster(cluster_data):
         delete_oidc(cluster_data=_cluster_data)
 
     if should_raise:
-        click.secho(f"Failed to run cluster destroy\n{should_raise}", fg="red")
+        click.secho(f"Failed to run clusters destroy\n{should_raise}", fg="red")
         raise click.Abort()

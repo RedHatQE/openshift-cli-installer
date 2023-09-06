@@ -39,7 +39,7 @@ spec:
           spotMarketOptions: {}
 EOF
 
-  for MACHINESET in $dir/openshift/99_openshift-cluster-api_worker-machineset-*.yaml; do
+  for MACHINESET in $dir/openshift/99_openshift-clusters-api_worker-machineset-*.yaml; do
     /tmp/yq m -x -i "${MACHINESET}" "${PATCH}"
     echo "Patched spotMarketOptions into ${MACHINESET}"
   done
@@ -149,7 +149,7 @@ def create_or_destroy_aws_ipi_cluster(
     install_dir = cluster_data["install-dir"]
     binary_path = cluster_data["openshift-install-binary"]
     res, out, err = run_command(
-        command=shlex.split(f"{binary_path} {action} cluster --dir {install_dir}"),
+        command=shlex.split(f"{binary_path} {action} clusters --dir {install_dir}"),
         capture_output=False,
         check=False,
     )
@@ -181,7 +181,8 @@ def create_or_destroy_aws_ipi_cluster(
     if not res:
         if not cleanup:
             click.secho(
-                f"Failed to run cluster {action}\n\tERR: {err}\n\tOUT: {out}.", fg="red"
+                f"Failed to run clusters {action}\n\tERR: {err}\n\tOUT: {out}.",
+                fg="red",
             )
             if action == CREATE_STR:
                 click.echo("Cleaning leftovers.")

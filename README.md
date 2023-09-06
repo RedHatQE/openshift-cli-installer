@@ -13,6 +13,10 @@ The binary is taken from `quay.io/openshift-release-dev/ocp-release:<target vers
 Image locate at [openshift-cli-installer](https://quay.io/repository/redhat_msi/openshift-cli-installer)  
 To pull the image: `podman pull quay.io/openshift-cli-installer`
 
+### Create clusters from YAML file
+User can create clusters by sending YAML file instead with CLI args
+Example YAML file can be found [here](openshift_cli_installer/manifests/clusters.example.yaml)
+
 ### Global CLI configuration
 * `--clusters-install-data-directory`: Clusters configurations are written to `<clusters-install-data-directory><platform><cluster name>`; write permissions are needed.
     * `<cluster directory>/auth` contains `kubeconfig` and `kubeadmin-password` files
