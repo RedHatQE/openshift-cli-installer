@@ -83,7 +83,7 @@ def add_cluster_info_to_cluster_data(cluster_data, cluster_object=None):
     `cluster-id`, `api-url` and `console-url` (when available) will be added to `cluster_data`.
 
     Args:
-        cluster_data (dict): A dictionary containing clusters data.
+        cluster_data (dict): A dictionary containing cluster data.
         cluster_object (ClusterObject, optional): An object representing a cluster.
             Relevant for ROSA, Hypershift and OSD clusters.
 

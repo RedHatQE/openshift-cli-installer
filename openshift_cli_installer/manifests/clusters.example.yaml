@@ -43,7 +43,6 @@ clusters:
   compute-machine-type: m5.4xlarge
   timeout: 90m
   replicas: 2
-  fips: True
   ocm-env: stage
   expiration-time: 1h
   private_subnets:
