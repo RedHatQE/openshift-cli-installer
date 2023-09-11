@@ -48,7 +48,7 @@ openshift-python-wrapper = "^4.14.1"
 python-terraform = "^0.10.1"
 semver = "^3.0.1"
 pytest = "^7.4.0"
-openshift-python-utilities = "^4.14.7"
+openshift-python-utilities = "^5.0.0"
 pyaml-env = "^1.2.1"
 
 
