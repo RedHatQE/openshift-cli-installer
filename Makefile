@@ -16,10 +16,10 @@ install:
 	poetry install
 
 build-container:
-	$(IMAGE_BUILD_CMD) build -t quay.io/redhat_msi/openshift-cli-installe:$(IMAGE_TAG) .
+	$(IMAGE_BUILD_CMD) build -t quay.io/redhat_msi/openshift-cli-installer:$(IMAGE_TAG) .
 
 push-container: build-container
-	$(IMAGE_BUILD_CMD) push quay.io/redhat_msi/openshift-cli-installe:$(IMAGE_TAG)
+	$(IMAGE_BUILD_CMD) push quay.io/redhat_msi/openshift-cli-installer:$(IMAGE_TAG)
 
 release:
 	release-it
