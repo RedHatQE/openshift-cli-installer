@@ -1,9 +1,15 @@
 IMAGE_BUILD_CMD ?= $(shell which podman 2>/dev/null || which docker)
 IMAGE_TAG ?= latest
 
-test:
+pre-commit:
+	python3 -m pip install pip pre-commit --upgrade
 	pre-commit run --all-files
+
+tox:
+	python3 -m pip install pip tox --upgrade
 	tox
+
+tests: pre-commit tox
 
 install:
 	python3 -m pip install pip poetry --upgrade
