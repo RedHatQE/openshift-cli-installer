@@ -21,7 +21,5 @@ build-container:
 push-container: build-container
 	$(IMAGE_BUILD_CMD) push quay.io/redhat_msi/openshift-cli-installer:$(IMAGE_TAG)
 
-build-and-push-container: build-container push-container
-
 release:
 	release-it
