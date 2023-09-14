@@ -1,11 +1,13 @@
 import os
 import re
+import shlex
 import shutil
 
 import click
 import rosa.cli
 import yaml
 from ocm_python_wrapper.cluster import Cluster
+from ocp_utilities.utils import run_command
 from python_terraform import IsNotFlagged, Terraform
 
 from openshift_cli_installer.utils.clusters import (
@@ -167,6 +169,8 @@ def rosa_create_cluster(cluster_data):
         "s3-object-name",
         "s3-bucket-name",
         "s3-bucket-path",
+        "acm",
+        "acm-clusters",
     )
     command = "create cluster --sts "
 
@@ -196,7 +200,8 @@ def rosa_create_cluster(cluster_data):
             aws_region=cluster_data["region"],
         )
 
-        cluster_object = Cluster(name=cluster_data["name"], client=ocm_client)
+        cluster_name = cluster_data["name"]
+        cluster_object = Cluster(name=cluster_name, client=ocm_client)
         cluster_object.wait_for_cluster_ready(wait_timeout=cluster_data["timeout"])
         set_cluster_auth(cluster_data=cluster_data, cluster_object=cluster_object)
 
@@ -206,8 +211,34 @@ def rosa_create_cluster(cluster_data):
         dump_cluster_data_to_file(cluster_data=cluster_data)
 
         click.secho(
-            f"Cluster {cluster_data['name']} created successfully", fg=SUCCESS_LOG_COLOR
+            f"Cluster {cluster_name} created successfully", fg=SUCCESS_LOG_COLOR
         )
+        if cluster_data.get("acm"):
+            click.echo(f"Installing ACM on cluster {cluster_name}")
+            run_command(command=shlex.split("cm install ......"))
+            click.secho(
+                f"ACM installed successfully on Cluster {cluster_name}",
+                fg=SUCCESS_LOG_COLOR,
+            )
+
+            for _cluster in cluster_data.get("acm-clusters", []):
+                click.echo(
+                    f"Attach {_cluster} to ACM hub, Wait for the cluster to be ready"
+                )
+                _cluster_object = Cluster(name=_cluster, client=ocm_client)
+                _cluster_object.wait_for_cluster_ready(
+                    wait_timeout=cluster_data["timeout"]
+                )
+                click.echo(f"Attach {_cluster} to ACM hub")
+                run_command(
+                    command=shlex.split(
+                        f"cm attach --kubeconfig-file={_cluster_object.kubeconfig}"
+                    )
+                )
+                click.secho(
+                    f"{_cluster} successfully attached to ACM Cluster {cluster_name}",
+                    fg=SUCCESS_LOG_COLOR,
+                )
 
     except Exception as ex:
         click.secho(

@@ -34,6 +34,20 @@ clusters:
   replicas: 2
   fips: True
   ocm-env: stage
+  acm: True
+  acm-clusters:
+    - rosa-c2
+
+- name: rosa-c2
+  platform: rosa
+  region: us-east-2
+  version: "4.13"
+  channel-group: stable
+  compute-machine-type: m5.4xlarge
+  timeout: 90m
+  replicas: 2
+  fips: True
+  ocm-env: stage
 
 - name: hyper-c1
   platform: hypershift
