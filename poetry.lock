@@ -637,16 +637,17 @@ PyYAML = "*"
 
 [[package]]
 name = "openshift-python-wrapper"
-version = "4.15.3"
+version = "4.15.4"
 description = "Wrapper around https://github.com/kubernetes-client/python"
 optional = false
 python-versions = ">=3.8,<4.0"
 files = [
-    {file = "openshift_python_wrapper-4.15.3.tar.gz", hash = "sha256:ccdd9fb9faec1fdfb4b2e4c1c7d73c475455f7169ef2fa2f16033784daf16e9c"},
+    {file = "openshift_python_wrapper-4.15.4.tar.gz", hash = "sha256:ab34a53e3df402659d7001b143b19f7cf1d90f4a1a2f06a8e7c5844812a49c6a"},
 ]
 
 [package.dependencies]
 colorlog = ">=6.7.0,<7.0.0"
+jinja2 = ">=3.1.2,<4.0.0"
 kubernetes = ">=28.1.0b1,<29.0.0"
 packaging = ">=23.1,<24.0"
 python-benedict = ">=0.32.0,<0.33.0"
