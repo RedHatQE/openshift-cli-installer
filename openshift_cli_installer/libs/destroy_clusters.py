@@ -18,7 +18,9 @@ from openshift_cli_installer.libs.unmanaged_clusters.aws_ipi_clusters import (
     create_or_destroy_aws_ipi_cluster,
     download_openshift_install_binary,
 )
-from openshift_cli_installer.utils.clusters import add_ocm_client_to_cluster_dict
+from openshift_cli_installer.utils.clusters import (
+    add_ocm_client_and_env_to_cluster_dict,
+)
 from openshift_cli_installer.utils.const import (
     AWS_OSD_STR,
     AWS_STR,
@@ -136,7 +138,7 @@ def set_clusters_data(cluster_dirs, clusters_dict, ocm_token):
 
     _clusters_dict = copy.copy(clusters_dict)
     for cluster_type, clusters_list in clusters_dict.items():
-        _clusters_dict[cluster_type] = add_ocm_client_to_cluster_dict(
+        _clusters_dict[cluster_type] = add_ocm_client_and_env_to_cluster_dict(
             clusters=clusters_list, ocm_token=ocm_token
         )
 

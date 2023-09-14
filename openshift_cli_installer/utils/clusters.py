@@ -107,15 +107,16 @@ def add_cluster_info_to_cluster_data(cluster_data, cluster_object=None):
     return cluster_data
 
 
-def add_ocm_client_to_cluster_dict(clusters, ocm_token):
+def add_ocm_client_and_env_to_cluster_dict(clusters, ocm_token):
     supported_envs = (PRODUCTION_STR, STAGE_STR)
 
     for _cluster in clusters:
-        ocm_env = (
-            PRODUCTION_STR
-            if _cluster["platform"] == AWS_STR
-            else _cluster.get("ocm-env", STAGE_STR)
-        )
+        if _cluster["platform"] == AWS_STR:
+            ocm_env = PRODUCTION_STR
+        else:
+            ocm_env = _cluster.get("ocm-env", STAGE_STR)
+        _cluster["ocm-env"] = ocm_env
+
         if ocm_env not in supported_envs:
             click.secho(
                 f"{_cluster['name']} got unsupported OCM env - {ocm_env}, supported"
