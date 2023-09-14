@@ -26,7 +26,7 @@ def set_clusters_versions(clusters, base_available_versions):
         )
 
     for cluster_data in clusters:
-        cluster_name = cluster_data["name"]
+        cluster_name = cluster_data.get("name", "test-cluster")
         stream = get_cluster_stream(cluster_data=cluster_data)
         cluster_version = cluster_data["version"]
         platform = cluster_data["platform"]
