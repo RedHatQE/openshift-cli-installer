@@ -145,6 +145,9 @@ def verify_processes_passed(processes, action):
 
 def create_openshift_cluster(
     cluster_data,
+    registry_config_file=None,
+    public_ssh_key_file=None,
+    private_ssh_key_file=None,
 ):
     cluster_platform = cluster_data["platform"]
     if cluster_platform == AWS_STR:
@@ -156,6 +159,9 @@ def create_openshift_cluster(
     elif cluster_platform in (ROSA_STR, HYPERSHIFT_STR):
         rosa_create_cluster(
             cluster_data=cluster_data,
+            registry_config_file=registry_config_file,
+            public_ssh_key_file=public_ssh_key_file,
+            private_ssh_key_file=private_ssh_key_file,
         )
     elif cluster_platform == AWS_OSD_STR:
         osd_create_cluster(cluster_data=cluster_data)
@@ -173,10 +179,41 @@ def destroy_openshift_cluster(cluster_data):
         osd_delete_cluster(cluster_data=cluster_data)
 
 
+def assert_public_ssh_key_file_exists(ssh_key_file):
+    if not ssh_key_file or not os.path.exists(ssh_key_file):
+        click.secho(
+            "SSH file is required for AWS or ACM cluster installations."
+            f" {ssh_key_file} file does not exist.",
+            fg=ERROR_LOG_COLOR,
+        )
+        raise click.Abort()
+
+
+def assert_registry_config_file_exists(registry_config_file):
+    if not registry_config_file or not os.path.exists(registry_config_file):
+        click.secho(
+            "Registry config file is required for AWS or ACM cluster installations."
+            f" {registry_config_file} file does not exist.",
+            fg=ERROR_LOG_COLOR,
+        )
+        raise click.Abort()
+
+
+def assert_aws_credentials_exist(aws_access_key_id, aws_secret_access_key):
+    if not (aws_secret_access_key and aws_access_key_id):
+        click.secho(
+            "--aws-secret-access-key and aws-access-key-id"
+            " required for AWS OSD OR ACM cluster installations.",
+            fg=ERROR_LOG_COLOR,
+        )
+        raise click.Abort()
+
+
 def verify_user_input(
     action,
     clusters,
     ssh_key_file,
+    private_ssh_key_file,
     docker_config_file,
     registry_config_file,
     aws_access_key_id,
@@ -198,16 +235,11 @@ def verify_user_input(
         )
         raise click.Abort()
 
-    if any([_cluster["platform"] == AWS_STR for _cluster in clusters]):
-        if not os.path.exists(ssh_key_file):
-            click.secho(
-                f"SSH file is required for AWS installations. {ssh_key_file} file does"
-                " not exist.",
-                fg=ERROR_LOG_COLOR,
-            )
-            raise click.Abort()
+    abort_no_ocm_token(ocm_token=ocm_token)
+    is_platform_supported(clusters=clusters)
 
-        if not os.path.exists(docker_config_file):
+    if any([_cluster["platform"] == AWS_STR for _cluster in clusters]):
+        if not docker_config_file or not os.path.exists(docker_config_file):
             click.secho(
                 "Docker config file is required for AWS installations."
                 f" {docker_config_file} file does not exist.",
@@ -215,25 +247,38 @@ def verify_user_input(
             )
             raise click.Abort()
 
-        if not registry_config_file or not os.path.exists(registry_config_file):
-            click.secho(
-                "Registry config file is required for AWS installations."
-                f" {registry_config_file} file does not exist.",
-                fg=ERROR_LOG_COLOR,
-            )
-            raise click.Abort()
+        assert_public_ssh_key_file_exists(ssh_key_file=ssh_key_file)
+        assert_registry_config_file_exists(registry_config_file=registry_config_file)
 
     if any([_cluster["platform"] == AWS_OSD_STR for _cluster in clusters]):
-        if not (aws_account_id and aws_secret_access_key and aws_access_key_id):
+        assert_aws_credentials_exist(
+            aws_access_key_id=aws_access_key_id,
+            aws_secret_access_key=aws_secret_access_key,
+        )
+        if not aws_account_id:
             click.secho(
-                "--aws-account_id and --aws-secret-access-key and aws-access-key-id"
-                " required for AWS OSD installations.",
+                "--aws-account_id required for AWS OSD installations.",
                 fg=ERROR_LOG_COLOR,
             )
             raise click.Abort()
 
-    is_platform_supported(clusters=clusters)
-    abort_no_ocm_token(ocm_token=ocm_token)
+    if any([_cluster.get("acm-clusters") for _cluster in clusters]):
+        if action == CREATE_STR:
+            assert_public_ssh_key_file_exists(ssh_key_file=ssh_key_file)
+            assert_registry_config_file_exists(
+                registry_config_file=registry_config_file
+            )
+            assert_aws_credentials_exist(
+                aws_access_key_id=aws_access_key_id,
+                aws_secret_access_key=aws_secret_access_key,
+            )
+            if not private_ssh_key_file or not os.path.exists(private_ssh_key_file):
+                click.secho(
+                    "SSH private file is required for ACM cluster installations."
+                    f" {private_ssh_key_file} file does not exist.",
+                    fg=ERROR_LOG_COLOR,
+                )
+                raise click.Abort()
 
 
 @click.command("installer")
@@ -252,8 +297,15 @@ def verify_user_input(
 )
 @click.option(
     "--ssh-key-file",
-    help="id_rsa.pub file path for AWS IPI clusters",
+    help="id_rsa.pub file path for AWS IPI or ACM clusters",
     default="/openshift-cli-installer/ssh-key/id_rsa.pub",
+    type=click.Path(),
+    show_default=True,
+)
+@click.option(
+    "--private-ssh-key-file",
+    help="id_rsa file path for ACM clusters",
+    default="/openshift-cli-installer/ssh-key/id_rsa",
     type=click.Path(),
     show_default=True,
 )
@@ -391,6 +443,7 @@ def main(
     s3_bucket_path,
     ocm_token,
     ssh_key_file,
+    private_ssh_key_file,
     destroy_all_clusters,
     destroy_clusters_from_s3_config_files,
     docker_config_file,
@@ -433,6 +486,7 @@ def main(
         parallel = yaml_config_data["parallel"]
         action = yaml_config_data["action"]
         ssh_key_file = yaml_config_data.get("ssh_key_file")
+        private_ssh_key_file = yaml_config_data.get("private_ssh_key_file")
         docker_config_file = yaml_config_data.get("docker_config_file")
         registry_config_file = yaml_config_data.get("registry_config_file")
         aws_access_key_id = yaml_config_data.get("aws_access_key_id")
@@ -449,6 +503,7 @@ def main(
         action=action,
         clusters=clusters,
         ssh_key_file=ssh_key_file,
+        private_ssh_key_file=private_ssh_key_file,
         docker_config_file=docker_config_file,
         registry_config_file=registry_config_file,
         aws_access_key_id=aws_access_key_id,
@@ -542,8 +597,14 @@ def main(
 
     for _cluster in aws_ipi_clusters + aws_managed_clusters:
         _cluster_name = _cluster["name"]
-        click.echo(f"Executing {action} {_cluster_name} [parallel: {parallel}]")
+        click.echo(f"Executing {action} cluster {_cluster_name} [parallel: {parallel}]")
         kwargs["cluster_data"] = _cluster
+
+        if _cluster.get("acm") and create:
+            kwargs["registry_config_file"] = registry_config_file
+            kwargs["public_ssh_key_file"] = ssh_key_file
+            kwargs["private_ssh_key_file"] = private_ssh_key_file
+
         if parallel:
             proc = multiprocessing.Process(
                 name=f"{_cluster_name}---{action}",

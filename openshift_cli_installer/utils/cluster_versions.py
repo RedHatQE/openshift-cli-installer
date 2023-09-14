@@ -26,12 +26,16 @@ def set_clusters_versions(clusters, base_available_versions):
         )
 
     for cluster_data in clusters:
+        cluster_name = cluster_data["name"]
         stream = get_cluster_stream(cluster_data=cluster_data)
         cluster_version = cluster_data["version"]
         platform = cluster_data["platform"]
         version_key = get_split_version(version=cluster_version)
         all_stream_versions = all_available_versions[stream][version_key]
-        err_msg = f"Cluster version {cluster_version} not found for stream {stream}"
+        err_msg = (
+            f"{cluster_name}: Cluster version {cluster_version} not found for stream"
+            f" {stream}"
+        )
         if len(cluster_version.split(".")) == 3:
             for _ver in all_stream_versions["versions"]:
                 if cluster_version in _ver:
@@ -42,7 +46,8 @@ def set_clusters_versions(clusters, base_available_versions):
                 raise click.Abort()
         elif len(cluster_version.split(".")) < 2:
             click.secho(
-                f"Version must be at least x.y (4.3), got {cluster_version}",
+                f"{cluster_name}: Version must be at least x.y (4.3), got"
+                f" {cluster_version}",
                 fg=ERROR_LOG_COLOR,
             )
             raise click.Abort()
@@ -63,13 +68,13 @@ def set_clusters_versions(clusters, base_available_versions):
                 cluster_data["version_url"] = version_url[0]
             else:
                 click.secho(
-                    f"Cluster version url not found for {cluster_version} in"
-                    f" {base_available_versions.keys()}",
+                    f"{cluster_name}: Cluster version url not found for"
+                    f" {cluster_version} in {base_available_versions.keys()}",
                     fg=ERROR_LOG_COLOR,
                 )
                 raise click.Abort()
 
-        click.echo(f"Cluster version set to {cluster_data['version']}")
+        click.echo(f"{cluster_name}: Cluster version set to {cluster_data['version']}")
 
     return clusters
 
