@@ -174,8 +174,7 @@ def rosa_create_cluster(
     )
     command = "create cluster --sts "
 
-    hypershift = _platform == HYPERSHIFT_STR
-    if hypershift:
+    if _platform == HYPERSHIFT_STR:
         cluster_data = create_oidc(cluster_data=cluster_data)
         cluster_data = prepare_hypershift_vpc(cluster_data=cluster_data)
 
