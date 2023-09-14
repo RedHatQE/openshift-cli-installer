@@ -5,9 +5,14 @@ from pathlib import Path
 import click
 import rosa.cli
 from clouds.aws.aws_utils import set_and_verify_aws_credentials
+from ocm_python_wrapper.cluster import Cluster
 from pyaml_env import parse_config
 
 from openshift_cli_installer.libs.destroy_clusters import destroy_clusters
+from openshift_cli_installer.libs.managed_clusters.acm_clusters import (
+    attach_cluster_to_acm,
+    install_acm,
+)
 from openshift_cli_installer.libs.managed_clusters.helpers import (
     prepare_managed_clusters_data,
 )
@@ -145,9 +150,6 @@ def verify_processes_passed(processes, action):
 
 def create_openshift_cluster(
     cluster_data,
-    registry_config_file=None,
-    public_ssh_key_file=None,
-    private_ssh_key_file=None,
 ):
     cluster_platform = cluster_data["platform"]
     if cluster_platform == AWS_STR:
@@ -159,9 +161,6 @@ def create_openshift_cluster(
     elif cluster_platform in (ROSA_STR, HYPERSHIFT_STR):
         rosa_create_cluster(
             cluster_data=cluster_data,
-            registry_config_file=registry_config_file,
-            public_ssh_key_file=public_ssh_key_file,
-            private_ssh_key_file=private_ssh_key_file,
         )
     elif cluster_platform == AWS_OSD_STR:
         osd_create_cluster(cluster_data=cluster_data)
@@ -550,8 +549,8 @@ def main(
 
     if aws_ipi_clusters or aws_managed_clusters:
         _regions_to_verify = set()
-        for _cluster in aws_ipi_clusters + aws_managed_clusters:
-            _regions_to_verify.add(_cluster["region"])
+        for cluster_data in aws_ipi_clusters + aws_managed_clusters:
+            _regions_to_verify.add(cluster_data["region"])
 
         for _region in _regions_to_verify:
             set_and_verify_aws_credentials(region_name=_region)
@@ -595,15 +594,10 @@ def main(
     processes = []
     action_func = create_openshift_cluster if create else destroy_openshift_cluster
 
-    for _cluster in aws_ipi_clusters + aws_managed_clusters:
-        _cluster_name = _cluster["name"]
+    for cluster_data in aws_ipi_clusters + aws_managed_clusters:
+        _cluster_name = cluster_data["name"]
         click.echo(f"Executing {action} cluster {_cluster_name} [parallel: {parallel}]")
-        kwargs["cluster_data"] = _cluster
-
-        if _cluster.get("acm") and create:
-            kwargs["registry_config_file"] = registry_config_file
-            kwargs["public_ssh_key_file"] = ssh_key_file
-            kwargs["private_ssh_key_file"] = private_ssh_key_file
+        kwargs["cluster_data"] = cluster_data
 
         if parallel:
             proc = multiprocessing.Process(
@@ -619,6 +613,36 @@ def main(
 
     if processes:
         verify_processes_passed(processes=processes, action=action)
+
+    if action == create:
+        for hub_cluster_data in aws_managed_clusters:
+            hub_cluster_name = hub_cluster_data["name"]
+            hub_cluster_object = Cluster(
+                name=hub_cluster_name, client=hub_cluster_data["ocm-client"]
+            )
+            acm_cluster_kubeconfig = os.path.join(
+                hub_cluster_data["auth-dir"], "kubeconfig"
+            )
+            if hub_cluster_data.get("acm"):
+                install_acm(
+                    hub_cluster_data=hub_cluster_data,
+                    hub_cluster_object=hub_cluster_object,
+                    private_ssh_key_file=private_ssh_key_file,
+                    public_ssh_key_file=ssh_key_file,
+                    registry_config_file=registry_config_file,
+                )
+
+            for _managed_cluster_name in hub_cluster_data.get("acm-clusters", []):
+                managed_acm_cluster_kubeconfig = os.path.join(
+                    hub_cluster_data["install-dir"],
+                    f"{_managed_cluster_name}-kubeconfig",
+                )
+                attach_cluster_to_acm(
+                    cluster_name=_managed_cluster_name,
+                    hub_cluster_object=hub_cluster_object,
+                    acm_cluster_kubeconfig=acm_cluster_kubeconfig,
+                    managed_acm_cluster_kubeconfig=managed_acm_cluster_kubeconfig,
+                )
 
 
 if __name__ == "__main__":

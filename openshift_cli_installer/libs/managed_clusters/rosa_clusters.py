@@ -8,7 +8,6 @@ import yaml
 from ocm_python_wrapper.cluster import Cluster
 from python_terraform import IsNotFlagged, Terraform
 
-from openshift_cli_installer.libs.managed_clusters.acm_clusters import install_acm
 from openshift_cli_installer.utils.clusters import (
     add_cluster_info_to_cluster_data,
     dump_cluster_data_to_file,
@@ -147,9 +146,6 @@ def prepare_hypershift_vpc(cluster_data):
 
 def rosa_create_cluster(
     cluster_data,
-    registry_config_file=None,
-    public_ssh_key_file=None,
-    private_ssh_key_file=None,
 ):
     hosted_cp_arg = "--hosted-cp"
     _platform = cluster_data["platform"]
@@ -178,7 +174,8 @@ def rosa_create_cluster(
     )
     command = "create cluster --sts "
 
-    if _platform == HYPERSHIFT_STR:
+    hypershift = _platform == HYPERSHIFT_STR
+    if hypershift:
         cluster_data = create_oidc(cluster_data=cluster_data)
         cluster_data = prepare_hypershift_vpc(cluster_data=cluster_data)
 
@@ -217,14 +214,6 @@ def rosa_create_cluster(
         click.secho(
             f"Cluster {cluster_name} created successfully", fg=SUCCESS_LOG_COLOR
         )
-        if cluster_data.get("acm"):
-            install_acm(
-                cluster_data=cluster_data,
-                cluster_object=cluster_object,
-                private_ssh_key_file=private_ssh_key_file,
-                public_ssh_key_file=public_ssh_key_file,
-                registry_config_file=registry_config_file,
-            )
 
     except Exception as ex:
         click.secho(
