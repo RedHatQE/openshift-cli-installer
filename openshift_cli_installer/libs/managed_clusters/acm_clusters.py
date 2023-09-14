@@ -75,14 +75,14 @@ def attach_cluster_to_acm(
     cluster_data, cluster_name, cluster_object, acm_cluster_kubeconfig
 ):
     click.echo(f"Attach {cluster_name} to ACM hub, Wait for the cluster to be ready")
-    _cluster_object = Cluster(name=cluster_name, client=cluster_object.client)
-    _cluster_object.wait_for_cluster_ready(wait_timeout=cluster_data["timeout"])
+    managed_cluster_object = Cluster(name=cluster_name, client=cluster_object.client)
+    managed_cluster_object.wait_for_cluster_ready(wait_timeout=cluster_data["timeout"])
     click.echo(f"Attach {cluster_name} to ACM hub")
     managed_acm_cluster_kubeconfig = os.path.join(
         cluster_data["install-dir"], f"{cluster_name}-kubeconfig"
     )
     with open(managed_acm_cluster_kubeconfig, "w") as fd:
-        fd.write(yaml.safe_dump(_cluster_object.kubeconfig))
+        fd.write(yaml.safe_dump(managed_cluster_object.kubeconfig))
 
     run_command(
         command=shlex.split(
