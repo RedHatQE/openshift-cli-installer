@@ -38,7 +38,8 @@ clusters:
   ocm-env: stage
   acm: True
   acm-clusters:
-    - rosa-c2
+    - name: rosa-c2
+      platform: rosa
 
 # Rosa cluster (Will be attahced to `rosa-c1` ACM hub)
 - name: rosa-c2

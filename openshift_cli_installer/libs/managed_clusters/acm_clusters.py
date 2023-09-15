@@ -12,8 +12,11 @@ from ocp_resources.utils import TimeoutWatch
 from ocp_utilities.utils import run_command
 
 from openshift_cli_installer.utils.const import (
+    AWS_OSD_STR,
     AWS_STR,
     ERROR_LOG_COLOR,
+    HYPERSHIFT_STR,
+    ROSA_STR,
     SUCCESS_LOG_COLOR,
 )
 from openshift_cli_installer.utils.general import tts
@@ -132,17 +135,17 @@ def install_and_attach_for_acm(
                 timeout_watch=timeout_watch,
             )
 
-        for _managed_cluster_name in hub_cluster_data.get("acm-clusters", []):
-            managed_acm_cluster_object = Cluster(
-                client=ocm_client, name=_managed_cluster_name
-            )
+        for _managed_acm_clusters in hub_cluster_data.get("acm-clusters", []):
+            (_managed_cluster_name,) = _managed_acm_clusters["name"]
+            _managed_cluster_platform = _managed_acm_clusters["platform"]
             (
                 managed_acm_cluster_kubeconfig,
                 is_hypershift,
             ) = get_managed_acm_cluster_kubeconfig(
                 hub_cluster_data=hub_cluster_data,
                 managed_acm_cluster_name=_managed_cluster_name,
-                managed_acm_cluster_object=managed_acm_cluster_object,
+                managed_cluster_platform=_managed_cluster_platform,
+                ocm_client=ocm_client,
             )
 
             attach_cluster_to_acm(
@@ -157,19 +160,15 @@ def install_and_attach_for_acm(
 
 
 def get_managed_acm_cluster_kubeconfig(
-    hub_cluster_data, managed_acm_cluster_name, managed_acm_cluster_object
+    hub_cluster_data, managed_acm_cluster_name, managed_cluster_platform, ocm_client
 ):
     # In case we deployed the cluster we have the kubeconfig
     managed_acm_cluster_kubeconfig = None
     is_hypershift = False
-    for root, dirs, files in os.walk(hub_cluster_data["install-dir"]):
-        for _dir in dirs:
-            if _dir == managed_acm_cluster_name:
-                managed_acm_cluster_kubeconfig = Path(
-                    os.path.join(root, _dir, "auth-dir", "kubeconfig")
-                )
-
-    if not managed_acm_cluster_kubeconfig and managed_acm_cluster_object.exists:
+    if managed_cluster_platform in (ROSA_STR, HYPERSHIFT_STR, AWS_OSD_STR):
+        managed_acm_cluster_object = Cluster(
+            client=ocm_client, name=managed_acm_cluster_name
+        )
         is_hypershift = managed_acm_cluster_object.hypershift()
         managed_acm_cluster_kubeconfig = os.path.join(
             hub_cluster_data["install-dir"],
@@ -178,6 +177,13 @@ def get_managed_acm_cluster_kubeconfig(
         with open(managed_acm_cluster_kubeconfig, "w") as fd:
             fd.write(yaml.safe_dump(managed_acm_cluster_object.kubeconfig))
 
+    elif managed_cluster_platform == AWS_STR:
+        managed_acm_cluster_kubeconfig = get_cluster_kubeconfig_from_install_dir(
+            install_dir=hub_cluster_data["install-dir"],
+            cluster_name=managed_acm_cluster_name,
+            cluster_platform=managed_cluster_platform,
+        )
+
     if not managed_acm_cluster_kubeconfig:
         click.secho(
             f"No kubeconfig found for {managed_acm_cluster_name}", fg=ERROR_LOG_COLOR
@@ -185,3 +191,18 @@ def get_managed_acm_cluster_kubeconfig(
         raise click.Abort()
 
     return managed_acm_cluster_kubeconfig, is_hypershift
+
+
+def get_cluster_kubeconfig_from_install_dir(
+    install_dir, cluster_name, cluster_platform
+):
+    managed_acm_cluster_kubeconfig = None
+    for root, dirs, files in os.walk(install_dir):
+        for _dir in dirs:
+            if _dir == cluster_name:
+                managed_acm_cluster_path = Path(os.path.join(root, _dir))
+                if managed_acm_cluster_path.parts[-1] == cluster_platform:
+                    managed_acm_cluster_kubeconfig = os.path.join(
+                        root, _dir, "auth-dir", "kubeconfig"
+                    )
+    return managed_acm_cluster_kubeconfig
