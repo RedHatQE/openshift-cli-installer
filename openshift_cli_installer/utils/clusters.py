@@ -38,6 +38,7 @@ def get_ocm_client(ocm_token, ocm_env):
 def dump_cluster_data_to_file(cluster_data):
     _cluster_data = copy.copy(cluster_data)
     _cluster_data.pop("ocm-client", "")
+    _cluster_data.pop("timeout-watch", "")
     with open(
         os.path.join(_cluster_data["install-dir"], CLUSTER_DATA_YAML_FILENAME), "w"
     ) as fd:

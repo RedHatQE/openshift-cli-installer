@@ -22,19 +22,22 @@ def install_acm(
     private_ssh_key_file,
     public_ssh_key_file,
     registry_config_file,
+    timeout_watch,
 ):
     cluster_name = hub_cluster_data["name"]
     click.echo(f"Installing ACM on cluster {cluster_name}")
     acm_cluster_kubeconfig = os.path.join(hub_cluster_data["auth-dir"], "kubeconfig")
     run_command(
-        command=shlex.split(f"cm install acm --kubeconfig {acm_cluster_kubeconfig}")
+        command=shlex.split(f"cm install acm --kubeconfig {acm_cluster_kubeconfig}"),
     )
     cluster_hub = MultiClusterHub(
         client=hub_cluster_object.ocp_client,
         name="multiclusterhub",
         namespace="open-cluster-management",
     )
-    cluster_hub.wait_for_status(status=cluster_hub.Status.RUNNING)
+    cluster_hub.wait_for_status(
+        status=cluster_hub.Status.RUNNING, timeout=timeout_watch.remaining_time()
+    )
     labels = {
         f"{cluster_hub.api_group}/credentials": "",
         f"{cluster_hub.api_group}/type": AWS_STR,
@@ -60,7 +63,7 @@ def install_acm(
         label=labels,
         string_data=secret_data,
     )
-    secret.deploy()
+    secret.deploy(wait=True)
     click.secho(
         f"ACM installed successfully on Cluster {cluster_name}",
         fg=SUCCESS_LOG_COLOR,
@@ -72,6 +75,7 @@ def attach_cluster_to_acm(
     hub_cluster_object,
     acm_cluster_kubeconfig,
     managed_acm_cluster_kubeconfig,
+    timeout_watch,
 ):
     managed_cluster_object = Cluster(
         name=cluster_name, client=hub_cluster_object.client
@@ -102,6 +106,7 @@ def attach_cluster_to_acm(
     managed_cluster.wait_for_condition(
         condition="ManagedClusterImportSucceeded",
         status=managed_cluster.Condition.Status.TRUE,
+        timeout=timeout_watch.remaining_time(),
     )
     click.secho(
         f"{cluster_name} successfully attached to ACM Cluster"
@@ -114,6 +119,7 @@ def install_and_attach_for_acm(
     managed_clusters, private_ssh_key_file, ssh_key_file, registry_config_file
 ):
     for hub_cluster_data in managed_clusters:
+        timeout_watch = hub_cluster_data["timeout-watch"]
         hub_cluster_name = hub_cluster_data["name"]
         hub_cluster_object = Cluster(
             name=hub_cluster_name, client=hub_cluster_data["ocm-client"]
@@ -128,6 +134,7 @@ def install_and_attach_for_acm(
                 private_ssh_key_file=private_ssh_key_file,
                 public_ssh_key_file=ssh_key_file,
                 registry_config_file=registry_config_file,
+                timeout_watch=timeout_watch,
             )
 
         for _managed_cluster_name in hub_cluster_data.get("acm-clusters", []):
@@ -140,4 +147,5 @@ def install_and_attach_for_acm(
                 hub_cluster_object=hub_cluster_object,
                 acm_cluster_kubeconfig=acm_cluster_kubeconfig,
                 managed_acm_cluster_kubeconfig=managed_acm_cluster_kubeconfig,
+                timeout_watch=timeout_watch,
             )

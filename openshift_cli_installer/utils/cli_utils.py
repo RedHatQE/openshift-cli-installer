@@ -4,6 +4,7 @@ from pathlib import Path
 
 import click
 import rosa.cli
+from ocp_resources.utils import TimeoutWatch
 
 from openshift_cli_installer.libs.destroy_clusters import destroy_clusters
 from openshift_cli_installer.libs.managed_clusters.helpers import (
@@ -398,6 +399,7 @@ def run_create_or_destroy_clusters(clusters, create, action, parallel):
     action_func = create_openshift_cluster if create else destroy_openshift_cluster
 
     for cluster_data in clusters:
+        cluster_data["timeout-watch"] = TimeoutWatch(timeout=cluster_data["timeout"])
         _cluster_name = cluster_data["name"]
         click.echo(f"Executing {action} cluster {_cluster_name} [parallel: {parallel}]")
         action_kwargs["cluster_data"] = cluster_data

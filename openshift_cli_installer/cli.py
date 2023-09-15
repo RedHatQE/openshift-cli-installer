@@ -253,15 +253,11 @@ def main(**kwargs):
     ) = get_clusters_by_type(clusters=clusters)
     aws_managed_clusters = rosa_clusters + hypershift_clusters + aws_osd_clusters
 
-    if (hypershift_clusters or rosa_clusters or aws_osd_clusters) and create:
-        check_existing_clusters(
-            clusters=hypershift_clusters + rosa_clusters + aws_osd_clusters
-        )
+    if aws_managed_clusters and create:
+        check_existing_clusters(clusters=aws_managed_clusters)
 
     if hypershift_clusters:
-        is_region_support_hypershift(
-            hypershift_clusters=hypershift_clusters,
-        )
+        is_region_support_hypershift(hypershift_clusters=hypershift_clusters)
 
     if aws_ipi_clusters or aws_managed_clusters:
         _regions_to_verify = set()

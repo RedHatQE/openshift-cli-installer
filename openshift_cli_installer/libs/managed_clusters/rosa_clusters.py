@@ -171,6 +171,7 @@ def rosa_create_cluster(
         "s3-bucket-path",
         "acm",
         "acm-clusters",
+        "timeout-watch",
     )
     command = "create cluster --sts "
 
