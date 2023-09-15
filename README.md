@@ -16,6 +16,9 @@ To pull the image: `podman pull quay.io/openshift-cli-installer`
 ### Create clusters from YAML file
 User can create/destroy clusters by sending YAML file instead with CLI args
 Example YAML file can be found [here](openshift_cli_installer/manifests/clusters.example.yaml)
+pass `--clusters-yaml-config-file=.local/clusters-example.yaml` to use YAML file.
+Action also can be passed to the CLI as `--action create/destroy` instead of specifying the action in the YAML file.
+`--action create --clusters-yaml-config-file=.local/clusters-example.yaml`
 
 ### Global CLI configuration
 * `--clusters-install-data-directory`: Clusters configurations are written to `<clusters-install-data-directory><platform><cluster name>`; write permissions are needed.
@@ -69,6 +72,11 @@ Every call to the openshift installer cli must have at least one `--cluster` opt
       * To set `cidr`, pass `--cluster ...cidr=1.1.0.0/16'`
       * To set `private_subnets`, pass `--cluster ...private_subnets=10.1.1.0/24,10.1.2.0/24'`
       * To set `public_subnets`, pass `--cluster ...public_subnets=10.1.10.0/24,10.1.20.0/24'`
+
+### ACM (Advanced Cluster Management)
+Managed clusters (AWS, OSD and Hypershift) can be deployed with ACM and attached to ACM hub.
+To deploy ACM on cluster pass `--cluster ..... acm=True`
+To attach cluster to this ACM hub pass `--cluster ...... acm-clusters=mycluser1,mycluster2`
 
 ### Usages
 

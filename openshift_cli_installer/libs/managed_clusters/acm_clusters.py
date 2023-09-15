@@ -9,7 +9,11 @@ from ocp_resources.multi_cluster_hub import MultiClusterHub
 from ocp_resources.secret import Secret
 from ocp_utilities.utils import run_command
 
-from openshift_cli_installer.utils.const import AWS_STR, SUCCESS_LOG_COLOR
+from openshift_cli_installer.utils.const import (
+    AWS_STR,
+    ERROR_LOG_COLOR,
+    SUCCESS_LOG_COLOR,
+)
 
 
 def install_acm(
@@ -72,7 +76,11 @@ def attach_cluster_to_acm(
     managed_cluster_object = Cluster(
         name=cluster_name, client=hub_cluster_object.client
     )
-    click.echo(f"Attach {cluster_name} to ACM hub")
+    if not managed_cluster_object.exists:
+        click.secho(f"Cluster {cluster_name} does not exist", fg=ERROR_LOG_COLOR)
+        raise click.Abort()
+
+    click.echo(f"Attach {cluster_name} to ACM hub {hub_cluster_object.name}")
 
     with open(managed_acm_cluster_kubeconfig, "w") as fd:
         fd.write(yaml.safe_dump(managed_cluster_object.kubeconfig))
@@ -96,6 +104,40 @@ def attach_cluster_to_acm(
         status=managed_cluster.Condition.Status.TRUE,
     )
     click.secho(
-        f"{cluster_name} successfully attached to ACM Cluster {cluster_name}",
+        f"{cluster_name} successfully attached to ACM Cluster"
+        f" {hub_cluster_object.name}",
         fg=SUCCESS_LOG_COLOR,
     )
+
+
+def install_and_attach_for_acm(
+    managed_clusters, private_ssh_key_file, ssh_key_file, registry_config_file
+):
+    for hub_cluster_data in managed_clusters:
+        hub_cluster_name = hub_cluster_data["name"]
+        hub_cluster_object = Cluster(
+            name=hub_cluster_name, client=hub_cluster_data["ocm-client"]
+        )
+        acm_cluster_kubeconfig = os.path.join(
+            hub_cluster_data["auth-dir"], "kubeconfig"
+        )
+        if hub_cluster_data.get("acm"):
+            install_acm(
+                hub_cluster_data=hub_cluster_data,
+                hub_cluster_object=hub_cluster_object,
+                private_ssh_key_file=private_ssh_key_file,
+                public_ssh_key_file=ssh_key_file,
+                registry_config_file=registry_config_file,
+            )
+
+        for _managed_cluster_name in hub_cluster_data.get("acm-clusters", []):
+            managed_acm_cluster_kubeconfig = os.path.join(
+                hub_cluster_data["install-dir"],
+                f"{_managed_cluster_name}-kubeconfig",
+            )
+            attach_cluster_to_acm(
+                cluster_name=_managed_cluster_name,
+                hub_cluster_object=hub_cluster_object,
+                acm_cluster_kubeconfig=acm_cluster_kubeconfig,
+                managed_acm_cluster_kubeconfig=managed_acm_cluster_kubeconfig,
+            )

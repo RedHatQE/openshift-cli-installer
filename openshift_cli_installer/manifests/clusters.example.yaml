@@ -1,4 +1,4 @@
-action: "create" # destroy
+action: "create" # destroy, can passed also to CLI with --action
 registry_config_file: !ENV "${HOME}/registry-config.json"
 parallel: True
 clusters_install_data_directory: "/tmp/clusters-data"
@@ -12,6 +12,7 @@ aws_secret_access_key: !ENV "${AWS_SECRET_ACCESS_KEY}"
 aws_account_id: !ENV "${AWS_ACCOUNT_ID}"
 
 clusters:
+# OSD cluster
 - name: osd-c1
   platform: aws-osd
   region: us-east-2
@@ -24,6 +25,7 @@ clusters:
   ocm-env: stage
   expiration-time: 1h
 
+# Rosa cluster with ACM deployed and attach `rosa-c2` cluster to the ACM hub
 - name: rosa-c1
   platform: rosa
   region: us-east-2
@@ -38,6 +40,7 @@ clusters:
   acm-clusters:
     - rosa-c2
 
+# Rosa cluster (Will be attahced to `rosa-c1` ACM hub)
 - name: rosa-c2
   platform: rosa
   region: us-east-2
@@ -49,6 +52,7 @@ clusters:
   fips: True
   ocm-env: stage
 
+# Hypershift cluster
 - name: hyper-c1
   platform: hypershift
   region: us-west-2
@@ -67,6 +71,7 @@ clusters:
     - 10.0.102.0/24
   cidr: 10.0.0.0/16
 
+# AWS IPI cluster
 - name: aws-ipi-c1
   base_domain: aws.domain.example.com
   platform: aws
