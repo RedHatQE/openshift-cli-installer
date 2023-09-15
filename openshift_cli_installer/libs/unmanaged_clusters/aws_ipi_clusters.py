@@ -195,6 +195,8 @@ def create_or_destroy_aws_ipi_cluster(
         if action == DESTROY_STR:
             click.secho(f"Cluster {name} destroyed successfully", fg=SUCCESS_LOG_COLOR)
 
+    return cluster_data
+
 
 @functools.cache
 def get_aws_versions():

@@ -144,9 +144,7 @@ def prepare_hypershift_vpc(cluster_data):
     return cluster_data
 
 
-def rosa_create_cluster(
-    cluster_data,
-):
+def rosa_create_cluster(cluster_data):
     hosted_cp_arg = "--hosted-cp"
     _platform = cluster_data["platform"]
     ignore_keys = (
@@ -234,6 +232,8 @@ def rosa_create_cluster(
                 s3_bucket_path=cluster_data["s3-bucket-path"],
             )
 
+    return cluster_data
+
 
 def rosa_delete_cluster(cluster_data):
     base_cluster_data = None
@@ -276,3 +276,4 @@ def rosa_delete_cluster(cluster_data):
         raise click.Abort()
 
     click.secho(f"Cluster {name} destroyed successfully", fg=SUCCESS_LOG_COLOR)
+    return cluster_data

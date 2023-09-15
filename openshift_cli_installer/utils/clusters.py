@@ -22,6 +22,7 @@ from openshift_cli_installer.utils.const import (
     PRODUCTION_STR,
     ROSA_STR,
     STAGE_STR,
+    WARNING_LOG_COLOR,
 )
 from openshift_cli_installer.utils.general import bucket_object_name
 
@@ -39,6 +40,7 @@ def dump_cluster_data_to_file(cluster_data):
     _cluster_data = copy.copy(cluster_data)
     _cluster_data.pop("ocm-client", "")
     _cluster_data.pop("timeout-watch", "")
+    _cluster_data.pop("ocp-client", "")
     with open(
         os.path.join(_cluster_data["install-dir"], CLUSTER_DATA_YAML_FILENAME), "w"
     ) as fd:
@@ -89,12 +91,18 @@ def add_cluster_info_to_cluster_data(cluster_data, cluster_object=None):
     Returns:
         dict: The updated cluster data dictionary.
     """
+    if cluster_data["platform"] == HYPERSHIFT_STR:
+        click.secho(
+            f"{HYPERSHIFT_STR} clusters do not have console URL", fg=WARNING_LOG_COLOR
+        )
+
     if cluster_object:
         ocp_client = cluster_object.ocp_client
         cluster_data["cluster-id"] = cluster_object.cluster_id
     else:
         ocp_client = get_client(config_file=f"{cluster_data['auth-dir']}/kubeconfig")
 
+    cluster_data["ocp-client"] = ocp_client
     cluster_data["api-url"] = ocp_client.configuration.host
     console_route = Route(
         name="console", namespace="openshift-console", client=ocp_client

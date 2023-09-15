@@ -1,5 +1,6 @@
 import os
 import shlex
+from pathlib import Path
 
 import click
 import yaml
@@ -7,6 +8,7 @@ from ocm_python_wrapper.cluster import Cluster
 from ocp_resources.managed_cluster import ManagedCluster
 from ocp_resources.multi_cluster_hub import MultiClusterHub
 from ocp_resources.secret import Secret
+from ocp_resources.utils import TimeoutWatch
 from ocp_utilities.utils import run_command
 
 from openshift_cli_installer.utils.const import (
@@ -14,11 +16,12 @@ from openshift_cli_installer.utils.const import (
     ERROR_LOG_COLOR,
     SUCCESS_LOG_COLOR,
 )
+from openshift_cli_installer.utils.general import tts
 
 
 def install_acm(
     hub_cluster_data,
-    hub_cluster_object,
+    ocp_client,
     private_ssh_key_file,
     public_ssh_key_file,
     registry_config_file,
@@ -31,7 +34,7 @@ def install_acm(
         command=shlex.split(f"cm install acm --kubeconfig {acm_cluster_kubeconfig}"),
     )
     cluster_hub = MultiClusterHub(
-        client=hub_cluster_object.ocp_client,
+        client=ocp_client,
         name="multiclusterhub",
         namespace="open-cluster-management",
     )
@@ -57,7 +60,7 @@ def install_acm(
         "ssh-publickey": ssh_publickey,
     }
     secret = Secret(
-        client=hub_cluster_object.ocp_client,
+        client=ocp_client,
         name="aws-creds",
         namespace="default",
         label=labels,
@@ -71,37 +74,28 @@ def install_acm(
 
 
 def attach_cluster_to_acm(
-    cluster_name,
-    hub_cluster_object,
+    hub_cluster_name,
+    managed_acm_cluster_name,
+    acm_hub_ocp_client,
     acm_cluster_kubeconfig,
     managed_acm_cluster_kubeconfig,
     timeout_watch,
+    is_hypershift=False,
 ):
-    managed_cluster_object = Cluster(
-        name=cluster_name, client=hub_cluster_object.client
-    )
-    if not managed_cluster_object.exists:
-        click.secho(f"Cluster {cluster_name} does not exist", fg=ERROR_LOG_COLOR)
-        raise click.Abort()
-
-    click.echo(f"Attach {cluster_name} to ACM hub {hub_cluster_object.name}")
-
-    with open(managed_acm_cluster_kubeconfig, "w") as fd:
-        fd.write(yaml.safe_dump(managed_cluster_object.kubeconfig))
-
+    click.echo(f"Attach {managed_acm_cluster_name} to ACM hub {hub_cluster_name}")
     run_command(
         command=shlex.split(
             f"cm --kubeconfig {acm_cluster_kubeconfig} attach"
-            f" {'hostedcluster' if hub_cluster_object.hypershift else 'cluster'} --cluster"
-            f" {cluster_name} --cluster-kubeconfig {managed_acm_cluster_kubeconfig} "
-            " --wait"
+            f" {'hostedcluster' if is_hypershift else 'cluster'} --cluster"
+            f" {managed_acm_cluster_name} --cluster-kubeconfig"
+            f" {managed_acm_cluster_kubeconfig}  --wait"
         ),
         check=False,
         verify_stderr=False,
     )
 
     managed_cluster = ManagedCluster(
-        client=hub_cluster_object.ocp_client, name=cluster_name
+        client=acm_hub_ocp_client, name=managed_acm_cluster_name
     )
     managed_cluster.wait_for_condition(
         condition="ManagedClusterImportSucceeded",
@@ -109,8 +103,8 @@ def attach_cluster_to_acm(
         timeout=timeout_watch.remaining_time(),
     )
     click.secho(
-        f"{cluster_name} successfully attached to ACM Cluster"
-        f" {hub_cluster_object.name}",
+        f"{managed_acm_cluster_name} successfully attached to ACM Cluster"
+        f" {hub_cluster_name}",
         fg=SUCCESS_LOG_COLOR,
     )
 
@@ -119,18 +113,19 @@ def install_and_attach_for_acm(
     managed_clusters, private_ssh_key_file, ssh_key_file, registry_config_file
 ):
     for hub_cluster_data in managed_clusters:
-        timeout_watch = hub_cluster_data["timeout-watch"]
-        hub_cluster_name = hub_cluster_data["name"]
-        hub_cluster_object = Cluster(
-            name=hub_cluster_name, client=hub_cluster_data["ocm-client"]
+        timeout_watch = hub_cluster_data.get(
+            "timeout-watch", TimeoutWatch(timeout=tts(ts="15m"))
         )
+        ocp_client = hub_cluster_data["ocp-client"]
+        ocm_client = hub_cluster_data["ocm-client"]
         acm_cluster_kubeconfig = os.path.join(
             hub_cluster_data["auth-dir"], "kubeconfig"
         )
+
         if hub_cluster_data.get("acm"):
             install_acm(
                 hub_cluster_data=hub_cluster_data,
-                hub_cluster_object=hub_cluster_object,
+                ocp_client=ocp_client,
                 private_ssh_key_file=private_ssh_key_file,
                 public_ssh_key_file=ssh_key_file,
                 registry_config_file=registry_config_file,
@@ -138,14 +133,55 @@ def install_and_attach_for_acm(
             )
 
         for _managed_cluster_name in hub_cluster_data.get("acm-clusters", []):
-            managed_acm_cluster_kubeconfig = os.path.join(
-                hub_cluster_data["install-dir"],
-                f"{_managed_cluster_name}-kubeconfig",
+            managed_acm_cluster_object = Cluster(
+                client=ocm_client, name=_managed_cluster_name
             )
+            (
+                managed_acm_cluster_kubeconfig,
+                is_hypershift,
+            ) = get_managed_acm_cluster_kubeconfig(
+                hub_cluster_data=hub_cluster_data,
+                managed_acm_cluster_name=_managed_cluster_name,
+                managed_acm_cluster_object=managed_acm_cluster_object,
+            )
+
             attach_cluster_to_acm(
-                cluster_name=_managed_cluster_name,
-                hub_cluster_object=hub_cluster_object,
+                managed_acm_cluster_name=_managed_cluster_name,
+                hub_cluster_name=hub_cluster_data["name"],
+                acm_hub_ocp_client=ocp_client,
                 acm_cluster_kubeconfig=acm_cluster_kubeconfig,
                 managed_acm_cluster_kubeconfig=managed_acm_cluster_kubeconfig,
                 timeout_watch=timeout_watch,
+                is_hypershift=is_hypershift,
             )
+
+
+def get_managed_acm_cluster_kubeconfig(
+    hub_cluster_data, managed_acm_cluster_name, managed_acm_cluster_object
+):
+    # In case we deployed the cluster we have the kubeconfig
+    managed_acm_cluster_kubeconfig = None
+    is_hypershift = False
+    for root, dirs, files in os.walk(hub_cluster_data["install-dir"]):
+        for _dir in dirs:
+            if _dir == managed_acm_cluster_name:
+                managed_acm_cluster_kubeconfig = Path(
+                    os.path.join(root, _dir, "auth-dir", "kubeconfig")
+                )
+
+    if not managed_acm_cluster_kubeconfig and managed_acm_cluster_object.exists:
+        is_hypershift = managed_acm_cluster_object.hypershift()
+        managed_acm_cluster_kubeconfig = os.path.join(
+            hub_cluster_data["install-dir"],
+            f"{managed_acm_cluster_name}-kubeconfig",
+        )
+        with open(managed_acm_cluster_kubeconfig, "w") as fd:
+            fd.write(yaml.safe_dump(managed_acm_cluster_object.kubeconfig))
+
+    if not managed_acm_cluster_kubeconfig:
+        click.secho(
+            f"No kubeconfig found for {managed_acm_cluster_name}", fg=ERROR_LOG_COLOR
+        )
+        raise click.Abort()
+
+    return managed_acm_cluster_kubeconfig, is_hypershift

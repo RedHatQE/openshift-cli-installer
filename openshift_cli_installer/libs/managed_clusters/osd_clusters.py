@@ -61,6 +61,8 @@ def osd_create_cluster(cluster_data):
                 uuid=cluster_data["shortuuid"],
             )
 
+    return cluster_data
+
 
 def osd_delete_cluster(cluster_data):
     name = cluster_data["name"]
@@ -71,6 +73,7 @@ def osd_delete_cluster(cluster_data):
             name=name,
         ).delete(timeout=cluster_data["timeout"])
         click.secho(f"Cluster {name} destroyed successfully", fg=SUCCESS_LOG_COLOR)
+        return cluster_data
     except Exception as ex:
         click.secho(
             f"Failed to run cluster delete cluster {name}\n{ex}",

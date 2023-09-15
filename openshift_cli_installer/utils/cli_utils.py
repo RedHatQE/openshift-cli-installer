@@ -1,5 +1,5 @@
-import multiprocessing
 import os
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
 import click
@@ -140,29 +140,31 @@ def create_openshift_cluster(
 ):
     cluster_platform = cluster_data["platform"]
     if cluster_platform == AWS_STR:
-        create_or_destroy_aws_ipi_cluster(
+        return create_or_destroy_aws_ipi_cluster(
             cluster_data=cluster_data,
             action=CREATE_STR,
         )
 
     elif cluster_platform in (ROSA_STR, HYPERSHIFT_STR):
-        rosa_create_cluster(
+        return rosa_create_cluster(
             cluster_data=cluster_data,
         )
     elif cluster_platform == AWS_OSD_STR:
-        osd_create_cluster(cluster_data=cluster_data)
+        return osd_create_cluster(cluster_data=cluster_data)
 
 
 def destroy_openshift_cluster(cluster_data):
     cluster_platform = cluster_data["platform"]
     if cluster_platform == AWS_STR:
-        create_or_destroy_aws_ipi_cluster(cluster_data=cluster_data, action=DESTROY_STR)
+        return create_or_destroy_aws_ipi_cluster(
+            cluster_data=cluster_data, action=DESTROY_STR
+        )
 
     elif cluster_platform in (ROSA_STR, HYPERSHIFT_STR):
-        rosa_delete_cluster(cluster_data=cluster_data)
+        return rosa_delete_cluster(cluster_data=cluster_data)
 
     elif cluster_platform == AWS_OSD_STR:
-        osd_delete_cluster(cluster_data=cluster_data)
+        return osd_delete_cluster(cluster_data=cluster_data)
 
 
 def assert_public_ssh_key_file_exists(ssh_key_file):
@@ -287,23 +289,25 @@ def assert_acm_clusters_user_input(
     aws_access_key_id,
     aws_secret_access_key,
 ):
-    if any([_cluster.get("acm-clusters") for _cluster in clusters]):
-        if action == CREATE_STR:
-            assert_public_ssh_key_file_exists(ssh_key_file=ssh_key_file)
-            assert_registry_config_file_exists(
-                registry_config_file=registry_config_file
+    acm_clusters = [_cluster for _cluster in clusters if _cluster.get("acm")]
+    if acm_clusters and action == CREATE_STR:
+        if any([_cluster["platform"] == HYPERSHIFT_STR for _cluster in acm_clusters]):
+            click.secho(f"ACM not supported for {HYPERSHIFT_STR} clusters")
+            raise click.Abort()
+
+        assert_public_ssh_key_file_exists(ssh_key_file=ssh_key_file)
+        assert_registry_config_file_exists(registry_config_file=registry_config_file)
+        assert_aws_credentials_exist(
+            aws_access_key_id=aws_access_key_id,
+            aws_secret_access_key=aws_secret_access_key,
+        )
+        if not private_ssh_key_file or not os.path.exists(private_ssh_key_file):
+            click.secho(
+                "SSH private file is required for ACM cluster installations."
+                f" {private_ssh_key_file} file does not exist.",
+                fg=ERROR_LOG_COLOR,
             )
-            assert_aws_credentials_exist(
-                aws_access_key_id=aws_access_key_id,
-                aws_secret_access_key=aws_secret_access_key,
-            )
-            if not private_ssh_key_file or not os.path.exists(private_ssh_key_file):
-                click.secho(
-                    "SSH private file is required for ACM cluster installations."
-                    f" {private_ssh_key_file} file does not exist.",
-                    fg=ERROR_LOG_COLOR,
-                )
-                raise click.Abort()
+            raise click.Abort()
 
 
 def destroy_s3_or_all_clusters(
@@ -342,6 +346,8 @@ def prepare_aws_ipi_clusters(
     ssh_key_file,
     docker_config_file,
     create,
+    aws_access_key_id,
+    aws_secret_access_key,
 ):
     if aws_ipi_clusters:
         aws_ipi_clusters = generate_cluster_dirs_path(
@@ -362,6 +368,12 @@ def prepare_aws_ipi_clusters(
                 ssh_key_file=ssh_key_file,
                 docker_config_file=docker_config_file,
             )
+            acm_clusters = [
+                _cluster for _cluster in aws_ipi_clusters if _cluster.get("acm")
+            ]
+            for _acm_cluster in acm_clusters:
+                _acm_cluster["aws-access-key-id"] = aws_access_key_id
+                _acm_cluster["aws-secret-access-key"] = aws_secret_access_key
 
     return aws_ipi_clusters
 
@@ -394,27 +406,33 @@ def prepare_aws_managed_clusters(
 
 
 def run_create_or_destroy_clusters(clusters, create, action, parallel):
-    processes = []
-    action_kwargs = {}
+    futures = []
     action_func = create_openshift_cluster if create else destroy_openshift_cluster
+    processed_clusters = []
 
-    for cluster_data in clusters:
-        cluster_data["timeout-watch"] = TimeoutWatch(timeout=cluster_data["timeout"])
-        _cluster_name = cluster_data["name"]
-        click.echo(f"Executing {action} cluster {_cluster_name} [parallel: {parallel}]")
-        action_kwargs["cluster_data"] = cluster_data
-
-        if parallel:
-            proc = multiprocessing.Process(
-                name=f"{_cluster_name}---{action}",
-                target=action_func,
-                kwargs=action_kwargs,
+    with ThreadPoolExecutor() as executor:
+        for cluster_data in clusters:
+            _cluster_name = cluster_data["name"]
+            action_kwargs = {"cluster_data": cluster_data}
+            click.echo(
+                f"Executing {action} cluster {_cluster_name} [parallel: {parallel}]"
             )
-            processes.append(proc)
-            proc.start()
+            if parallel:
+                futures.append(executor.submit(action_func, **action_kwargs))
+            else:
+                cluster_data["timeout-watch"] = TimeoutWatch(
+                    timeout=cluster_data["timeout"]
+                )
+                processed_clusters.append(action_func(**action_kwargs))
 
-        else:
-            action_func(**action_kwargs)
+    if futures:
+        for result in as_completed(futures):
+            if result.exception():
+                click.secho(
+                    f"Failed to {action} cluster: {result.exception()}\n",
+                    fg=ERROR_LOG_COLOR,
+                )
+                raise click.Abort()
+            processed_clusters.append(result.result())
 
-    if processes:
-        verify_processes_passed(processes=processes, action=action)
+    return processed_clusters

@@ -274,6 +274,8 @@ def main(**kwargs):
         ssh_key_file=ssh_key_file,
         docker_config_file=docker_config_file,
         create=create,
+        aws_access_key_id=aws_access_key_id,
+        aws_secret_access_key=aws_secret_access_key,
     )
     aws_managed_clusters = prepare_aws_managed_clusters(
         aws_managed_clusters=aws_managed_clusters,
@@ -284,7 +286,7 @@ def main(**kwargs):
         create=create,
     )
 
-    run_create_or_destroy_clusters(
+    processed_clusters = run_create_or_destroy_clusters(
         clusters=aws_ipi_clusters + aws_managed_clusters,
         create=create,
         action=action,
@@ -293,7 +295,7 @@ def main(**kwargs):
 
     if create:
         install_and_attach_for_acm(
-            managed_clusters=aws_managed_clusters,
+            managed_clusters=processed_clusters,
             private_ssh_key_file=private_ssh_key_file,
             ssh_key_file=ssh_key_file,
             registry_config_file=registry_config_file,

@@ -74,7 +74,7 @@ Every call to the openshift installer cli must have at least one `--cluster` opt
       * To set `public_subnets`, pass `--cluster ...public_subnets=10.1.10.0/24,10.1.20.0/24'`
 
 ### ACM (Advanced Cluster Management)
-Managed clusters (AWS, OSD and Hypershift) can be deployed with ACM and attached to ACM hub.
+Managed clusters (Rosa, AWS and OSD) can be deployed with ACM and attached to ACM hub.
 To deploy ACM on cluster pass `--cluster ..... acm=True`
 To attach cluster to this ACM hub pass `--cluster ...... acm-clusters=mycluser1,mycluster2`
 
