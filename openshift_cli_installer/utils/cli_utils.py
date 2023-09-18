@@ -292,7 +292,9 @@ def assert_acm_clusters_user_input(
     acm_clusters = [_cluster for _cluster in clusters if _cluster.get("acm")]
     if acm_clusters and action == CREATE_STR:
         if any([_cluster["platform"] == HYPERSHIFT_STR for _cluster in acm_clusters]):
-            click.secho(f"ACM not supported for {HYPERSHIFT_STR} clusters")
+            click.secho(
+                f"ACM not supported for {HYPERSHIFT_STR} clusters", fg=ERROR_LOG_COLOR
+            )
             raise click.Abort()
 
         assert_public_ssh_key_file_exists(ssh_key_file=ssh_key_file)

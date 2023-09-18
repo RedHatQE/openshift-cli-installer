@@ -41,6 +41,7 @@ def dump_cluster_data_to_file(cluster_data):
     _cluster_data.pop("ocm-client", "")
     _cluster_data.pop("timeout-watch", "")
     _cluster_data.pop("ocp-client", "")
+    _cluster_data.pop("cluster-object", "")
     with open(
         os.path.join(_cluster_data["install-dir"], CLUSTER_DATA_YAML_FILENAME), "w"
     ) as fd:
@@ -99,6 +100,7 @@ def add_cluster_info_to_cluster_data(cluster_data, cluster_object=None):
     if cluster_object:
         ocp_client = cluster_object.ocp_client
         cluster_data["cluster-id"] = cluster_object.cluster_id
+        cluster_data["cluster-object"] = cluster_object
     else:
         ocp_client = get_client(config_file=f"{cluster_data['auth-dir']}/kubeconfig")
 

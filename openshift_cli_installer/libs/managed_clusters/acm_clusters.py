@@ -136,12 +136,12 @@ def install_and_attach_for_acm(
             )
 
         for _managed_acm_clusters in hub_cluster_data.get("acm-clusters", []):
-            (_managed_cluster_name,) = _managed_acm_clusters["name"]
+            _managed_cluster_name = _managed_acm_clusters["name"]
             _managed_cluster_platform = _managed_acm_clusters["platform"]
             (
                 managed_acm_cluster_kubeconfig,
                 is_hypershift,
-            ) = get_managed_acm_cluster_kubeconfig(
+            ) = get_managed_acm_cluster_kubeconfig_and_is_hypershift(
                 hub_cluster_data=hub_cluster_data,
                 managed_acm_cluster_name=_managed_cluster_name,
                 managed_cluster_platform=_managed_cluster_platform,
@@ -159,7 +159,7 @@ def install_and_attach_for_acm(
             )
 
 
-def get_managed_acm_cluster_kubeconfig(
+def get_managed_acm_cluster_kubeconfig_and_is_hypershift(
     hub_cluster_data, managed_acm_cluster_name, managed_cluster_platform, ocm_client
 ):
     # In case we deployed the cluster we have the kubeconfig
@@ -169,7 +169,7 @@ def get_managed_acm_cluster_kubeconfig(
         managed_acm_cluster_object = Cluster(
             client=ocm_client, name=managed_acm_cluster_name
         )
-        is_hypershift = managed_acm_cluster_object.hypershift()
+        is_hypershift = managed_acm_cluster_object.hypershift
         managed_acm_cluster_kubeconfig = os.path.join(
             hub_cluster_data["install-dir"],
             f"{managed_acm_cluster_name}-kubeconfig",

@@ -120,16 +120,17 @@ def destroy_hypershift_vpc(cluster_data):
 
 
 def prepare_hypershift_vpc(cluster_data):
+    cluster_name = cluster_data["name"]
     shutil.copy(
         os.path.join(get_manifests_path(), "setup-vpc.tf"), cluster_data["install-dir"]
     )
-    click.echo(f"Preparing hypershift VPCs for cluster {cluster_data['name']}")
+    click.echo(f"Preparing hypershift VPCs for cluster {cluster_name}")
     terraform = terraform_init(cluster_data=cluster_data)
     terraform.plan(dir_or_plan="hypershift.plan")
     rc, _, err = terraform.apply(capture_output=True, skip_plan=True, auto_approve=True)
     if rc != 0:
         click.secho(
-            f"Create hypershift VPC for cluster {cluster_data['name']} failed with"
+            f"Create hypershift VPC for cluster {cluster_name} failed with"
             f" error: {err}, rolling back."
         )
         delete_oidc(cluster_data=cluster_data)
