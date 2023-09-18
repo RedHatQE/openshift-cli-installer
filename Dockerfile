@@ -3,7 +3,7 @@ FROM python:3.11
 ARG GITHUB_API_TOKEN
 
 RUN apt-get update \
-    && apt-get install -y ssh gnupg software-properties-common curl gpg
+    && apt-get install -y ssh gnupg software-properties-common curl gpg wget
 
 # Install Hashicorp's APT repository for Terraform
 RUN wget -O- https://apt.releases.hashicorp.com/gpg | gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg \
@@ -11,9 +11,6 @@ RUN wget -O- https://apt.releases.hashicorp.com/gpg | gpg --dearmor -o /usr/shar
 
 RUN apt-get update \
     && apt-get install -y terraform
-
-RUN python3 -m pip install pip --upgrade \
-    && python3 -m pip install lastversion
 
 # Install the Rosa CLI
 RUN curl -L https://mirror.openshift.com/pub/openshift-v4/clients/rosa/latest/rosa-linux.tar.gz --output /tmp/rosa-linux.tar.gz \
@@ -35,8 +32,12 @@ RUN chmod +x /usr/bin/kubectl \
     && chmod +x /usr/bin/regctl
 
 # Install the Advanced cluster management CLI (cm)
-RUN lastversion --assets --filter linux_amd64.tar.gz download https://github.com/stolostron/cm-cli -o /tmp/cm_linux_amd64.tar.gz \
-    && tar xvf /tmp/cm_linux_amd64.tar.gz --no-same-owner \
+RUN curl -s https://api.github.com/repos/stolostron/cm-cli/releases/latest \
+    | grep "browser_download_url.*linux_amd64.tar.gz" \
+    | cut -d : -f 2,3 \
+    | tr -d \" \
+    | wget -i - \
+    && tar xvf cm_linux_amd64.tar.gz --no-same-owner \
     && mv cm /usr/bin/cm
 
 COPY pyproject.toml poetry.lock README.md /openshift-cli-installer/
@@ -51,7 +52,8 @@ RUN ssh-keygen -t rsa -N '' -f /openshift-cli-installer/ssh-key/id_rsa
 ENV POETRY_HOME=/openshift-cli-installer
 ENV PATH="/openshift-cli-installer/bin:$PATH"
 
-RUN python3 -m pip install poetry \
+RUN python3 -m pip install pip --upgrade \
+    && python3 -m pip install poetry \
     && poetry config cache-dir /openshift-cli-installer \
     && poetry config virtualenvs.in-project true \
     && poetry config installer.max-workers 10 \

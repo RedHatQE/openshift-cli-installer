@@ -1,6 +1,5 @@
 import os
 import shlex
-from pathlib import Path
 
 import click
 import yaml
@@ -83,13 +82,11 @@ def attach_cluster_to_acm(
     acm_cluster_kubeconfig,
     managed_acm_cluster_kubeconfig,
     timeout_watch,
-    is_hypershift=False,
 ):
     click.echo(f"Attach {managed_acm_cluster_name} to ACM hub {hub_cluster_name}")
     run_command(
         command=shlex.split(
-            f"cm --kubeconfig {acm_cluster_kubeconfig} attach"
-            f" {'hostedcluster' if is_hypershift else 'cluster'} --cluster"
+            f"cm --kubeconfig {acm_cluster_kubeconfig} attach cluster --cluster"
             f" {managed_acm_cluster_name} --cluster-kubeconfig"
             f" {managed_acm_cluster_kubeconfig}  --wait"
         ),
@@ -113,7 +110,11 @@ def attach_cluster_to_acm(
 
 
 def install_and_attach_for_acm(
-    managed_clusters, private_ssh_key_file, ssh_key_file, registry_config_file
+    managed_clusters,
+    private_ssh_key_file,
+    ssh_key_file,
+    registry_config_file,
+    clusters_install_data_directory,
 ):
     for hub_cluster_data in managed_clusters:
         timeout_watch = hub_cluster_data.get(
@@ -138,14 +139,12 @@ def install_and_attach_for_acm(
         for _managed_acm_clusters in hub_cluster_data.get("acm-clusters", []):
             _managed_cluster_name = _managed_acm_clusters["name"]
             _managed_cluster_platform = _managed_acm_clusters["platform"]
-            (
-                managed_acm_cluster_kubeconfig,
-                is_hypershift,
-            ) = get_managed_acm_cluster_kubeconfig_and_is_hypershift(
+            managed_acm_cluster_kubeconfig = get_managed_acm_cluster_kubeconfig(
                 hub_cluster_data=hub_cluster_data,
                 managed_acm_cluster_name=_managed_cluster_name,
                 managed_cluster_platform=_managed_cluster_platform,
                 ocm_client=ocm_client,
+                clusters_install_data_directory=clusters_install_data_directory,
             )
 
             attach_cluster_to_acm(
@@ -155,21 +154,22 @@ def install_and_attach_for_acm(
                 acm_cluster_kubeconfig=acm_cluster_kubeconfig,
                 managed_acm_cluster_kubeconfig=managed_acm_cluster_kubeconfig,
                 timeout_watch=timeout_watch,
-                is_hypershift=is_hypershift,
             )
 
 
-def get_managed_acm_cluster_kubeconfig_and_is_hypershift(
-    hub_cluster_data, managed_acm_cluster_name, managed_cluster_platform, ocm_client
+def get_managed_acm_cluster_kubeconfig(
+    hub_cluster_data,
+    managed_acm_cluster_name,
+    managed_cluster_platform,
+    ocm_client,
+    clusters_install_data_directory,
 ):
     # In case we deployed the cluster we have the kubeconfig
     managed_acm_cluster_kubeconfig = None
-    is_hypershift = False
     if managed_cluster_platform in (ROSA_STR, HYPERSHIFT_STR, AWS_OSD_STR):
         managed_acm_cluster_object = Cluster(
             client=ocm_client, name=managed_acm_cluster_name
         )
-        is_hypershift = managed_acm_cluster_object.hypershift
         managed_acm_cluster_kubeconfig = os.path.join(
             hub_cluster_data["install-dir"],
             f"{managed_acm_cluster_name}-kubeconfig",
@@ -179,7 +179,7 @@ def get_managed_acm_cluster_kubeconfig_and_is_hypershift(
 
     elif managed_cluster_platform == AWS_STR:
         managed_acm_cluster_kubeconfig = get_cluster_kubeconfig_from_install_dir(
-            install_dir=hub_cluster_data["install-dir"],
+            clusters_install_data_directory=clusters_install_data_directory,
             cluster_name=managed_acm_cluster_name,
             cluster_platform=managed_cluster_platform,
         )
@@ -190,19 +190,20 @@ def get_managed_acm_cluster_kubeconfig_and_is_hypershift(
         )
         raise click.Abort()
 
-    return managed_acm_cluster_kubeconfig, is_hypershift
+    return managed_acm_cluster_kubeconfig
 
 
 def get_cluster_kubeconfig_from_install_dir(
-    install_dir, cluster_name, cluster_platform
+    clusters_install_data_directory, cluster_name, cluster_platform
 ):
-    managed_acm_cluster_kubeconfig = None
-    for root, dirs, files in os.walk(install_dir):
-        for _dir in dirs:
-            if _dir == cluster_name:
-                managed_acm_cluster_path = Path(os.path.join(root, _dir))
-                if managed_acm_cluster_path.parts[-1] == cluster_platform:
-                    managed_acm_cluster_kubeconfig = os.path.join(
-                        root, _dir, "auth-dir", "kubeconfig"
-                    )
-    return managed_acm_cluster_kubeconfig
+    cluster_install_dir = os.path.join(
+        clusters_install_data_directory, cluster_platform, cluster_name
+    )
+    if not os.path.exists(cluster_install_dir):
+        click.secho(
+            f"Install dir {cluster_install_dir} not found for {cluster_name}",
+            fg=ERROR_LOG_COLOR,
+        )
+        raise click.Abort()
+
+    return os.path.join(cluster_install_dir, "auth", "kubeconfig")

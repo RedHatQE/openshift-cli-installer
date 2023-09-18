@@ -192,7 +192,7 @@ def main(**kwargs):
     action = user_kwargs.get("action", kwargs.get("action"))
     clusters = user_kwargs.get("cluster", user_kwargs.get("clusters"))
     ocm_token = user_kwargs.get("ocm_token")
-    parallel = user_kwargs.get("parallel")
+    parallel = False if len(clusters) == 1 else user_kwargs.get("parallel")
     clusters_install_data_directory = user_kwargs.get(
         "clusters_install_data_directory",
         "/openshift-cli-installer/clusters-install-data",
@@ -299,6 +299,7 @@ def main(**kwargs):
             private_ssh_key_file=private_ssh_key_file,
             ssh_key_file=ssh_key_file,
             registry_config_file=registry_config_file,
+            clusters_install_data_directory=clusters_install_data_directory,
         )
 
 
