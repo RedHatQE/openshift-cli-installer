@@ -219,7 +219,7 @@ podman run quay.io/redhat_msi/openshift-cli-installer \
 podman run quay.io/redhat_msi/openshift-cli-installer \
     --action destroy \
     --ocm-token=$OCM_TOKEN \
-    --cluster 'name=hyper1;platform=rosa;region=us-east-2;version=4.13.4;timeout=1h'
+    --cluster 'name=hyper1;platform=hypershift;region=us-east-2;version=4.13.4;timeout=1h'
 ```
 
 ##### Multiple clusters
