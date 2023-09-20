@@ -1,5 +1,6 @@
 import json
 from datetime import datetime, timedelta
+import click
 
 from openshift_cli_installer.utils.const import (
     AWS_OSD_STR,
@@ -7,6 +8,7 @@ from openshift_cli_installer.utils.const import (
     HYPERSHIFT_STR,
     ROSA_STR,
     TIMEOUT_60MIN,
+    ERROR_LOG_COLOR,
 )
 from openshift_cli_installer.utils.general import tts
 
@@ -16,12 +18,8 @@ def prepare_managed_clusters_data(
     aws_account_id,
     aws_secret_access_key,
     aws_access_key_id,
-    gcp_service_account_file,
+    gcp_service_account_file=None,
 ):
-    gcp_service_account_dict = get_service_account_dict_from_file(
-        gcp_service_account_file=gcp_service_account_file
-    )
-
     for _cluster in clusters:
         cluster_platform = _cluster["platform"]
         _cluster["cluster-name"] = _cluster["name"]
@@ -41,6 +39,16 @@ def prepare_managed_clusters_data(
                 _cluster["machine-cidr"] = _cluster.get("cidr", "10.0.0.0/16")
 
         elif cluster_platform == GCP_OSD_STR:
+            if gcp_service_account_file:
+                gcp_service_account_dict = get_service_account_dict_from_file(
+                    gcp_service_account_file=gcp_service_account_file
+                )
+            else:
+                click.secho(
+                    "'gcp_service_account_file' wasn't provided, but cluster_platform is gcp-osd",
+                    fg=ERROR_LOG_COLOR,
+                )
+                raise click.Abort()
             _cluster["gcp_service_account"] = gcp_service_account_dict
 
         expiration_time = _cluster.get("expiration-time")
