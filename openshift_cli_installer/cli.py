@@ -224,7 +224,7 @@ def main(**kwargs):
     aws_access_key_id = user_kwargs.get("aws_access_key_id")
     aws_secret_access_key = user_kwargs.get("aws_secret_access_key")
     aws_account_id = user_kwargs.get("aws_account_id")
-    gcp_service_account_file = user_kwargs.get("gcp-service-account-file")
+    gcp_service_account_file = user_kwargs.get("gcp_service_account_file")
 
     verify_user_input(
         action=action,
