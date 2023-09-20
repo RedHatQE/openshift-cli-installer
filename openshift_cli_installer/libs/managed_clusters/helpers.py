@@ -1,14 +1,15 @@
 import json
 from datetime import datetime, timedelta
+
 import click
 
 from openshift_cli_installer.utils.const import (
     AWS_OSD_STR,
+    ERROR_LOG_COLOR,
     GCP_OSD_STR,
     HYPERSHIFT_STR,
     ROSA_STR,
     TIMEOUT_60MIN,
-    ERROR_LOG_COLOR,
 )
 from openshift_cli_installer.utils.general import tts
 
@@ -45,7 +46,8 @@ def prepare_managed_clusters_data(
                 )
             else:
                 click.secho(
-                    "'gcp_service_account_file' wasn't provided, but cluster_platform is gcp-osd",
+                    "'gcp_service_account_file' wasn't provided, but cluster_platform"
+                    " is gcp-osd",
                     fg=ERROR_LOG_COLOR,
                 )
                 raise click.Abort()
