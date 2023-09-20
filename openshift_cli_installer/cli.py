@@ -1,18 +1,19 @@
 import os
 
 import click
-from clouds.aws.aws_utils import set_and_verify_aws_credentials
 from pyaml_env import parse_config
 
+from openshift_cli_installer.libs.destroy_clusters import destroy_clusters
 from openshift_cli_installer.libs.managed_clusters.acm_clusters import (
     install_and_attach_for_acm,
 )
 from openshift_cli_installer.utils.cli_utils import (
-    destroy_s3_or_all_clusters,
     get_clusters_by_type,
+    is_region_support_aws,
+    is_region_support_gcp,
     is_region_support_hypershift,
     prepare_aws_ipi_clusters,
-    prepare_aws_managed_clusters,
+    prepare_ocm_managed_clusters,
     run_create_or_destroy_clusters,
     verify_user_input,
 )
@@ -20,12 +21,17 @@ from openshift_cli_installer.utils.click_dict_type import DictParamType
 from openshift_cli_installer.utils.clusters import (
     add_ocm_client_and_env_to_cluster_dict,
     add_s3_bucket_data,
-    check_existing_clusters,
+    check_ocm_managed_existing_clusters,
 )
 from openshift_cli_installer.utils.const import (
+    AWS_OSD_STR,
+    AWS_STR,
     CLUSTER_DATA_YAML_FILENAME,
     CREATE_STR,
     DESTROY_STR,
+    GCP_OSD_STR,
+    HYPERSHIFT_STR,
+    ROSA_STR,
 )
 
 
@@ -180,6 +186,14 @@ For example:
     """,
     type=click.Path(exists=True),
 )
+@click.option(
+    "--gcp-service-account-file",
+    help="""
+\b
+Path to GCP service account json file.
+""",
+    type=click.Path(exists=True),
+)
 def main(**kwargs):
     """
     Create/Destroy Openshift cluster/s
@@ -210,16 +224,7 @@ def main(**kwargs):
     aws_access_key_id = user_kwargs.get("aws_access_key_id")
     aws_secret_access_key = user_kwargs.get("aws_secret_access_key")
     aws_account_id = user_kwargs.get("aws_account_id")
-
-    destroy_s3_or_all_clusters(
-        destroy_clusters_from_s3_config_files=destroy_clusters_from_s3_config_files,
-        s3_bucket_name=s3_bucket_name,
-        s3_bucket_path=s3_bucket_path,
-        clusters_install_data_directory=clusters_install_data_directory,
-        registry_config_file=registry_config_file,
-        destroy_all_clusters=destroy_all_clusters,
-        ocm_token=ocm_token,
-    )
+    gcp_service_account_file = user_kwargs.get("gcp-service-account-file")
 
     verify_user_input(
         action=action,
@@ -232,7 +237,21 @@ def main(**kwargs):
         aws_secret_access_key=aws_secret_access_key,
         aws_account_id=aws_account_id,
         ocm_token=ocm_token,
+        destroy_clusters_from_s3_config_files=destroy_clusters_from_s3_config_files,
+        s3_bucket_name=s3_bucket_name,
+        gcp_service_account_file=gcp_service_account_file,
     )
+
+    if destroy_clusters_from_s3_config_files or destroy_all_clusters:
+        return destroy_clusters(
+            s3_bucket_name=s3_bucket_name,
+            s3_bucket_path=s3_bucket_path,
+            clusters_install_data_directory=clusters_install_data_directory,
+            registry_config_file=registry_config_file,
+            clusters_yaml_files=destroy_clusters_from_s3_config_files,
+            destroy_all_clusters=destroy_all_clusters,
+            ocm_token=ocm_token,
+        )
 
     clusters = add_ocm_client_and_env_to_cluster_dict(
         clusters=clusters, ocm_token=ocm_token
@@ -245,27 +264,23 @@ def main(**kwargs):
             s3_bucket_path=s3_bucket_path,
         )
 
-    (
-        aws_ipi_clusters,
-        rosa_clusters,
-        hypershift_clusters,
-        aws_osd_clusters,
-    ) = get_clusters_by_type(clusters=clusters)
+    clusters_dict = get_clusters_by_type(clusters=clusters)
+    aws_ipi_clusters = clusters_dict.get(AWS_STR)
+    rosa_clusters = clusters_dict.get(ROSA_STR)
+    hypershift_clusters = clusters_dict.get(HYPERSHIFT_STR)
+    aws_osd_clusters = clusters_dict.get(AWS_OSD_STR)
+    gcp_osd_clusters = clusters_dict.get(GCP_OSD_STR)
+
     aws_managed_clusters = rosa_clusters + hypershift_clusters + aws_osd_clusters
+    ocm_managed_clusters = aws_managed_clusters + gcp_osd_clusters
 
-    if aws_managed_clusters and create:
-        check_existing_clusters(clusters=aws_managed_clusters)
-
-    if hypershift_clusters:
-        is_region_support_hypershift(hypershift_clusters=hypershift_clusters)
-
-    if aws_ipi_clusters or aws_managed_clusters:
-        _regions_to_verify = set()
-        for cluster_data in aws_ipi_clusters + aws_managed_clusters:
-            _regions_to_verify.add(cluster_data["region"])
-
-        for _region in _regions_to_verify:
-            set_and_verify_aws_credentials(region_name=_region)
+    check_ocm_managed_existing_clusters(clusters=ocm_managed_clusters, create=create)
+    is_region_support_hypershift(hypershift_clusters=hypershift_clusters)
+    is_region_support_aws(clusters=aws_ipi_clusters + aws_managed_clusters)
+    is_region_support_gcp(
+        gcp_osd_clusters=gcp_osd_clusters,
+        gcp_service_account_file=gcp_service_account_file,
+    )
 
     aws_ipi_clusters = prepare_aws_ipi_clusters(
         aws_ipi_clusters=aws_ipi_clusters,
@@ -277,17 +292,18 @@ def main(**kwargs):
         aws_access_key_id=aws_access_key_id,
         aws_secret_access_key=aws_secret_access_key,
     )
-    aws_managed_clusters = prepare_aws_managed_clusters(
-        aws_managed_clusters=aws_managed_clusters,
+    ocm_managed_clusters = prepare_ocm_managed_clusters(
+        osd_managed_clusters=ocm_managed_clusters,
         clusters_install_data_directory=clusters_install_data_directory,
         aws_access_key_id=aws_access_key_id,
         aws_secret_access_key=aws_secret_access_key,
         aws_account_id=aws_account_id,
         create=create,
+        gcp_service_account_file=gcp_service_account_file,
     )
 
     processed_clusters = run_create_or_destroy_clusters(
-        clusters=aws_ipi_clusters + aws_managed_clusters,
+        clusters=aws_ipi_clusters + ocm_managed_clusters,
         create=create,
         action=action,
         parallel=parallel,

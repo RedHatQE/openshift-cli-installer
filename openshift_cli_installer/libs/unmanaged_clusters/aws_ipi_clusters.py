@@ -201,10 +201,10 @@ def create_or_destroy_aws_ipi_cluster(
 @functools.cache
 def get_aws_versions():
     versions_dict = {}
-    for source_repo in [
+    for source_repo in (
         "quay.io/openshift-release-dev/ocp-release",
         "registry.ci.openshift.org/ocp/release",
-    ]:
+    ):
         versions_dict[source_repo] = run_command(
             command=shlex.split(f"regctl tag ls {source_repo}"),
             check=False,

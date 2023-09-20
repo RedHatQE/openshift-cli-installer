@@ -4,9 +4,9 @@ from pathlib import Path
 
 import click
 import rosa.cli
+from clouds.aws.aws_utils import set_and_verify_aws_credentials
 from ocp_resources.utils import TimeoutWatch
 
-from openshift_cli_installer.libs.destroy_clusters import destroy_clusters
 from openshift_cli_installer.libs.managed_clusters.helpers import (
     prepare_managed_clusters_data,
 )
@@ -31,39 +31,41 @@ from openshift_cli_installer.utils.const import (
     CREATE_STR,
     DESTROY_STR,
     ERROR_LOG_COLOR,
+    GCP_OSD_STR,
     HYPERSHIFT_STR,
     PRODUCTION_STR,
     ROSA_STR,
     STAGE_STR,
+    SUPPORTED_PLATFORMS,
 )
+from openshift_cli_installer.utils.gcp import get_gcp_regions
 
 
 def get_clusters_by_type(clusters):
-    aws_ipi_clusters = [
-        _cluster for _cluster in clusters if _cluster["platform"] == AWS_STR
-    ]
-    rosa_clusters = [
-        _cluster for _cluster in clusters if _cluster["platform"] == ROSA_STR
-    ]
-    hypershift_clusters = [
-        _cluster for _cluster in clusters if _cluster["platform"] == HYPERSHIFT_STR
-    ]
-    aws_osd_clusters = [
-        _cluster for _cluster in clusters if _cluster["platform"] == AWS_OSD_STR
-    ]
-    return aws_ipi_clusters, rosa_clusters, hypershift_clusters, aws_osd_clusters
+    clusters_dict = {}
+    for platform in SUPPORTED_PLATFORMS:
+        clusters_dict[platform] = [
+            _cluster for _cluster in clusters if _cluster["platform"] == platform
+        ]
+
+    return clusters_dict
 
 
 def is_platform_supported(clusters):
-    supported_platform = (AWS_STR, ROSA_STR, HYPERSHIFT_STR, AWS_OSD_STR)
+    unsupported_platforms = []
     for _cluster in clusters:
         _platform = _cluster["platform"]
-        if _platform not in supported_platform:
-            click.secho(
-                f"Cluster platform '{_platform}' is not supported.\n{_cluster}",
-                fg=ERROR_LOG_COLOR,
+        if _platform not in SUPPORTED_PLATFORMS:
+            unsupported_platforms.append(
+                f"Cluster {_cluster['name']} platform '{_platform}' is not supported.\n"
             )
-            raise click.Abort()
+
+    if unsupported_platforms:
+        click.secho(
+            unsupported_platforms,
+            fg=ERROR_LOG_COLOR,
+        )
+        raise click.Abort()
 
 
 def rosa_regions(ocm_client):
@@ -84,6 +86,7 @@ def hypershift_regions(ocm_client):
 
 def is_region_support_hypershift(hypershift_clusters):
     hypershift_regions_dict = {PRODUCTION_STR: None, STAGE_STR: None}
+    unsupported_regions = []
     for _cluster in hypershift_clusters:
         cluster_ocm_env = _cluster["ocm-env"]
         _hypershift_regions = hypershift_regions_dict[cluster_ocm_env]
@@ -93,10 +96,15 @@ def is_region_support_hypershift(hypershift_clusters):
 
         _region = _cluster["region"]
         if _region not in _hypershift_regions:
+            unsupported_regions.append(
+                f"Cluster {_cluster['name']}, region: {_region}\n"
+            )
+
+        if unsupported_regions:
             click.secho(
-                f"region '{_region}' does not supported {HYPERSHIFT_STR}."
-                f"\nSupported hypershift regions are: {_hypershift_regions}"
-                f"\n{_cluster}",
+                f"The following {HYPERSHIFT_STR} clusters regions are no supported:"
+                f" {unsupported_regions}.\nSupported hypershift regions are:"
+                f" {_hypershift_regions}",
                 fg=ERROR_LOG_COLOR,
             )
             raise click.Abort()
@@ -149,7 +157,7 @@ def create_openshift_cluster(
         return rosa_create_cluster(
             cluster_data=cluster_data,
         )
-    elif cluster_platform == AWS_OSD_STR:
+    elif cluster_platform in (AWS_OSD_STR, GCP_OSD_STR):
         return osd_create_cluster(cluster_data=cluster_data)
 
 
@@ -163,7 +171,7 @@ def destroy_openshift_cluster(cluster_data):
     elif cluster_platform in (ROSA_STR, HYPERSHIFT_STR):
         return rosa_delete_cluster(cluster_data=cluster_data)
 
-    elif cluster_platform == AWS_OSD_STR:
+    elif cluster_platform in (AWS_OSD_STR, GCP_OSD_STR):
         return osd_delete_cluster(cluster_data=cluster_data)
 
 
@@ -208,44 +216,63 @@ def verify_user_input(
     aws_secret_access_key,
     aws_account_id,
     ocm_token,
+    destroy_clusters_from_s3_config_files,
+    s3_bucket_name,
+    gcp_service_account_file,
 ):
-    if not action:
-        click.secho(
-            f"'action' must be provided, supported actions: `{CREATE_STR}`,"
-            f" `{DESTROY_STR}`",
-            fg=ERROR_LOG_COLOR,
-        )
-        raise click.Abort()
-
-    if not clusters:
-        click.secho(
-            "At least one '--cluster' option must be provided.", fg=ERROR_LOG_COLOR
-        )
-        raise click.Abort()
-
     abort_no_ocm_token(ocm_token=ocm_token)
-    is_platform_supported(clusters=clusters)
-    assert_aws_ipi_user_input(
-        clusters=clusters,
-        ssh_key_file=ssh_key_file,
-        docker_config_file=docker_config_file,
-        registry_config_file=registry_config_file,
-    )
-    assert_osd_user_input(
-        clusters=clusters,
-        aws_access_key_id=aws_access_key_id,
-        aws_secret_access_key=aws_secret_access_key,
-        aws_account_id=aws_account_id,
-    )
-    assert_acm_clusters_user_input(
-        action=action,
-        clusters=clusters,
-        ssh_key_file=ssh_key_file,
-        private_ssh_key_file=private_ssh_key_file,
-        registry_config_file=registry_config_file,
-        aws_access_key_id=aws_access_key_id,
-        aws_secret_access_key=aws_secret_access_key,
-    )
+
+    if destroy_clusters_from_s3_config_files:
+        if not s3_bucket_name:
+            click.secho(
+                "`--s3-bucket-name` must be provided when running with"
+                " `--destroy-clusters-from-s3-config-files`",
+                fg=ERROR_LOG_COLOR,
+            )
+            raise click.Abort()
+
+    else:
+        if not action:
+            click.secho(
+                f"'action' must be provided, supported actions: `{CREATE_STR}`,"
+                f" `{DESTROY_STR}`",
+                fg=ERROR_LOG_COLOR,
+            )
+            raise click.Abort()
+
+        if not clusters:
+            click.secho(
+                "At least one '--cluster' option must be provided.", fg=ERROR_LOG_COLOR
+            )
+            raise click.Abort()
+
+        is_platform_supported(clusters=clusters)
+        assert_aws_ipi_user_input(
+            clusters=clusters,
+            ssh_key_file=ssh_key_file,
+            docker_config_file=docker_config_file,
+            registry_config_file=registry_config_file,
+        )
+        assert_aws_osd_user_input(
+            clusters=clusters,
+            aws_access_key_id=aws_access_key_id,
+            aws_secret_access_key=aws_secret_access_key,
+            aws_account_id=aws_account_id,
+        )
+        assert_acm_clusters_user_input(
+            action=action,
+            clusters=clusters,
+            ssh_key_file=ssh_key_file,
+            private_ssh_key_file=private_ssh_key_file,
+            registry_config_file=registry_config_file,
+            aws_access_key_id=aws_access_key_id,
+            aws_secret_access_key=aws_secret_access_key,
+        )
+        assert_gcp_osd_user_input(
+            action=action,
+            clusters=clusters,
+            gcp_service_account_file=gcp_service_account_file,
+        )
 
 
 def assert_aws_ipi_user_input(
@@ -264,7 +291,7 @@ def assert_aws_ipi_user_input(
         assert_registry_config_file_exists(registry_config_file=registry_config_file)
 
 
-def assert_osd_user_input(
+def assert_aws_osd_user_input(
     clusters, aws_access_key_id, aws_secret_access_key, aws_account_id
 ):
     if any([_cluster["platform"] == AWS_OSD_STR for _cluster in clusters]):
@@ -312,35 +339,6 @@ def assert_acm_clusters_user_input(
             raise click.Abort()
 
 
-def destroy_s3_or_all_clusters(
-    destroy_clusters_from_s3_config_files,
-    s3_bucket_name,
-    s3_bucket_path,
-    clusters_install_data_directory,
-    registry_config_file,
-    destroy_all_clusters,
-    ocm_token,
-):
-    if destroy_clusters_from_s3_config_files and not s3_bucket_name:
-        click.secho(
-            "`--s3-bucket-name` must be provided when running with"
-            " `--destroy-clusters-from-s3-config-files`",
-            fg=ERROR_LOG_COLOR,
-        )
-        raise click.Abort()
-
-    if destroy_all_clusters or destroy_clusters_from_s3_config_files:
-        return destroy_clusters(
-            s3_bucket_name=s3_bucket_name,
-            s3_bucket_path=s3_bucket_path,
-            clusters_install_data_directory=clusters_install_data_directory,
-            registry_config_file=registry_config_file,
-            clusters_yaml_files=destroy_clusters_from_s3_config_files,
-            destroy_all_clusters=destroy_all_clusters,
-            ocm_token=ocm_token,
-        )
-
-
 def prepare_aws_ipi_clusters(
     aws_ipi_clusters,
     clusters_install_data_directory,
@@ -380,31 +378,33 @@ def prepare_aws_ipi_clusters(
     return aws_ipi_clusters
 
 
-def prepare_aws_managed_clusters(
-    aws_managed_clusters,
+def prepare_ocm_managed_clusters(
+    osd_managed_clusters,
     clusters_install_data_directory,
     aws_access_key_id,
     aws_secret_access_key,
     aws_account_id,
     create,
+    gcp_service_account_file,
 ):
-    if aws_managed_clusters:
-        aws_managed_clusters = generate_cluster_dirs_path(
-            clusters=aws_managed_clusters,
+    if osd_managed_clusters:
+        osd_managed_clusters = generate_cluster_dirs_path(
+            clusters=osd_managed_clusters,
             base_directory=clusters_install_data_directory,
         )
-        aws_managed_clusters = prepare_managed_clusters_data(
-            clusters=aws_managed_clusters,
+        osd_managed_clusters = prepare_managed_clusters_data(
+            clusters=osd_managed_clusters,
             aws_access_key_id=aws_access_key_id,
             aws_secret_access_key=aws_secret_access_key,
             aws_account_id=aws_account_id,
+            gcp_service_account_file=gcp_service_account_file,
         )
         if create:
-            aws_managed_clusters = update_rosa_osd_clusters_versions(
-                clusters=aws_managed_clusters,
+            osd_managed_clusters = update_rosa_osd_clusters_versions(
+                clusters=osd_managed_clusters,
             )
 
-    return aws_managed_clusters
+    return osd_managed_clusters
 
 
 def run_create_or_destroy_clusters(clusters, create, action, parallel):
@@ -438,3 +438,46 @@ def run_create_or_destroy_clusters(clusters, create, action, parallel):
             processed_clusters.append(result.result())
 
     return processed_clusters
+
+
+def is_region_support_gcp(gcp_osd_clusters, gcp_service_account_file):
+    if gcp_osd_clusters:
+        supported_regions = get_gcp_regions(gcp_service_account_file)
+        unsupported_regions = []
+        for cluster_data in gcp_osd_clusters:
+            cluster_region = cluster_data["region"]
+            if cluster_region not in supported_regions:
+                unsupported_regions.append(
+                    f"cluster: {cluster_data['name']}, region: {cluster_region}"
+                )
+
+        if unsupported_regions:
+            click.secho(
+                "The following clusters regions are not supported in GCP:"
+                f" {unsupported_regions}",
+                fg=ERROR_LOG_COLOR,
+            )
+            raise click.Abort()
+
+
+def is_region_support_aws(clusters):
+    _regions_to_verify = set()
+    for cluster_data in clusters:
+        _regions_to_verify.add(cluster_data["region"])
+
+    for _region in _regions_to_verify:
+        set_and_verify_aws_credentials(region_name=_region)
+
+
+def assert_gcp_osd_user_input(action, clusters, gcp_service_account_file):
+    if (
+        action == CREATE_STR
+        and any([cluster["platform"] == GCP_OSD_STR for cluster in clusters])
+        and not gcp_service_account_file
+    ):
+        click.secho(
+            "`--gcp-service-account-file` option must be provided for"
+            f" {GCP_OSD_STR} clusters",
+            fg=ERROR_LOG_COLOR,
+        )
+        raise click.Abort()

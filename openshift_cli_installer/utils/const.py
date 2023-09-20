@@ -6,6 +6,8 @@ AWS_STR = "aws"
 ROSA_STR = "rosa"
 AWS_OSD_STR = "aws-osd"
 HYPERSHIFT_STR = "hypershift"
+GCP_OSD_STR = "gcp-osd"
+SUPPORTED_PLATFORMS = (AWS_STR, ROSA_STR, HYPERSHIFT_STR, AWS_OSD_STR, GCP_OSD_STR)
 
 # Cluster actions
 DESTROY_STR = "destroy"

@@ -47,6 +47,7 @@ WORKDIR /openshift-cli-installer
 RUN mkdir clusters-install-data
 RUN mkdir ssh-key
 RUN ssh-keygen -t rsa -N '' -f /openshift-cli-installer/ssh-key/id_rsa
+RUN chmod 644 /openshift-cli-installer/ssh-key/id_rsa
 
 
 ENV POETRY_HOME=/openshift-cli-installer

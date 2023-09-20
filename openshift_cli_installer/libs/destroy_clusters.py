@@ -18,6 +18,7 @@ from openshift_cli_installer.libs.unmanaged_clusters.aws_ipi_clusters import (
     create_or_destroy_aws_ipi_cluster,
     download_openshift_install_binary,
 )
+from openshift_cli_installer.utils.cli_utils import assert_registry_config_file_exists
 from openshift_cli_installer.utils.clusters import (
     add_ocm_client_and_env_to_cluster_dict,
 )
@@ -280,6 +281,7 @@ def destroy_clusters(
 
     aws_clusters = clusters_data_dict["aws"]
     if aws_clusters:
+        assert_registry_config_file_exists(registry_config_file=registry_config_file)
         download_openshift_install_binary(
             clusters=aws_clusters, registry_config_file=registry_config_file
         )

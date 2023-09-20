@@ -1,7 +1,7 @@
 # openshift-cli-installer
 Basic Openshift install CLI wrapper.  
 The tool allows deploying or deletion of one or more clusters.  
-The clusters can be deployed on different platforms; currently supported platforms: AWS IPI, ROSA and Hypershift.  
+The clusters can be deployed on different platforms; currently supported platforms: AWS IPI, AWS OSD, GCP OSD, ROSA and Hypershift.  
 Each cluster can be provided with different configuration options, such as worker type, number of workers etc.
 
 ## Tools
@@ -45,6 +45,14 @@ Action also can be passed to the CLI as `--action create/destroy` instead of spe
   * `--aws-access-key-id`: AWS access key ID
   * `--aws-secret-access-key`: AWS secret access key
   * `--aws-account-id`: AWS account ID
+
+* GCP OSD clusters:
+  * `platform=gcp-osd`: Must pass in cluster parameters
+  * `--gcp-service-account-file`: Path to GCP service account json.  
+    To create the file, create a service account and download it:  
+    1. Go to https://console.cloud.google.com/iam-admin/serviceaccounts?project=<project>
+    2. Select the service account -> "Create Key"
+    3. Select the Key Type as `JSON` and click Create
 
 ### Cluster parameters
 Every call to the openshift installer cli must have at least one `--cluster` option.  

@@ -6,7 +6,12 @@ from openshift_cli_installer.utils.clusters import (
     dump_cluster_data_to_file,
     set_cluster_auth,
 )
-from openshift_cli_installer.utils.const import ERROR_LOG_COLOR, SUCCESS_LOG_COLOR
+from openshift_cli_installer.utils.const import (
+    AWS_OSD_STR,
+    ERROR_LOG_COLOR,
+    GCP_OSD_STR,
+    SUCCESS_LOG_COLOR,
+)
 from openshift_cli_installer.utils.general import zip_and_upload_to_s3
 
 
@@ -16,20 +21,33 @@ def osd_create_cluster(cluster_data):
         name=cluster_data["name"],
     )
     try:
-        cluster_object.provision_osd_aws(
-            wait_for_ready=True,
-            wait_timeout=cluster_data["timeout"],
-            region=cluster_data["region"],
-            ocp_version=cluster_data["version"],
-            access_key_id=cluster_data["aws-access-key-id"],
-            account_id=cluster_data["aws-account-id"],
-            secret_access_key=cluster_data["aws-secret-access-key"],
-            replicas=cluster_data["replicas"],
-            compute_machine_type=cluster_data["compute-machine-type"],
-            multi_az=cluster_data["multi-az"],
-            channel_group=cluster_data["channel-group"],
-            expiration_time=cluster_data.get("expiration-time"),
-        )
+        cluster_platform = cluster_data["platform"]
+        provision_osd_kwargs = {
+            "wait_for_ready": True,
+            "wait_timeout": cluster_data["timeout"],
+            "region": cluster_data["region"],
+            "ocp_version": cluster_data["version"],
+            "replicas": cluster_data["replicas"],
+            "compute_machine_type": cluster_data["compute-machine-type"],
+            "multi_az": cluster_data["multi-az"],
+            "channel_group": cluster_data["channel-group"],
+            "expiration_time": cluster_data.get("expiration-time"),
+            "platform": cluster_platform.replace("-osd", ""),
+        }
+        if cluster_platform == AWS_OSD_STR:
+            provision_osd_kwargs.update(
+                {
+                    "aws_access_key_id": cluster_data["aws-access-key-id"],
+                    "aws_account_id": cluster_data["aws-account-id"],
+                    "aws_secret_access_key": cluster_data["aws-secret-access-key"],
+                }
+            )
+        elif cluster_platform == GCP_OSD_STR:
+            provision_osd_kwargs.update(
+                {"gcp_service_account": cluster_data["gcp_service_account"]}
+            )
+
+        cluster_object.provision_osd(**provision_osd_kwargs)
 
         cluster_data = add_cluster_info_to_cluster_data(
             cluster_data=cluster_data,

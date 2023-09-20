@@ -426,6 +426,22 @@ def test_rosa_cluster_version(clusters, expected):
             ],
             "error",
         ),
+        (
+            [
+                {
+                    "version": "4.13",
+                    "channel-group": "stable",
+                    "platform": "gcp-osd",
+                }
+            ],
+            [
+                {
+                    "version": "4.13.9",
+                    "channel-group": "stable",
+                    "platform": "gcp-osd",
+                }
+            ],
+        ),
     ],
     ids=[
         "aws_osd_4.13_stable",
@@ -437,6 +453,7 @@ def test_rosa_cluster_version(clusters, expected):
         "aws_osd_100.5.1_stable_negative",
         "aws_osd_100.5_stable_negative",
         "aws_osd_4.13.40_stable_negative",
+        "gcp_osd_4.13_stable",
     ],
 )
 def test_osd_cluster_version(clusters, expected):

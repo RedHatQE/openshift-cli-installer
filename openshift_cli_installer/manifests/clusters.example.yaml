@@ -10,15 +10,29 @@ docker_config_file: !ENV "${HOME}/.docker/config.json"
 aws_access_key_id: !ENV "${AWS_ACCESS_KEY}"
 aws_secret_access_key: !ENV "${AWS_SECRET_ACCESS_KEY}"
 aws_account_id: !ENV "${AWS_ACCOUNT_ID}"
+gcp-service-account-file: !ENV "${HOME}/gcp-service-account.json"
 
 clusters:
-# OSD cluster
-- name: osd-c1
+# AWS OSD cluster
+- name: aws-osd-c1
   platform: aws-osd
   region: us-east-2
   version: "4.13"
   channel-group: stable
   compute-machine-type: m5.4xlarge
+  timeout: 90m
+  replicas: 2
+  fips: True
+  ocm-env: stage
+  expiration-time: 1h
+
+# GCP OSD cluster
+- name: gcp-osd-c1
+  platform: gcp-osd
+  region: us-east1
+  version: "4.13"
+  channel-group: stable
+  compute-machine-type: custom-4-16384
   timeout: 90m
   replicas: 2
   fips: True
