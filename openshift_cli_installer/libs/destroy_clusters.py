@@ -2,6 +2,7 @@ import copy
 import multiprocessing
 import os
 import shutil
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
 import click
@@ -59,24 +60,37 @@ def download_and_extract_s3_file(
         )
 
 
-def destroy_clusters_from_data_dict(cluster_data_dict):
-    processes = []
+def destroy_clusters_from_data_dict(cluster_data_dict, parallel):
+    futures = []
+    processed_clusters = []
 
-    for cluster_type, clusters_data_list in cluster_data_dict.items():
-        for cluster_data in clusters_data_list:
-            proc = multiprocessing.Process(
-                target=_destroy_cluster,
-                kwargs={
+    with ThreadPoolExecutor() as executor:
+        for cluster_type, clusters_data_list in cluster_data_dict.items():
+            for cluster_data in clusters_data_list:
+                action_kwargs = {
                     "cluster_data": cluster_data,
                     "cluster_type": cluster_type,
-                },
-            )
+                }
+                _cluster_name = cluster_data["name"]
+                click.echo(
+                    f"Executing destroy cluster {_cluster_name} [parallel: {parallel}]"
+                )
+                if parallel:
+                    futures.append(executor.submit(_destroy_cluster, **action_kwargs))
+                else:
+                    processed_clusters.append(_destroy_cluster(**action_kwargs))
 
-            processes.append(proc)
-            proc.start()
+    if futures:
+        for result in as_completed(futures):
+            if result.exception():
+                click.secho(
+                    f"Failed to destroy cluster: {result.exception()}\n",
+                    fg=ERROR_LOG_COLOR,
+                )
+                raise click.Abort()
+            processed_clusters.append(result.result())
 
-    for proc in processes:
-        proc.join()
+    return processed_clusters
 
 
 def _destroy_cluster(cluster_data, cluster_type):
@@ -239,6 +253,7 @@ def destroy_clusters(
     registry_config_file=None,
     clusters_yaml_files=None,
     destroy_all_clusters=False,
+    parallel=False,
 ):
     clusters_data_dict = {platform: [] for platform in SUPPORTED_PLATFORMS}
 
@@ -284,6 +299,7 @@ def destroy_clusters(
 
     destroy_clusters_from_data_dict(
         cluster_data_dict=clusters_data_dict,
+        parallel=parallel,
     )
 
     for _dir in s3_target_dirs:
