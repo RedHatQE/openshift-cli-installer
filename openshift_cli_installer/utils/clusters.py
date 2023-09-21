@@ -129,8 +129,9 @@ def set_cluster_auth(cluster_data, cluster_object):
         fd.write(cluster_object.kubeadmin_password)
 
 
-def check_ocm_managed_existing_clusters(clusters, create):
-    if clusters and create:
+def check_ocm_managed_existing_clusters(clusters):
+    if clusters:
+        click.echo("Check for existing OCM-managed clusters.")
         ocm_clients_list = []
         ocm_token = clusters[0]["ocm-client"].api_client.token
         for env in (PRODUCTION_STR, STAGE_STR):

@@ -226,6 +226,7 @@ def main(**kwargs):
     aws_account_id = user_kwargs.get("aws_account_id")
     gcp_service_account_file = user_kwargs.get("gcp_service_account_file")
 
+    create = action == CREATE_STR
     verify_user_input(
         action=action,
         clusters=clusters,
@@ -240,6 +241,7 @@ def main(**kwargs):
         destroy_clusters_from_s3_config_files=destroy_clusters_from_s3_config_files,
         s3_bucket_name=s3_bucket_name,
         gcp_service_account_file=gcp_service_account_file,
+        create=create,
     )
 
     if destroy_clusters_from_s3_config_files or destroy_all_clusters:
@@ -256,7 +258,6 @@ def main(**kwargs):
     # General prepare for all clusters
     clusters = prepare_clusters(clusters=clusters, ocm_token=ocm_token)
 
-    create = action == CREATE_STR
     if create and s3_bucket_name:
         clusters = add_s3_bucket_data(
             clusters=clusters,
@@ -274,13 +275,14 @@ def main(**kwargs):
     aws_managed_clusters = rosa_clusters + hypershift_clusters + aws_osd_clusters
     ocm_managed_clusters = aws_managed_clusters + gcp_osd_clusters
 
-    check_ocm_managed_existing_clusters(clusters=ocm_managed_clusters, create=create)
-    is_region_support_hypershift(hypershift_clusters=hypershift_clusters)
-    is_region_support_aws(clusters=aws_ipi_clusters + aws_managed_clusters)
-    is_region_support_gcp(
-        gcp_osd_clusters=gcp_osd_clusters,
-        gcp_service_account_file=gcp_service_account_file,
-    )
+    if create:
+        check_ocm_managed_existing_clusters(clusters=ocm_managed_clusters)
+        is_region_support_hypershift(hypershift_clusters=hypershift_clusters)
+        is_region_support_aws(clusters=aws_ipi_clusters + aws_managed_clusters)
+        is_region_support_gcp(
+            gcp_osd_clusters=gcp_osd_clusters,
+            gcp_service_account_file=gcp_service_account_file,
+        )
 
     aws_ipi_clusters = prepare_aws_ipi_clusters(
         aws_ipi_clusters=aws_ipi_clusters,

@@ -90,29 +90,33 @@ def hypershift_regions(ocm_client):
 
 
 def is_region_support_hypershift(hypershift_clusters):
-    hypershift_regions_dict = {PRODUCTION_STR: None, STAGE_STR: None}
-    unsupported_regions = []
-    for _cluster in hypershift_clusters:
-        cluster_ocm_env = _cluster["ocm-env"]
-        _hypershift_regions = hypershift_regions_dict[cluster_ocm_env]
-        if not _hypershift_regions:
-            _hypershift_regions = hypershift_regions(ocm_client=_cluster["ocm-client"])
-            hypershift_regions_dict[cluster_ocm_env] = _hypershift_regions
+    if hypershift_clusters:
+        click.echo(f"Check if regions are {HYPERSHIFT_STR}-supported.")
+        hypershift_regions_dict = {PRODUCTION_STR: None, STAGE_STR: None}
+        unsupported_regions = []
+        for _cluster in hypershift_clusters:
+            cluster_ocm_env = _cluster["ocm-env"]
+            _hypershift_regions = hypershift_regions_dict[cluster_ocm_env]
+            if not _hypershift_regions:
+                _hypershift_regions = hypershift_regions(
+                    ocm_client=_cluster["ocm-client"]
+                )
+                hypershift_regions_dict[cluster_ocm_env] = _hypershift_regions
 
-        _region = _cluster["region"]
-        if _region not in _hypershift_regions:
-            unsupported_regions.append(
-                f"Cluster {_cluster['name']}, region: {_region}\n"
-            )
+            _region = _cluster["region"]
+            if _region not in _hypershift_regions:
+                unsupported_regions.append(
+                    f"Cluster {_cluster['name']}, region: {_region}\n"
+                )
 
-        if unsupported_regions:
-            click.secho(
-                f"The following {HYPERSHIFT_STR} clusters regions are no supported:"
-                f" {unsupported_regions}.\nSupported hypershift regions are:"
-                f" {_hypershift_regions}",
-                fg=ERROR_LOG_COLOR,
-            )
-            raise click.Abort()
+            if unsupported_regions:
+                click.secho(
+                    f"The following {HYPERSHIFT_STR} clusters regions are no supported:"
+                    f" {unsupported_regions}.\nSupported hypershift regions are:"
+                    f" {_hypershift_regions}",
+                    fg=ERROR_LOG_COLOR,
+                )
+                raise click.Abort()
 
 
 def generate_cluster_dirs_path(clusters, base_directory):
@@ -224,6 +228,7 @@ def verify_user_input(
     destroy_clusters_from_s3_config_files,
     s3_bucket_name,
     gcp_service_account_file,
+    create,
 ):
     abort_no_ocm_token(ocm_token=ocm_token)
 
@@ -274,9 +279,9 @@ def verify_user_input(
             aws_secret_access_key=aws_secret_access_key,
         )
         assert_gcp_osd_user_input(
-            action=action,
             clusters=clusters,
             gcp_service_account_file=gcp_service_account_file,
+            create=create,
         )
 
 
@@ -403,6 +408,7 @@ def prepare_ocm_managed_clusters(
             aws_secret_access_key=aws_secret_access_key,
             aws_account_id=aws_account_id,
             gcp_service_account_file=gcp_service_account_file,
+            create=create,
         )
         if create:
             osd_managed_clusters = update_rosa_osd_clusters_versions(
@@ -447,6 +453,7 @@ def run_create_or_destroy_clusters(clusters, create, action, parallel):
 
 def is_region_support_gcp(gcp_osd_clusters, gcp_service_account_file):
     if gcp_osd_clusters:
+        click.echo("Check if regions are GCP-supported.")
         supported_regions = get_gcp_regions(gcp_service_account_file)
         unsupported_regions = []
         for cluster_data in gcp_osd_clusters:
@@ -466,17 +473,19 @@ def is_region_support_gcp(gcp_osd_clusters, gcp_service_account_file):
 
 
 def is_region_support_aws(clusters):
-    _regions_to_verify = set()
-    for cluster_data in clusters:
-        _regions_to_verify.add(cluster_data["region"])
+    if clusters:
+        click.echo(f"Check if regions are {AWS_STR}-supported.")
+        _regions_to_verify = set()
+        for cluster_data in clusters:
+            _regions_to_verify.add(cluster_data["region"])
 
-    for _region in _regions_to_verify:
-        set_and_verify_aws_credentials(region_name=_region)
+        for _region in _regions_to_verify:
+            set_and_verify_aws_credentials(region_name=_region)
 
 
-def assert_gcp_osd_user_input(action, clusters, gcp_service_account_file):
+def assert_gcp_osd_user_input(create, clusters, gcp_service_account_file):
     if (
-        action == CREATE_STR
+        create
         and any([cluster["platform"] == GCP_OSD_STR for cluster in clusters])
         and not gcp_service_account_file
     ):

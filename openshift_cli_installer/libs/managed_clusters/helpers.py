@@ -17,10 +17,13 @@ def prepare_managed_clusters_data(
     aws_secret_access_key,
     aws_access_key_id,
     gcp_service_account_file,
+    create,
 ):
-    gcp_service_account_dict = get_service_account_dict_from_file(
-        gcp_service_account_file=gcp_service_account_file
-    )
+    gcp_service_account_dict = None
+    if gcp_service_account_file and create:
+        gcp_service_account_dict = get_service_account_dict_from_file(
+            gcp_service_account_file=gcp_service_account_file
+        )
 
     for _cluster in clusters:
         cluster_platform = _cluster["platform"]
@@ -40,7 +43,7 @@ def prepare_managed_clusters_data(
                 _cluster["tags"] = "dns:external"
                 _cluster["machine-cidr"] = _cluster.get("cidr", "10.0.0.0/16")
 
-        elif cluster_platform == GCP_OSD_STR:
+        elif cluster_platform == GCP_OSD_STR and create:
             _cluster["gcp_service_account"] = gcp_service_account_dict
 
         expiration_time = _cluster.get("expiration-time")

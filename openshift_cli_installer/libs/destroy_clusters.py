@@ -28,8 +28,8 @@ from openshift_cli_installer.utils.const import (
     CLUSTER_DATA_YAML_FILENAME,
     DESTROY_STR,
     ERROR_LOG_COLOR,
-    HYPERSHIFT_STR,
-    ROSA_STR,
+    GCP_OSD_STR,
+    SUPPORTED_PLATFORMS,
 )
 
 
@@ -85,7 +85,7 @@ def _destroy_cluster(cluster_data, cluster_type):
             create_or_destroy_aws_ipi_cluster(
                 cluster_data=cluster_data, action=DESTROY_STR
             )
-        elif cluster_type == AWS_OSD_STR:
+        elif cluster_type in (AWS_OSD_STR, GCP_OSD_STR):
             osd_delete_cluster(cluster_data=cluster_data)
         else:
             rosa_delete_cluster(cluster_data=cluster_data)
@@ -240,12 +240,8 @@ def destroy_clusters(
     clusters_yaml_files=None,
     destroy_all_clusters=False,
 ):
-    clusters_data_dict = {
-        AWS_STR: [],
-        ROSA_STR: [],
-        HYPERSHIFT_STR: [],
-        AWS_OSD_STR: [],
-    }
+    clusters_data_dict = {platform: [] for platform in SUPPORTED_PLATFORMS}
+
     cluster_dirs = []
     s3_target_dirs = []
     if destroy_all_clusters:
