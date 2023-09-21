@@ -338,7 +338,7 @@ def test_rosa_cluster_version(clusters, expected):
             ],
             [
                 {
-                    "version": "4.13.9",
+                    "version": "4.13.10",
                     "channel-group": "candidate",
                     "platform": "aws-osd",
                 }

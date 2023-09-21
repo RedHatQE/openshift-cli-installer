@@ -19,7 +19,7 @@ def set_clusters_versions(clusters, base_available_versions):
         stream = get_cluster_stream(cluster_data=_cluster_data)
         all_available_versions.update(
             filter_versions(
-                version=_cluster_data["version"],
+                wanted_version=_cluster_data["version"],
                 base_versions_dict=base_available_versions,
                 platform=_cluster_data["platform"],
                 stream=stream,
@@ -80,9 +80,9 @@ def set_clusters_versions(clusters, base_available_versions):
     return clusters
 
 
-def filter_versions(version, base_versions_dict, platform, stream):
+def filter_versions(wanted_version, base_versions_dict, platform, stream):
     versions_dict = {}
-    version_key = get_split_version(version=version)
+    version_key = get_split_version(version=wanted_version)
     x86_64_str = "-x86_64"
     versions_dict[stream] = {version_key: {"versions": set(), "latest": ""}}
 
@@ -98,7 +98,7 @@ def filter_versions(version, base_versions_dict, platform, stream):
         )
 
         match = re.findall(
-            rf"({re.escape(version)}(.\d+)?(-)?(\d+.)?{reg_stream}.*)",
+            rf"({re.escape(wanted_version)}(.\d+)?(-)?(\d+.)?{reg_stream}.*)",
             "\n".join(versions),
         )
         if match:
@@ -120,7 +120,7 @@ def filter_versions(version, base_versions_dict, platform, stream):
                 continue
 
         if all_semver_versions:
-            max_version = max([str(ver[0]) for ver in all_semver_versions])
+            max_version = str(max([ver[0] for ver in all_semver_versions]))
             add_x86_64 = [
                 ver[1] for ver in all_semver_versions if str(ver[0]) == max_version
             ][0]
@@ -130,7 +130,7 @@ def filter_versions(version, base_versions_dict, platform, stream):
 
     if not versions_dict[stream][version_key]["versions"]:
         click.secho(
-            f"Cluster version {version} not found for stream {stream}",
+            f"Cluster version {wanted_version} not found for stream {stream}",
             fg=ERROR_LOG_COLOR,
         )
         raise click.Abort()
