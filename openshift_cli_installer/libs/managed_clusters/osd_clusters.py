@@ -22,11 +22,16 @@ def osd_create_cluster(cluster_data):
     )
     try:
         cluster_platform = cluster_data["platform"]
+        ocp_version = (
+            cluster_data["version"]
+            if cluster_data["channel-group"] != "candidate"
+            else f"{cluster_data['version']}-candidate"
+        )
         provision_osd_kwargs = {
             "wait_for_ready": True,
             "wait_timeout": cluster_data["timeout"],
             "region": cluster_data["region"],
-            "ocp_version": cluster_data["version"],
+            "ocp_version": ocp_version,
             "replicas": cluster_data["replicas"],
             "compute_machine_type": cluster_data["compute-machine-type"],
             "multi_az": cluster_data["multi-az"],
