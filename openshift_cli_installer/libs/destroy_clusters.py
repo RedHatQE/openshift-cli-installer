@@ -1,5 +1,4 @@
 import copy
-import multiprocessing
 import os
 import shutil
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -224,25 +223,26 @@ def get_files_from_s3_bucket(
     target_dir,
     files_list,
 ):
-    processes = []
+    futures = []
+    action_kwargs = {
+        "client": client,
+        "bucket": s3_bucket_name,
+        "target_dir": target_dir,
+        "extracted_target_dir": extracted_target_dir,
+    }
+    with ThreadPoolExecutor() as executor:
+        for _file in files_list:
+            action_kwargs["bucket_filepath"] = _file
+            action_kwargs["target_filename"] = _file
+            futures.append(
+                executor.submit(download_and_extract_s3_file, **action_kwargs)
+            )
 
-    for _file in files_list:
-        proc = multiprocessing.Process(
-            target=download_and_extract_s3_file,
-            kwargs={
-                "client": client,
-                "bucket": s3_bucket_name,
-                "bucket_filepath": _file,
-                "target_dir": target_dir,
-                "target_filename": _file,
-                "extracted_target_dir": extracted_target_dir,
-            },
-        )
-        processes.append(proc)
-        proc.start()
-
-    for proc in processes:
-        proc.join()
+    if futures:
+        for _ in as_completed(futures):
+            """
+            Place holder to make sure all futures are completed.
+            """
 
 
 def destroy_clusters(
