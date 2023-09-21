@@ -6,7 +6,6 @@ from openshift_cli_installer.utils.const import (
     GCP_OSD_STR,
     HYPERSHIFT_STR,
     ROSA_STR,
-    TIMEOUT_60MIN,
 )
 from openshift_cli_installer.utils.general import tts
 
@@ -28,7 +27,6 @@ def prepare_managed_clusters_data(
     for _cluster in clusters:
         cluster_platform = _cluster["platform"]
         _cluster["cluster-name"] = _cluster["name"]
-        _cluster["timeout"] = tts(ts=_cluster.get("timeout", TIMEOUT_60MIN))
         _cluster["channel-group"] = _cluster.get("channel-group", "stable")
 
         _cluster["multi-az"] = _cluster.get("multi-az", False)
