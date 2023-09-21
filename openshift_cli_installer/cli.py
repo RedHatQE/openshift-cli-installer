@@ -173,7 +173,7 @@ The yaml file must include `s3-object-name` with s3 objet name.
 `--s3-bucket-name` and optionally `--s3-bucket-path` must be provided.
 S3 objects will be deleted upon successful deletion.
 For example:
-    '/tmp/cluster1/{CLUSTER_DATA_YAML_FILENAME},/tmp/cluster2/{CLUSTER_DATA_YAML_FILENAME}'
+    '/tmp/cluster1/,/tmp/cluster2/'
     """,
     show_default=True,
 )
@@ -250,9 +250,10 @@ def main(**kwargs):
             s3_bucket_path=s3_bucket_path,
             clusters_install_data_directory=clusters_install_data_directory,
             registry_config_file=registry_config_file,
-            clusters_yaml_files=destroy_clusters_from_s3_config_files,
+            clusters_dir_paths=destroy_clusters_from_s3_config_files,
             destroy_all_clusters=destroy_all_clusters,
             ocm_token=ocm_token,
+            parallel=parallel,
         )
 
     # General prepare for all clusters

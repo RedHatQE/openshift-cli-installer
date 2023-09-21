@@ -251,7 +251,7 @@ def destroy_clusters(
     s3_bucket_path=None,
     clusters_install_data_directory=None,
     registry_config_file=None,
-    clusters_yaml_files=None,
+    clusters_dir_paths=None,
     destroy_all_clusters=False,
     parallel=False,
 ):
@@ -276,8 +276,8 @@ def destroy_clusters(
             ocm_token=ocm_token,
         )
 
-    if clusters_yaml_files:
-        dir_paths = [os.path.dirname(_file) for _file in clusters_yaml_files.split(",")]
+    elif clusters_dir_paths:
+        dir_paths = [_path for _path in clusters_dir_paths.split(",")]
         clusters_data_dict = set_clusters_data(
             cluster_dirs=dir_paths,
             clusters_dict=clusters_data_dict,
