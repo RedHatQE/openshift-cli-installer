@@ -13,13 +13,13 @@ from openshift_cli_installer.utils.cli_utils import (
     is_region_support_gcp,
     is_region_support_hypershift,
     prepare_aws_ipi_clusters,
+    prepare_clusters,
     prepare_ocm_managed_clusters,
     run_create_or_destroy_clusters,
     verify_user_input,
 )
 from openshift_cli_installer.utils.click_dict_type import DictParamType
 from openshift_cli_installer.utils.clusters import (
-    add_ocm_client_and_env_to_cluster_dict,
     add_s3_bucket_data,
     check_ocm_managed_existing_clusters,
 )
@@ -253,9 +253,9 @@ def main(**kwargs):
             ocm_token=ocm_token,
         )
 
-    clusters = add_ocm_client_and_env_to_cluster_dict(
-        clusters=clusters, ocm_token=ocm_token
-    )
+    # General prepare for all clusters
+    clusters = prepare_clusters(clusters=clusters, ocm_token=ocm_token)
+
     create = action == CREATE_STR
     if create and s3_bucket_name:
         clusters = add_s3_bucket_data(

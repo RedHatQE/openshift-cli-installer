@@ -15,7 +15,6 @@ from ocp_utilities.infra import get_client
 from openshift_cli_installer.utils.cluster_versions import set_clusters_versions
 from openshift_cli_installer.utils.const import (
     AWS_OSD_STR,
-    AWS_STR,
     CLUSTER_DATA_YAML_FILENAME,
     ERROR_LOG_COLOR,
     GCP_OSD_STR,
@@ -117,28 +116,6 @@ def add_cluster_info_to_cluster_data(cluster_data, cluster_object=None):
         )
 
     return cluster_data
-
-
-def add_ocm_client_and_env_to_cluster_dict(clusters, ocm_token):
-    supported_envs = (PRODUCTION_STR, STAGE_STR)
-
-    for _cluster in clusters:
-        if _cluster["platform"] == AWS_STR:
-            ocm_env = PRODUCTION_STR
-        else:
-            ocm_env = _cluster.get("ocm-env", STAGE_STR)
-        _cluster["ocm-env"] = ocm_env
-
-        if ocm_env not in supported_envs:
-            click.secho(
-                f"{_cluster['name']} got unsupported OCM env - {ocm_env}, supported"
-                f" envs: {supported_envs}"
-            )
-            raise click.Abort()
-
-        _cluster["ocm-client"] = get_ocm_client(ocm_token=ocm_token, ocm_env=ocm_env)
-
-    return clusters
 
 
 def set_cluster_auth(cluster_data, cluster_object):

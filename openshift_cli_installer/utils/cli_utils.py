@@ -24,7 +24,10 @@ from openshift_cli_installer.libs.unmanaged_clusters.aws_ipi_clusters import (
     download_openshift_install_binary,
     update_aws_clusters_versions,
 )
-from openshift_cli_installer.utils.clusters import update_rosa_osd_clusters_versions
+from openshift_cli_installer.utils.clusters import (
+    get_ocm_client,
+    update_rosa_osd_clusters_versions,
+)
 from openshift_cli_installer.utils.const import (
     AWS_OSD_STR,
     AWS_STR,
@@ -37,8 +40,10 @@ from openshift_cli_installer.utils.const import (
     ROSA_STR,
     STAGE_STR,
     SUPPORTED_PLATFORMS,
+    TIMEOUT_60MIN,
 )
 from openshift_cli_installer.utils.gcp import get_gcp_regions
+from openshift_cli_installer.utils.general import tts
 
 
 def get_clusters_by_type(clusters):
@@ -414,6 +419,9 @@ def run_create_or_destroy_clusters(clusters, create, action, parallel):
 
     with ThreadPoolExecutor() as executor:
         for cluster_data in clusters:
+            cluster_data["timeout-watch"] = TimeoutWatch(
+                timeout=cluster_data["timeout"]
+            )
             _cluster_name = cluster_data["name"]
             action_kwargs = {"cluster_data": cluster_data}
             click.echo(
@@ -422,9 +430,6 @@ def run_create_or_destroy_clusters(clusters, create, action, parallel):
             if parallel:
                 futures.append(executor.submit(action_func, **action_kwargs))
             else:
-                cluster_data["timeout-watch"] = TimeoutWatch(
-                    timeout=cluster_data["timeout"]
-                )
                 processed_clusters.append(action_func(**action_kwargs))
 
     if futures:
@@ -481,3 +486,25 @@ def assert_gcp_osd_user_input(action, clusters, gcp_service_account_file):
             fg=ERROR_LOG_COLOR,
         )
         raise click.Abort()
+
+
+def prepare_clusters(clusters, ocm_token):
+    supported_envs = (PRODUCTION_STR, STAGE_STR)
+    for _cluster in clusters:
+        _cluster["timeout"] = tts(ts=_cluster.get("timeout", TIMEOUT_60MIN))
+        if _cluster["platform"] == AWS_STR:
+            ocm_env = PRODUCTION_STR
+        else:
+            ocm_env = _cluster.get("ocm-env", STAGE_STR)
+        _cluster["ocm-env"] = ocm_env
+
+        if ocm_env not in supported_envs:
+            click.secho(
+                f"{_cluster['name']} got unsupported OCM env - {ocm_env}, supported"
+                f" envs: {supported_envs}"
+            )
+            raise click.Abort()
+
+        _cluster["ocm-client"] = get_ocm_client(ocm_token=ocm_token, ocm_env=ocm_env)
+
+    return clusters
