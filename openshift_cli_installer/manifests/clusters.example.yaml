@@ -52,7 +52,6 @@ clusters:
   ocm-env: stage
   acm: True
   acm_observability: True
-  acm_observability_s3_bucket_endpoint: com.amazonaws.us-east-1.s3
   acm-clusters:
     - name: rosa-c2
       platform: rosa

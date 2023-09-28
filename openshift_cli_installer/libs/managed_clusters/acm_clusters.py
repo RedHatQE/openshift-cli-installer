@@ -80,10 +80,9 @@ def install_acm(
         fg=SUCCESS_LOG_COLOR,
     )
     if hub_cluster_data.get("acm_observability"):
-        s3_bucket_endpoint = hub_cluster_data["acm_observability_s3_bucket_endpoint"]
         enable_observability(
             ocp_client=ocp_client,
-            s3_bucket_endpoint=s3_bucket_endpoint,
+            s3_bucket_endpoint=f"s3.{hub_cluster_data['region']}.amazonaws.com",
             aws_access_key_id=aws_access_key_id,
             aws_secret_access_key=aws_secret_access_key,
             cluster_name=cluster_name,
@@ -265,7 +264,7 @@ def enable_observability(
     observability_pull_secret.deploy(wait=True)
     s3_secret = Secret(
         client=ocp_client,
-        name="s3-secret-observability",
+        name="thanos-object-storage",
         namespace=open_cluster_management_observability_ns.name,
         type="Opaque",
         data_dict=s3_secret_data,
