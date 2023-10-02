@@ -148,11 +148,6 @@ def download_openshift_install_binary(clusters, registry_config_file):
 def aws_ipi_create_cluster(
     cluster_data,
 ):
-    cluster_data = add_cluster_info_to_cluster_data(
-        cluster_data=cluster_data,
-    )
-    dump_cluster_data_to_file(cluster_data=cluster_data)
-    return cluster_data
     res, _, _ = run_aws_installer_command(
         cluster_data=cluster_data, action=CREATE_STR, raise_on_failure=False
     )

@@ -7,6 +7,7 @@ import yaml
 from clouds.aws.session_clients import s3_client
 from ocm_python_wrapper.cluster import Cluster
 from ocp_resources.managed_cluster import ManagedCluster
+from ocp_resources.multi_cluster_hub import MultiClusterHub
 from ocp_resources.multi_cluster_observability import MultiClusterObservability
 from ocp_resources.namespace import Namespace
 from ocp_resources.secret import Secret
@@ -33,57 +34,59 @@ def install_acm(
     registry_config_file,
     timeout_watch,
 ):
-    # section = "Install ACM"
-    # cluster_name = hub_cluster_data["name"]
-    # platform = hub_cluster_data["platform"]
-    # aws_access_key_id = hub_cluster_data["aws-access-key-id"]
-    # aws_secret_access_key = hub_cluster_data["aws-secret-access-key"]
-    # click_echo(name=cluster_name, platform=platform, section=section, msg="Installing ACM")
-    # acm_cluster_kubeconfig = os.path.join(hub_cluster_data["auth-dir"], "kubeconfig")
-    # run_command(
-    #     command=shlex.split(f"cm install acm --kubeconfig {acm_cluster_kubeconfig}"),
-    # )
-    # cluster_hub = MultiClusterHub(
-    #     client=ocp_client,
-    #     name="multiclusterhub",
-    #     namespace="open-cluster-management",
-    # )
-    # cluster_hub.wait_for_status(
-    #     status=cluster_hub.Status.RUNNING, timeout=timeout_watch.remaining_time()
-    # )
-    # labels = {
-    #     f"{cluster_hub.api_group}/credentials": "",
-    #     f"{cluster_hub.api_group}/type": AWS_STR,
-    # }
-    #
-    # with open(private_ssh_key_file, "r") as fd:
-    #     ssh_privatekey = fd.read()
-    #
-    # with open(public_ssh_key_file, "r") as fd:
-    #     ssh_publickey = fd.read()
-    #
-    # secret_data = {
-    #     "aws_access_key_id": aws_access_key_id,
-    #     "aws_secret_access_key": aws_secret_access_key,
-    #     "pullSecret": registry_config_file,
-    #     "ssh-privatekey": ssh_privatekey,
-    #     "ssh-publickey": ssh_publickey,
-    # }
-    # secret = Secret(
-    #     client=ocp_client,
-    #     name="aws-creds",
-    #     namespace="default",
-    #     label=labels,
-    #     string_data=secret_data,
-    # )
-    # secret.deploy(wait=True)
-    # click_echo(
-    #     name=cluster_name,
-    #     platform=platform,
-    #     section=section,
-    #     msg="ACM installed successfully",
-    #     success=True,
-    # )
+    section = "Install ACM"
+    cluster_name = hub_cluster_data["name"]
+    platform = hub_cluster_data["platform"]
+    aws_access_key_id = hub_cluster_data["aws-access-key-id"]
+    aws_secret_access_key = hub_cluster_data["aws-secret-access-key"]
+    click_echo(
+        name=cluster_name, platform=platform, section=section, msg="Installing ACM"
+    )
+    acm_cluster_kubeconfig = os.path.join(hub_cluster_data["auth-dir"], "kubeconfig")
+    run_command(
+        command=shlex.split(f"cm install acm --kubeconfig {acm_cluster_kubeconfig}"),
+    )
+    cluster_hub = MultiClusterHub(
+        client=ocp_client,
+        name="multiclusterhub",
+        namespace="open-cluster-management",
+    )
+    cluster_hub.wait_for_status(
+        status=cluster_hub.Status.RUNNING, timeout=timeout_watch.remaining_time()
+    )
+    labels = {
+        f"{cluster_hub.api_group}/credentials": "",
+        f"{cluster_hub.api_group}/type": AWS_STR,
+    }
+
+    with open(private_ssh_key_file, "r") as fd:
+        ssh_privatekey = fd.read()
+
+    with open(public_ssh_key_file, "r") as fd:
+        ssh_publickey = fd.read()
+
+    secret_data = {
+        "aws_access_key_id": aws_access_key_id,
+        "aws_secret_access_key": aws_secret_access_key,
+        "pullSecret": registry_config_file,
+        "ssh-privatekey": ssh_privatekey,
+        "ssh-publickey": ssh_publickey,
+    }
+    secret = Secret(
+        client=ocp_client,
+        name="aws-creds",
+        namespace="default",
+        label=labels,
+        string_data=secret_data,
+    )
+    secret.deploy(wait=True)
+    click_echo(
+        name=cluster_name,
+        platform=platform,
+        section=section,
+        msg="ACM installed successfully",
+        success=True,
+    )
     if hub_cluster_data.get("acm_observability"):
         enable_observability(
             hub_cluster_data=hub_cluster_data,
