@@ -1,3 +1,4 @@
+import base64
 import os
 import shlex
 
@@ -6,12 +7,10 @@ import yaml
 from clouds.aws.session_clients import s3_client
 from ocm_python_wrapper.cluster import Cluster
 from ocp_resources.managed_cluster import ManagedCluster
-from ocp_resources.multi_cluster_hub import MultiClusterHub
 from ocp_resources.multi_cluster_observability import MultiClusterObservability
 from ocp_resources.namespace import Namespace
 from ocp_resources.secret import Secret
 from ocp_resources.utils import TimeoutWatch
-from ocp_utilities.infra import dict_base64_encode
 from ocp_utilities.utils import run_command
 
 from openshift_cli_installer.utils.cli_utils import click_echo
@@ -34,55 +33,57 @@ def install_acm(
     registry_config_file,
     timeout_watch,
 ):
-    cluster_name = hub_cluster_data["name"]
-    platform = hub_cluster_data["platform"]
-    aws_access_key_id = hub_cluster_data["aws-access-key-id"]
-    aws_secret_access_key = hub_cluster_data["aws-secret-access-key"]
-    click_echo(name=cluster_name, platform=platform, msg="Installing ACM")
-    acm_cluster_kubeconfig = os.path.join(hub_cluster_data["auth-dir"], "kubeconfig")
-    run_command(
-        command=shlex.split(f"cm install acm --kubeconfig {acm_cluster_kubeconfig}"),
-    )
-    cluster_hub = MultiClusterHub(
-        client=ocp_client,
-        name="multiclusterhub",
-        namespace="open-cluster-management",
-    )
-    cluster_hub.wait_for_status(
-        status=cluster_hub.Status.RUNNING, timeout=timeout_watch.remaining_time()
-    )
-    labels = {
-        f"{cluster_hub.api_group}/credentials": "",
-        f"{cluster_hub.api_group}/type": AWS_STR,
-    }
-
-    with open(private_ssh_key_file, "r") as fd:
-        ssh_privatekey = fd.read()
-
-    with open(public_ssh_key_file, "r") as fd:
-        ssh_publickey = fd.read()
-
-    secret_data = {
-        "aws_access_key_id": aws_access_key_id,
-        "aws_secret_access_key": aws_secret_access_key,
-        "pullSecret": registry_config_file,
-        "ssh-privatekey": ssh_privatekey,
-        "ssh-publickey": ssh_publickey,
-    }
-    secret = Secret(
-        client=ocp_client,
-        name="aws-creds",
-        namespace="default",
-        label=labels,
-        string_data=secret_data,
-    )
-    secret.deploy(wait=True)
-    click_echo(
-        name=cluster_name,
-        platform=platform,
-        msg="ACM installed successfully",
-        success=True,
-    )
+    # section = "Install ACM"
+    # cluster_name = hub_cluster_data["name"]
+    # platform = hub_cluster_data["platform"]
+    # aws_access_key_id = hub_cluster_data["aws-access-key-id"]
+    # aws_secret_access_key = hub_cluster_data["aws-secret-access-key"]
+    # click_echo(name=cluster_name, platform=platform, section=section, msg="Installing ACM")
+    # acm_cluster_kubeconfig = os.path.join(hub_cluster_data["auth-dir"], "kubeconfig")
+    # run_command(
+    #     command=shlex.split(f"cm install acm --kubeconfig {acm_cluster_kubeconfig}"),
+    # )
+    # cluster_hub = MultiClusterHub(
+    #     client=ocp_client,
+    #     name="multiclusterhub",
+    #     namespace="open-cluster-management",
+    # )
+    # cluster_hub.wait_for_status(
+    #     status=cluster_hub.Status.RUNNING, timeout=timeout_watch.remaining_time()
+    # )
+    # labels = {
+    #     f"{cluster_hub.api_group}/credentials": "",
+    #     f"{cluster_hub.api_group}/type": AWS_STR,
+    # }
+    #
+    # with open(private_ssh_key_file, "r") as fd:
+    #     ssh_privatekey = fd.read()
+    #
+    # with open(public_ssh_key_file, "r") as fd:
+    #     ssh_publickey = fd.read()
+    #
+    # secret_data = {
+    #     "aws_access_key_id": aws_access_key_id,
+    #     "aws_secret_access_key": aws_secret_access_key,
+    #     "pullSecret": registry_config_file,
+    #     "ssh-privatekey": ssh_privatekey,
+    #     "ssh-publickey": ssh_publickey,
+    # }
+    # secret = Secret(
+    #     client=ocp_client,
+    #     name="aws-creds",
+    #     namespace="default",
+    #     label=labels,
+    #     string_data=secret_data,
+    # )
+    # secret.deploy(wait=True)
+    # click_echo(
+    #     name=cluster_name,
+    #     platform=platform,
+    #     section=section,
+    #     msg="ACM installed successfully",
+    #     success=True,
+    # )
     if hub_cluster_data.get("acm_observability"):
         enable_observability(
             hub_cluster_data=hub_cluster_data,
@@ -99,9 +100,11 @@ def attach_cluster_to_acm(
     timeout_watch,
     managed_cluster_platform,
 ):
+    section = "Attach cluster to ACM hub"
     click_echo(
         name=hub_cluster_name,
         platform=managed_cluster_platform,
+        section=section,
         msg=f"Attach to ACM hub {hub_cluster_name}",
     )
     run_command(
@@ -125,6 +128,7 @@ def attach_cluster_to_acm(
     click_echo(
         name=managed_acm_cluster_name,
         platform=managed_cluster_platform,
+        section=section,
         msg=f"successfully attached to ACM Cluster {hub_cluster_name}",
         success=True,
     )
@@ -210,6 +214,7 @@ def get_managed_acm_cluster_kubeconfig(
         click_echo(
             name=managed_acm_cluster_name,
             platform=managed_cluster_platform,
+            section="Get managed ACM cluster kubeconfig",
             msg="No kubeconfig found",
             error=True,
         )
@@ -228,6 +233,7 @@ def get_cluster_kubeconfig_from_install_dir(
         click_echo(
             name=cluster_name,
             platform=cluster_platform,
+            section="Get cluster kubeconfig from install dir",
             msg=f"Install dir {cluster_install_dir} not found for",
             error=True,
         )
@@ -240,7 +246,9 @@ def enable_observability(
     hub_cluster_data,
     timeout_watch,
 ):
-    string_data_json = None
+    section = "Observability"
+    thanos_secret_data = None
+    _s3_client = None
     ocp_client = hub_cluster_data["ocp-client"]
     cluster_name = hub_cluster_data["name"]
     cluster_uuid = hub_cluster_data["shortuuid"]
@@ -248,28 +256,40 @@ def enable_observability(
     hub_cluster_platform = hub_cluster_data["platform"]
 
     if hub_cluster_platform in AWS_BASED_PLATFORMS:
+        _s3_client = s3_client()
         aws_access_key_id = hub_cluster_data["aws-access-key-id"]
         aws_secret_access_key = hub_cluster_data["aws-secret-access-key"]
         aws_region = hub_cluster_data["region"]
-        string_data_json = {
-            "type": "s3",
-            "config": {
-                "bucket": bucket_name,
-                "endpoint": f"s3.{aws_region}.amazonaws.com",
-                "insecure": "true",
-                "access_key": aws_access_key_id,
-                "secret_key": aws_secret_access_key,
-            },
+        s3_secret_data = f"""
+        type: s3
+        config:
+          bucket: {bucket_name}
+          endpoint: s3.{aws_region}.amazonaws.com
+          insecure: true
+          access_key: {aws_access_key_id}
+          secret_key: {aws_secret_access_key}
+        """
+        s3_secret_data_bytes = s3_secret_data.encode("ascii")
+        thanos_secret_data = {
+            "thanos.yaml": base64.b64encode(s3_secret_data_bytes).decode("utf-8")
         }
-        _s3_client = s3_client()
-        _s3_client.create_bucket(bucket_name=bucket_name)
+        _s3_client.create_bucket(Bucket=bucket_name.lower())
 
     elif hub_cluster_data["platform"] == GCP_OSD_STR:
         # TODO: Add GCP support
         pass
 
+    else:
+        click_echo(
+            name=cluster_name,
+            platform=hub_cluster_platform,
+            section=section,
+            msg="Platform not supported",
+            error=True,
+        )
+        raise click.Abort()
+
     try:
-        thanos_secret_data = {"thanos.yaml": dict_base64_encode(string_data_json)}
         open_cluster_management_observability_ns = Namespace(
             client=ocp_client, name="open-cluster-management-observability"
         )
@@ -316,6 +336,7 @@ def enable_observability(
         click_echo(
             name=cluster_name,
             platform=hub_cluster_platform,
+            section=section,
             msg="Successfully enabled observability",
             success=True,
         )
@@ -323,10 +344,13 @@ def enable_observability(
         click_echo(
             name=cluster_name,
             platform=hub_cluster_platform,
-            msg=f"Failed to enable observability {ex}",
+            section=section,
+            msg=f"Failed to enable observability. error: {ex}",
             error=True,
         )
         if hub_cluster_platform in AWS_BASED_PLATFORMS:
-            _s3_client.delete_bucket(bucket=bucket_name)
+            for _bucket in _s3_client.list_buckets()["Buckets"]:
+                if _bucket["Name"] == bucket_name:
+                    _s3_client.delete_bucket(Bucket=bucket_name)
 
         raise click.Abort()

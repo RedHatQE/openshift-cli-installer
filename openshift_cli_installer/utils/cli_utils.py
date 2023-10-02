@@ -520,7 +520,7 @@ def prepare_clusters(clusters, ocm_token):
     return clusters
 
 
-def click_echo(name, platform, msg, success=None, error=None):
+def click_echo(name, platform, section, msg, success=None, error=None):
     if success:
         fg = SUCCESS_LOG_COLOR
     elif error:
@@ -528,4 +528,6 @@ def click_echo(name, platform, msg, success=None, error=None):
     else:
         fg = "white"
 
-    click.secho(f"Cluster: {name}, Platform:{platform}: {msg}", fg=fg)
+    click.secho(
+        f"[Cluster: {name}, Platform: {platform},  Section: {section}]: {msg}", fg=fg
+    )
