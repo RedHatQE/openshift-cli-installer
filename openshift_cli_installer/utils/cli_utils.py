@@ -40,6 +40,7 @@ from openshift_cli_installer.utils.const import (
     PRODUCTION_STR,
     ROSA_STR,
     STAGE_STR,
+    SUCCESS_LOG_COLOR,
     SUPPORTED_PLATFORMS,
     TIMEOUT_60MIN,
 )
@@ -517,3 +518,14 @@ def prepare_clusters(clusters, ocm_token):
         _cluster["ocm-client"] = get_ocm_client(ocm_token=ocm_token, ocm_env=ocm_env)
 
     return clusters
+
+
+def click_echo(name, platform, msg, success=None, error=None):
+    if success:
+        fg = SUCCESS_LOG_COLOR
+    elif error:
+        fg = ERROR_LOG_COLOR
+    else:
+        fg = "white"
+
+    click.secho(f"Cluster: {name}, Platform:{platform}: {msg}", fg=fg)

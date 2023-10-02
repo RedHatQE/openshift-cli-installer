@@ -3,6 +3,7 @@ import shlex
 
 import click
 import yaml
+from clouds.aws.session_clients import s3_client
 from ocm_python_wrapper.cluster import Cluster
 from ocp_resources.managed_cluster import ManagedCluster
 from ocp_resources.multi_cluster_hub import MultiClusterHub
@@ -12,17 +13,17 @@ from ocp_resources.secret import Secret
 from ocp_resources.utils import TimeoutWatch
 from ocp_utilities.infra import dict_base64_encode
 from ocp_utilities.utils import run_command
-from python_terraform import IsNotFlagged, Terraform
 
+from openshift_cli_installer.utils.cli_utils import click_echo
 from openshift_cli_installer.utils.const import (
+    AWS_BASED_PLATFORMS,
     AWS_OSD_STR,
     AWS_STR,
-    ERROR_LOG_COLOR,
+    GCP_OSD_STR,
     HYPERSHIFT_STR,
     ROSA_STR,
-    SUCCESS_LOG_COLOR,
 )
-from openshift_cli_installer.utils.general import get_manifests_path, tts
+from openshift_cli_installer.utils.general import tts
 
 
 def install_acm(
@@ -34,9 +35,10 @@ def install_acm(
     timeout_watch,
 ):
     cluster_name = hub_cluster_data["name"]
+    platform = hub_cluster_data["platform"]
     aws_access_key_id = hub_cluster_data["aws-access-key-id"]
     aws_secret_access_key = hub_cluster_data["aws-secret-access-key"]
-    click.echo(f"Installing ACM on cluster {cluster_name}")
+    click_echo(name=cluster_name, platform=platform, msg="Installing ACM")
     acm_cluster_kubeconfig = os.path.join(hub_cluster_data["auth-dir"], "kubeconfig")
     run_command(
         command=shlex.split(f"cm install acm --kubeconfig {acm_cluster_kubeconfig}"),
@@ -75,17 +77,16 @@ def install_acm(
         string_data=secret_data,
     )
     secret.deploy(wait=True)
-    click.secho(
-        f"ACM installed successfully on Cluster {cluster_name}",
-        fg=SUCCESS_LOG_COLOR,
+    click_echo(
+        name=cluster_name,
+        platform=platform,
+        msg="ACM installed successfully",
+        success=True,
     )
     if hub_cluster_data.get("acm_observability"):
         enable_observability(
-            ocp_client=ocp_client,
-            s3_bucket_endpoint=f"s3.{hub_cluster_data['region']}.amazonaws.com",
-            aws_access_key_id=aws_access_key_id,
-            aws_secret_access_key=aws_secret_access_key,
-            cluster_name=cluster_name,
+            hub_cluster_data=hub_cluster_data,
+            timeout_watch=timeout_watch,
         )
 
 
@@ -96,8 +97,13 @@ def attach_cluster_to_acm(
     acm_cluster_kubeconfig,
     managed_acm_cluster_kubeconfig,
     timeout_watch,
+    managed_cluster_platform,
 ):
-    click.echo(f"Attach {managed_acm_cluster_name} to ACM hub {hub_cluster_name}")
+    click_echo(
+        name=hub_cluster_name,
+        platform=managed_cluster_platform,
+        msg=f"Attach to ACM hub {hub_cluster_name}",
+    )
     run_command(
         command=shlex.split(
             f"cm --kubeconfig {acm_cluster_kubeconfig} attach cluster --cluster"
@@ -116,10 +122,11 @@ def attach_cluster_to_acm(
         status=managed_cluster.Condition.Status.TRUE,
         timeout=timeout_watch.remaining_time(),
     )
-    click.secho(
-        f"{managed_acm_cluster_name} successfully attached to ACM Cluster"
-        f" {hub_cluster_name}",
-        fg=SUCCESS_LOG_COLOR,
+    click_echo(
+        name=managed_acm_cluster_name,
+        platform=managed_cluster_platform,
+        msg=f"successfully attached to ACM Cluster {hub_cluster_name}",
+        success=True,
     )
 
 
@@ -168,6 +175,7 @@ def install_and_attach_for_acm(
                 acm_cluster_kubeconfig=acm_cluster_kubeconfig,
                 managed_acm_cluster_kubeconfig=managed_acm_cluster_kubeconfig,
                 timeout_watch=timeout_watch,
+                managed_cluster_platform=_managed_cluster_platform,
             )
 
 
@@ -199,8 +207,11 @@ def get_managed_acm_cluster_kubeconfig(
         )
 
     if not managed_acm_cluster_kubeconfig:
-        click.secho(
-            f"No kubeconfig found for {managed_acm_cluster_name}", fg=ERROR_LOG_COLOR
+        click_echo(
+            name=managed_acm_cluster_name,
+            platform=managed_cluster_platform,
+            msg="No kubeconfig found",
+            error=True,
         )
         raise click.Abort()
 
@@ -214,9 +225,11 @@ def get_cluster_kubeconfig_from_install_dir(
         clusters_install_data_directory, cluster_platform, cluster_name
     )
     if not os.path.exists(cluster_install_dir):
-        click.secho(
-            f"Install dir {cluster_install_dir} not found for {cluster_name}",
-            fg=ERROR_LOG_COLOR,
+        click_echo(
+            name=cluster_name,
+            platform=cluster_platform,
+            msg=f"Install dir {cluster_install_dir} not found for",
+            error=True,
         )
         raise click.Abort()
 
@@ -224,102 +237,96 @@ def get_cluster_kubeconfig_from_install_dir(
 
 
 def enable_observability(
-    ocp_client,
-    s3_bucket_endpoint,
-    aws_access_key_id,
-    aws_secret_access_key,
-    cluster_name,
+    hub_cluster_data,
+    timeout_watch,
 ):
-    s3_bucket_name = prepare_vpc_with_endpoint(cluster_name=cluster_name)
-    string_data_json = {
-        "type": "s3",
-        "config": {
-            "bucket": s3_bucket_name,
-            "endpoint": s3_bucket_endpoint,
-            "insecure": "true",
-            "access_key": aws_access_key_id,
-            "secret_key": aws_secret_access_key,
-        },
-    }
-    s3_secret_data = {"thanos.yaml": dict_base64_encode(string_data_json)}
+    string_data_json = None
+    ocp_client = hub_cluster_data["ocp-client"]
+    cluster_name = hub_cluster_data["name"]
+    cluster_uuid = hub_cluster_data["shortuuid"]
+    bucket_name = f"{cluster_name}-observability-{cluster_uuid}"
+    hub_cluster_platform = hub_cluster_data["platform"]
 
-    open_cluster_management_observability_ns = Namespace(
-        client=ocp_client, name="open-cluster-management-observability"
-    )
-    open_cluster_management_observability_ns.deploy(wait=True)
-    openshift_pull_secret = Secret(
-        client=ocp_client, name="pull-secret", namespace="openshift-config"
-    )
-    observability_pull_secret = Secret(
-        client=ocp_client,
-        name="multiclusterhub-operator-pull-secret",
-        namespace=open_cluster_management_observability_ns.name,
-        data_dict={
-            ".dockerconfigjson": openshift_pull_secret.instance.data[
-                ".dockerconfigjson"
-            ]
-        },
-        type="kubernetes.io/dockerconfigjson",
-    )
-    observability_pull_secret.deploy(wait=True)
-    s3_secret = Secret(
-        client=ocp_client,
-        name="thanos-object-storage",
-        namespace=open_cluster_management_observability_ns.name,
-        type="Opaque",
-        data_dict=s3_secret_data,
-    )
-    s3_secret.deploy(wait=True)
+    if hub_cluster_platform in AWS_BASED_PLATFORMS:
+        aws_access_key_id = hub_cluster_data["aws-access-key-id"]
+        aws_secret_access_key = hub_cluster_data["aws-secret-access-key"]
+        aws_region = hub_cluster_data["region"]
+        string_data_json = {
+            "type": "s3",
+            "config": {
+                "bucket": bucket_name,
+                "endpoint": f"s3.{aws_region}.amazonaws.com",
+                "insecure": "true",
+                "access_key": aws_access_key_id,
+                "secret_key": aws_secret_access_key,
+            },
+        }
+        _s3_client = s3_client()
+        _s3_client.create_bucket(bucket_name=bucket_name)
 
-    multi_cluster_observability_data = {"name": s3_secret.name, "key": "thanos.yaml"}
-    multi_cluster_observability = MultiClusterObservability(
-        client=ocp_client,
-        name="observability",
-        metric_object_storage=multi_cluster_observability_data,
-    )
-    multi_cluster_observability.deploy(wait=True)
+    elif hub_cluster_data["platform"] == GCP_OSD_STR:
+        # TODO: Add GCP support
+        pass
 
-
-def terraform_init():
-    terraform = Terraform(
-        working_dir=os.path.join(get_manifests_path(), "vpc_with_endpoint"),
-    )
-    terraform.init()
-    return terraform
-
-
-def destroy_vpc_with_endpoint(cluster_name, terraform):
-    click.echo(
-        f"Destroy VPC with endpoint for ACM observability for cluster {cluster_name}"
-    )
-    rc, _, err = terraform.destroy(
-        force=IsNotFlagged,
-        auto_approve=True,
-        capture_output=True,
-    )
-    if rc != 0:
-        click.secho(
-            "Failed to destroy VPC with endpoint for ACM observability for cluster"
-            f" {cluster_name} with error: {err}"
+    try:
+        thanos_secret_data = {"thanos.yaml": dict_base64_encode(string_data_json)}
+        open_cluster_management_observability_ns = Namespace(
+            client=ocp_client, name="open-cluster-management-observability"
         )
-        raise click.Abort()
-
-
-def prepare_vpc_with_endpoint(cluster_name):
-    click.echo(
-        f"Preparing VPC with endpoint for ACM observability for cluster {cluster_name}"
-    )
-    terraform = terraform_init()
-    terraform.plan(dir_or_plan="vpc_with_endpoint.plan")
-    rc, _, err = terraform.apply(capture_output=True, skip_plan=True, auto_approve=True)
-    if rc != 0:
-        click.secho(
-            f"Create hypershift VPC for cluster {cluster_name} failed with"
-            f" error: {err}, rolling back.",
-            fg=ERROR_LOG_COLOR,
+        open_cluster_management_observability_ns.deploy(wait=True)
+        openshift_pull_secret = Secret(
+            client=ocp_client, name="pull-secret", namespace="openshift-config"
         )
-        # Clean up already created resources from the plan
-        destroy_vpc_with_endpoint(cluster_name=cluster_name, terraform=terraform)
-        raise click.Abort()
+        observability_pull_secret = Secret(
+            client=ocp_client,
+            name="multiclusterhub-operator-pull-secret",
+            namespace=open_cluster_management_observability_ns.name,
+            data_dict={
+                ".dockerconfigjson": openshift_pull_secret.instance.data[
+                    ".dockerconfigjson"
+                ]
+            },
+            type="kubernetes.io/dockerconfigjson",
+        )
+        observability_pull_secret.deploy(wait=True)
+        thanos_secret = Secret(
+            client=ocp_client,
+            name="thanos-object-storage",
+            namespace=open_cluster_management_observability_ns.name,
+            type="Opaque",
+            data_dict=thanos_secret_data,
+        )
+        thanos_secret.deploy(wait=True)
 
-    return terraform.output()["openshift-observability-bucket"]["value"]
+        multi_cluster_observability_data = {
+            "name": thanos_secret.name,
+            "key": "thanos.yaml",
+        }
+        multi_cluster_observability = MultiClusterObservability(
+            client=ocp_client,
+            name="observability",
+            metric_object_storage=multi_cluster_observability_data,
+        )
+        multi_cluster_observability.deploy(wait=True)
+        multi_cluster_observability.wait_for_condition(
+            condition=multi_cluster_observability.Condition.READY,
+            status=multi_cluster_observability.Condition.Status.TRUE,
+            timeout=timeout_watch.remaining_time(),
+        )
+        click_echo(
+            name=cluster_name,
+            platform=hub_cluster_platform,
+            msg="Successfully enabled observability",
+            success=True,
+        )
+    except Exception as ex:
+        click_echo(
+            name=cluster_name,
+            platform=hub_cluster_platform,
+            msg=f"Failed to enable observability {ex}",
+            error=True,
+        )
+        if hub_cluster_platform in AWS_BASED_PLATFORMS:
+            _s3_client.delete_bucket(bucket=bucket_name)
+
+        raise click.Abort()
