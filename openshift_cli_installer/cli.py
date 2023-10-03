@@ -241,6 +241,7 @@ def main(**kwargs):
 
     create = action == CREATE_STR
     user_kwargs["create"] = create
+    user_kwargs["clusters"] = clusters
     verify_user_input(**user_kwargs)
 
     if destroy_clusters_from_s3_config_files or destroy_all_clusters:

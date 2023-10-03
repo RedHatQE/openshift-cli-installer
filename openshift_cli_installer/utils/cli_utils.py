@@ -218,7 +218,7 @@ def assert_aws_credentials_exist(aws_access_key_id, aws_secret_access_key):
 
 def verify_user_input(**kwargs):
     action = kwargs.get("action")
-    clusters = get_clusters_from_user_input(**kwargs)
+    clusters = kwargs.get("clusters")
     ssh_key_file = kwargs.get("ssh_key_file")
     private_ssh_key_file = kwargs.get("private_ssh_key_file")
     docker_config_file = kwargs.get("docker_config_file")
@@ -364,6 +364,7 @@ def assert_acm_clusters_user_input(
                     platform=cluster_platform,
                     section="verify_user_input",
                     msg=f"ACM not supported for {cluster_platform} clusters",
+                    error=True,
                 )
                 raise click.Abort()
 
@@ -613,11 +614,16 @@ def assert_managed_acm_clusters_user_input(clusters, create):
 
 def get_managed_acm_clusters_from_user_input(cluster):
     managed_acm_clusters = cluster.get("acm-clusters")
+
+    # When user input is a single string, we need to convert it to a list
+    # Single string will be when user send only one cluster: acm-clusters=cluster1
     managed_acm_clusters = (
         managed_acm_clusters
         if isinstance(managed_acm_clusters, list)
         else [managed_acm_clusters]
     )
+
+    # Filter all `None` objects from the list
     return [_cluster for _cluster in managed_acm_clusters if _cluster]
 
 
@@ -644,6 +650,6 @@ def assert_unique_cluster_names(clusters):
             platform="All",
             section="verify_user_input",
             error=True,
-            msg="Cluster names must be unique",
+            msg=f"Cluster names must be unique: clusters {cluster_names}",
         )
         raise click.Abort()
