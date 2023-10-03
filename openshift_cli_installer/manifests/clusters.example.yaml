@@ -54,7 +54,7 @@ clusters:
   acm: True
   acm_observability: True
   acm-clusters:
-    - rosa-c2:rosa # Format is <cluster-name>:<cluster platform>
+    - rosa-c2
 
 # Rosa cluster (Will be attahced to `rosa-c1` ACM hub)
 - name: rosa-c2

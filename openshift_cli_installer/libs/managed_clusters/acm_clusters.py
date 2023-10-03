@@ -16,6 +16,7 @@ from ocp_utilities.utils import run_command
 
 from openshift_cli_installer.utils.cli_utils import (
     click_echo,
+    get_cluster_data_by_name_from_clusters,
     get_managed_acm_clusters_from_user_input,
 )
 from openshift_cli_installer.utils.clusters import get_kubeconfig_path
@@ -169,10 +170,12 @@ def install_and_attach_for_acm(
             cluster=hub_cluster_data
         )
         if managed_acm_clusters:
-            for _managed_acm_clusters in managed_acm_clusters:
-                _managed_cluster_name, _managed_cluster_platform = (
-                    _managed_acm_clusters.split(":")
+            for _managed_acm_cluster in managed_acm_clusters:
+                _managed_acm_cluster_data = get_cluster_data_by_name_from_clusters(
+                    name=_managed_acm_cluster, clusters=managed_clusters
                 )
+                _managed_cluster_name = _managed_acm_cluster_data["name"]
+                _managed_cluster_platform = _managed_acm_cluster_data["platform"]
                 managed_acm_cluster_kubeconfig = get_managed_acm_cluster_kubeconfig(
                     hub_cluster_data=hub_cluster_data,
                     managed_acm_cluster_name=_managed_cluster_name,

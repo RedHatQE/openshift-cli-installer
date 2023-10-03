@@ -240,6 +240,7 @@ def main(**kwargs):
     must_gather_output_dir = user_kwargs.get("must_gather_output_dir")
 
     create = action == CREATE_STR
+    user_kwargs["create"] = create
     verify_user_input(**user_kwargs)
 
     if destroy_clusters_from_s3_config_files or destroy_all_clusters:

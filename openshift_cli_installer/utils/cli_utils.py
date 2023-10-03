@@ -586,27 +586,26 @@ def assert_managed_acm_clusters_user_input(clusters, create):
                 cluster=cluster
             )
             for managed_acm_cluster in managed_acm_clusters:
-                try:
-                    name, platform = managed_acm_cluster.split(":")
-                    if platform not in SUPPORTED_PLATFORMS:
-                        click_echo(
-                            name=name,
-                            platform=platform,
-                            section=section,
-                            error=True,
-                            msg=f"{platform} is not supported",
-                        )
-                        raise click.Abort()
-                except ValueError:
+                managed_acm_cluster_data = get_cluster_data_by_name_from_clusters(
+                    name=managed_acm_cluster, clusters=clusters
+                )
+                if not managed_acm_cluster_data:
                     click_echo(
-                        name=cluster["name"],
-                        platform=cluster["platform"],
+                        name=managed_acm_cluster,
+                        platform=None,
                         section=section,
                         error=True,
-                        msg=(
-                            "Format to add cluster to ACM is <cluster-name>:<cluster"
-                            " platform>"
-                        ),
+                        msg=f"Cluster {managed_acm_cluster} not found",
+                    )
+                    raise click.Abort()
+                managed_acm_cluster_platform = managed_acm_cluster_data["platform"]
+                if managed_acm_cluster_platform not in SUPPORTED_PLATFORMS:
+                    click_echo(
+                        name=managed_acm_cluster_platform["name"],
+                        platform=managed_acm_cluster_platform,
+                        section=section,
+                        error=True,
+                        msg=f"{managed_acm_cluster_platform} is not supported",
                     )
                     raise click.Abort()
 
@@ -628,3 +627,9 @@ def get_clusters_from_user_input(**kwargs):
         clusters = kwargs.get("clusters")
 
     return clusters
+
+
+def get_cluster_data_by_name_from_clusters(name, clusters):
+    for cluster in clusters:
+        if cluster["name"] == name:
+            return cluster
