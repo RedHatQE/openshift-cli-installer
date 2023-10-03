@@ -45,7 +45,6 @@ def install_acm(
     click_echo(
         name=cluster_name, platform=platform, section=section, msg="Installing ACM"
     )
-    acm_cluster_kubeconfig = os.path.join(hub_cluster_data["auth-dir"], "kubeconfig")
     run_command(
         command=shlex.split(f"cm install acm --kubeconfig {acm_cluster_kubeconfig}"),
     )

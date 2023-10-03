@@ -355,11 +355,16 @@ def assert_acm_clusters_user_input(
 ):
     acm_clusters = [_cluster for _cluster in clusters if _cluster.get("acm")]
     if acm_clusters and create:
-        if any([_cluster["platform"] == HYPERSHIFT_STR for _cluster in acm_clusters]):
-            click.secho(
-                f"ACM not supported for {HYPERSHIFT_STR} clusters", fg=ERROR_LOG_COLOR
-            )
-            raise click.Abort()
+        for _cluster in acm_clusters:
+            cluster_platform = _cluster["platform"]
+            if cluster_platform not in (ROSA_STR, AWS_STR, AWS_OSD_STR):
+                click_echo(
+                    name=_cluster["name"],
+                    platform=cluster_platform,
+                    section="verify_user_input",
+                    msg=f"ACM not supported for {cluster_platform} clusters",
+                )
+                raise click.Abort()
 
         assert_public_ssh_key_file_exists(ssh_key_file=ssh_key_file)
         assert_registry_config_file_exists(registry_config_file=registry_config_file)
