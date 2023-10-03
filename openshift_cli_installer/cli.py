@@ -9,6 +9,7 @@ from openshift_cli_installer.libs.managed_clusters.acm_clusters import (
 )
 from openshift_cli_installer.utils.cli_utils import (
     get_clusters_by_type,
+    get_clusters_from_user_input,
     is_region_support_aws,
     is_region_support_gcp,
     is_region_support_hypershift,
@@ -208,12 +209,14 @@ def main(**kwargs):
     Create/Destroy Openshift cluster/s
     """
     user_kwargs = kwargs
-    clusters_yaml_config_file = kwargs.get("clusters_yaml_config_file")
+    clusters_yaml_config_file = user_kwargs.get("clusters_yaml_config_file")
     if clusters_yaml_config_file:
-        user_kwargs = parse_config(path=clusters_yaml_config_file)
+        # Update CLI user input from YAML file if exists
+        # Since CLI user input has some defaults, YAML file will override them
+        user_kwargs.update(parse_config(path=clusters_yaml_config_file))
 
-    action = user_kwargs.get("action", kwargs.get("action"))
-    clusters = user_kwargs.get("cluster", user_kwargs.get("clusters"))
+    action = user_kwargs.get("action")
+    clusters = get_clusters_from_user_input(**user_kwargs)
     ocm_token = user_kwargs.get("ocm_token")
     parallel = False if clusters and len(clusters) == 1 else user_kwargs.get("parallel")
     clusters_install_data_directory = user_kwargs.get(
@@ -237,22 +240,7 @@ def main(**kwargs):
     must_gather_output_dir = user_kwargs.get("must_gather_output_dir")
 
     create = action == CREATE_STR
-    verify_user_input(
-        action=action,
-        clusters=clusters,
-        ssh_key_file=ssh_key_file,
-        private_ssh_key_file=private_ssh_key_file,
-        docker_config_file=docker_config_file,
-        registry_config_file=registry_config_file,
-        aws_access_key_id=aws_access_key_id,
-        aws_secret_access_key=aws_secret_access_key,
-        aws_account_id=aws_account_id,
-        ocm_token=ocm_token,
-        destroy_clusters_from_s3_config_files=destroy_clusters_from_s3_config_files,
-        s3_bucket_name=s3_bucket_name,
-        gcp_service_account_file=gcp_service_account_file,
-        create=create,
-    )
+    verify_user_input(**user_kwargs)
 
     if destroy_clusters_from_s3_config_files or destroy_all_clusters:
         return destroy_clusters(

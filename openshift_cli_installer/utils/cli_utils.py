@@ -33,8 +33,6 @@ from openshift_cli_installer.utils.clusters import (
 from openshift_cli_installer.utils.const import (
     AWS_OSD_STR,
     AWS_STR,
-    CREATE_STR,
-    DESTROY_STR,
     ERROR_LOG_COLOR,
     GCP_OSD_STR,
     HYPERSHIFT_STR,
@@ -43,6 +41,7 @@ from openshift_cli_installer.utils.const import (
     ROSA_STR,
     STAGE_STR,
     SUCCESS_LOG_COLOR,
+    SUPPORTED_ACTIONS,
     SUPPORTED_PLATFORMS,
     TIMEOUT_60MIN,
 )
@@ -217,23 +216,28 @@ def assert_aws_credentials_exist(aws_access_key_id, aws_secret_access_key):
         raise click.Abort()
 
 
-def verify_user_input(
-    action,
-    clusters,
-    ssh_key_file,
-    private_ssh_key_file,
-    docker_config_file,
-    registry_config_file,
-    aws_access_key_id,
-    aws_secret_access_key,
-    aws_account_id,
-    ocm_token,
-    destroy_clusters_from_s3_config_files,
-    s3_bucket_name,
-    gcp_service_account_file,
-    create,
-):
+def verify_user_input(**kwargs):
+    action = kwargs.get("action")
+    clusters = get_clusters_from_user_input(**kwargs)
+    ssh_key_file = kwargs.get("ssh_key_file")
+    private_ssh_key_file = kwargs.get("private_ssh_key_file")
+    docker_config_file = kwargs.get("docker_config_file")
+    registry_config_file = kwargs.get("registry_config_file")
+    aws_access_key_id = kwargs.get("aws_access_key_id")
+    aws_secret_access_key = kwargs.get("aws_secret_access_key")
+    aws_account_id = kwargs.get("aws_account_id")
+    ocm_token = kwargs.get("ocm_token")
+    destroy_clusters_from_s3_config_files = kwargs.get(
+        "destroy_clusters_from_s3_config_files"
+    )
+    s3_bucket_name = kwargs.get("s3_bucket_name")
+    gcp_service_account_file = kwargs.get("gcp_service_account_file")
+    create = kwargs.get("create")
+
     abort_no_ocm_token(ocm_token=ocm_token)
+
+    section = "Verify user input"
+    no_platform_no_cluster_for_log = "All"
 
     if destroy_clusters_from_s3_config_files:
         if not s3_bucket_name:
@@ -246,10 +250,28 @@ def verify_user_input(
 
     else:
         if not action:
-            click.secho(
-                f"'action' must be provided, supported actions: `{CREATE_STR}`,"
-                f" `{DESTROY_STR}`",
-                fg=ERROR_LOG_COLOR,
+            click_echo(
+                name=no_platform_no_cluster_for_log,
+                platform=no_platform_no_cluster_for_log,
+                section=section,
+                msg=(
+                    "''action' must be provided, supported actions:"
+                    f" `{SUPPORTED_ACTIONS}`"
+                ),
+                error=True,
+            )
+            raise click.Abort()
+
+        if action not in SUPPORTED_ACTIONS:
+            click_echo(
+                name=no_platform_no_cluster_for_log,
+                platform=no_platform_no_cluster_for_log,
+                section=section,
+                msg=(
+                    f"'{action}' is not supported, supported actions:"
+                    f" `{SUPPORTED_ACTIONS}`"
+                ),
+                error=True,
             )
             raise click.Abort()
 
@@ -260,6 +282,8 @@ def verify_user_input(
             raise click.Abort()
 
         is_platform_supported(clusters=clusters)
+        assert_managed_acm_clusters_user_input(clusters=clusters, create=create)
+
         assert_aws_ipi_user_input(
             clusters=clusters,
             ssh_key_file=ssh_key_file,
@@ -273,7 +297,7 @@ def verify_user_input(
             aws_account_id=aws_account_id,
         )
         assert_acm_clusters_user_input(
-            action=action,
+            create=create,
             clusters=clusters,
             ssh_key_file=ssh_key_file,
             private_ssh_key_file=private_ssh_key_file,
@@ -321,7 +345,7 @@ def assert_aws_osd_user_input(
 
 
 def assert_acm_clusters_user_input(
-    action,
+    create,
     clusters,
     ssh_key_file,
     private_ssh_key_file,
@@ -330,7 +354,7 @@ def assert_acm_clusters_user_input(
     aws_secret_access_key,
 ):
     acm_clusters = [_cluster for _cluster in clusters if _cluster.get("acm")]
-    if acm_clusters and action == CREATE_STR:
+    if acm_clusters and create:
         if any([_cluster["platform"] == HYPERSHIFT_STR for _cluster in acm_clusters]):
             click.secho(
                 f"ACM not supported for {HYPERSHIFT_STR} clusters", fg=ERROR_LOG_COLOR
@@ -547,3 +571,55 @@ def click_echo(name, platform, section, msg, success=None, error=None):
     click.secho(
         f"[Cluster: {name} - Platform: {platform} - Section: {section}]: {msg}", fg=fg
     )
+
+
+def assert_managed_acm_clusters_user_input(clusters, create):
+    if create:
+        section = "Verify user input"
+        for cluster in clusters:
+            managed_acm_clusters = get_managed_acm_clusters_from_user_input(
+                cluster=cluster
+            )
+            for managed_acm_cluster in managed_acm_clusters:
+                try:
+                    name, platform = managed_acm_cluster.split(":")
+                    if platform not in SUPPORTED_PLATFORMS:
+                        click_echo(
+                            name=name,
+                            platform=platform,
+                            section=section,
+                            error=True,
+                            msg=f"{platform} is not supported",
+                        )
+                        raise click.Abort()
+                except ValueError:
+                    click_echo(
+                        name=cluster["name"],
+                        platform=cluster["platform"],
+                        section=section,
+                        error=True,
+                        msg=(
+                            "Format to add cluster to ACM is <cluster-name>:<cluster"
+                            " platform>"
+                        ),
+                    )
+                    raise click.Abort()
+
+
+def get_managed_acm_clusters_from_user_input(cluster):
+    managed_acm_clusters = cluster.get("acm-clusters")
+    managed_acm_clusters = (
+        managed_acm_clusters
+        if isinstance(managed_acm_clusters, list)
+        else [managed_acm_clusters]
+    )
+    return [_cluster for _cluster in managed_acm_clusters if _cluster]
+
+
+def get_clusters_from_user_input(**kwargs):
+    # From CLI, we get `cluster`, from YAML file we get `clusters`
+    clusters = kwargs.get("cluster")
+    if not clusters:
+        clusters = kwargs.get("clusters")
+
+    return clusters
