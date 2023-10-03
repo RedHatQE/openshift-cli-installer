@@ -3,9 +3,7 @@ import os
 import shlex
 
 import click
-import yaml
 from clouds.aws.session_clients import s3_client
-from ocm_python_wrapper.cluster import Cluster
 from ocp_resources.managed_cluster import ManagedCluster
 from ocp_resources.multi_cluster_hub import MultiClusterHub
 from ocp_resources.multi_cluster_observability import MultiClusterObservability
@@ -24,7 +22,6 @@ from openshift_cli_installer.utils.const import (
     AWS_BASED_PLATFORMS,
     AWS_STR,
     GCP_OSD_STR,
-    OCM_MANAGED_PLATFORMS,
 )
 from openshift_cli_installer.utils.general import tts
 
@@ -196,31 +193,15 @@ def install_and_attach_for_acm(
 
 
 def get_managed_acm_cluster_kubeconfig(
-    hub_cluster_data,
     managed_acm_cluster_name,
     managed_cluster_platform,
-    ocm_client,
     clusters_install_data_directory,
 ):
-    # In case we deployed the cluster we have the kubeconfig
-    managed_acm_cluster_kubeconfig = None
-    if managed_cluster_platform in OCM_MANAGED_PLATFORMS:
-        managed_acm_cluster_object = Cluster(
-            client=ocm_client, name=managed_acm_cluster_name
-        )
-        managed_acm_cluster_kubeconfig = os.path.join(
-            hub_cluster_data["install-dir"],
-            f"{managed_acm_cluster_name}-kubeconfig",
-        )
-        with open(managed_acm_cluster_kubeconfig, "w") as fd:
-            fd.write(yaml.safe_dump(managed_acm_cluster_object.kubeconfig))
-
-    elif managed_cluster_platform == AWS_STR:
-        managed_acm_cluster_kubeconfig = get_cluster_kubeconfig_from_install_dir(
-            clusters_install_data_directory=clusters_install_data_directory,
-            cluster_name=managed_acm_cluster_name,
-            cluster_platform=managed_cluster_platform,
-        )
+    managed_acm_cluster_kubeconfig = get_cluster_kubeconfig_from_install_dir(
+        clusters_install_data_directory=clusters_install_data_directory,
+        cluster_name=managed_acm_cluster_name,
+        cluster_platform=managed_cluster_platform,
+    )
 
     if not managed_acm_cluster_kubeconfig:
         click_echo(
