@@ -150,7 +150,6 @@ def install_and_attach_for_acm(
                 "timeout-watch", TimeoutWatch(timeout=tts(ts="15m"))
             )
             ocp_client = hub_cluster_data["ocp-client"]
-            ocm_client = hub_cluster_data["ocm-client"]
             acm_cluster_kubeconfig = get_kubeconfig_path(cluster_data=hub_cluster_data)
 
             install_acm(
@@ -174,10 +173,8 @@ def install_and_attach_for_acm(
                     _managed_cluster_name = _managed_acm_cluster_data["name"]
                     _managed_cluster_platform = _managed_acm_cluster_data["platform"]
                     managed_acm_cluster_kubeconfig = get_managed_acm_cluster_kubeconfig(
-                        hub_cluster_data=hub_cluster_data,
                         managed_acm_cluster_name=_managed_cluster_name,
                         managed_cluster_platform=_managed_cluster_platform,
-                        ocm_client=ocm_client,
                         clusters_install_data_directory=clusters_install_data_directory,
                     )
 
