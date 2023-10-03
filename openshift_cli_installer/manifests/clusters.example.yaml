@@ -25,7 +25,7 @@ clusters:
   replicas: 2
   fips: True
   ocm-env: stage
-  expiration-time: 1h
+  expiration-time: 4h
 
 # GCP OSD cluster
 - name: gcp-osd-c1
@@ -38,7 +38,7 @@ clusters:
   replicas: 2
   fips: True
   ocm-env: stage
-  expiration-time: 1h
+  expiration-time: 4h
 
 # Rosa cluster with ACM deployed and attach `rosa-c2` cluster to the ACM hub
 - name: rosa-c1
@@ -52,7 +52,7 @@ clusters:
   fips: True
   ocm-env: stage
   acm: True
-  acm_observability: True
+  acm-observability: True
   acm-clusters:
     - rosa-c2
 
@@ -78,7 +78,7 @@ clusters:
   timeout: 90m
   replicas: 2
   ocm-env: stage
-  expiration-time: 1h
+  expiration-time: 4h
   private_subnets:
     - 10.0.1.0/24
     - 10.0.2.0/24
@@ -94,7 +94,7 @@ clusters:
   region: us-east-2
   version: "4.13"
   stream: stable
-  timeout: 1h
+  timeout: 4h
   worker_replicas: 2
   worker_flavor: m5.4xlarge
   worker_root_disk_size: 128

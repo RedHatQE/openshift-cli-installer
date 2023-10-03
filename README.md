@@ -84,7 +84,7 @@ Every call to the openshift installer cli must have at least one `--cluster` opt
 ### ACM (Advanced Cluster Management)
 Managed clusters (Rosa, AWS and OSD) can be deployed with ACM and attached to ACM hub.
 To deploy ACM on cluster pass `--cluster ... acm=True`
-To enable observability on the ACM enabled cluster pass `--cluster ... acm_observability=True`
+To enable observability on the ACM enabled cluster pass `--cluster ... acm-observability=True`
 Attach clusters to ACM cluster hub:
   * Support only clusters that created during the run
   * To attach cluster to this ACM hub pass `--cluster ... acm-clusters=mycluser1,mycluster2`

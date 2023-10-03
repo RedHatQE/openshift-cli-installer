@@ -87,7 +87,7 @@ def install_acm(
         msg="ACM installed successfully",
         success=True,
     )
-    if hub_cluster_data.get("acm_observability"):
+    if hub_cluster_data.get("acm-observability"):
         enable_observability(
             hub_cluster_data=hub_cluster_data,
             timeout_watch=timeout_watch,
