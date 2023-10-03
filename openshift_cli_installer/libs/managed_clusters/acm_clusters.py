@@ -1,6 +1,7 @@
 import base64
 import os
 import shlex
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 import click
 from clouds.aws.session_clients import s3_client
@@ -143,6 +144,7 @@ def install_and_attach_for_acm(
     ssh_key_file,
     registry_config_file,
     clusters_install_data_directory,
+    parallel,
 ):
     for hub_cluster_data in managed_clusters:
         if hub_cluster_data.get("acm"):
@@ -162,31 +164,15 @@ def install_and_attach_for_acm(
                 acm_cluster_kubeconfig=acm_cluster_kubeconfig,
             )
 
-            managed_acm_clusters = get_managed_acm_clusters_from_user_input(
-                cluster=hub_cluster_data
+            attach_clusters_to_acm_hub(
+                clusters_install_data_directory=clusters_install_data_directory,
+                ocp_client=ocp_client,
+                acm_cluster_kubeconfig=acm_cluster_kubeconfig,
+                timeout_watch=timeout_watch,
+                hub_cluster_data=hub_cluster_data,
+                managed_clusters=managed_clusters,
+                parallel=parallel,
             )
-            if managed_acm_clusters:
-                for _managed_acm_cluster in managed_acm_clusters:
-                    _managed_acm_cluster_data = get_cluster_data_by_name_from_clusters(
-                        name=_managed_acm_cluster, clusters=managed_clusters
-                    )
-                    _managed_cluster_name = _managed_acm_cluster_data["name"]
-                    _managed_cluster_platform = _managed_acm_cluster_data["platform"]
-                    managed_acm_cluster_kubeconfig = get_managed_acm_cluster_kubeconfig(
-                        managed_acm_cluster_name=_managed_cluster_name,
-                        managed_cluster_platform=_managed_cluster_platform,
-                        clusters_install_data_directory=clusters_install_data_directory,
-                    )
-
-                    attach_cluster_to_acm(
-                        managed_acm_cluster_name=_managed_cluster_name,
-                        hub_cluster_name=hub_cluster_data["name"],
-                        acm_hub_ocp_client=ocp_client,
-                        acm_cluster_kubeconfig=acm_cluster_kubeconfig,
-                        managed_acm_cluster_kubeconfig=managed_acm_cluster_kubeconfig,
-                        timeout_watch=timeout_watch,
-                        managed_cluster_platform=_managed_cluster_platform,
-                    )
 
 
 def get_managed_acm_cluster_kubeconfig(
@@ -343,3 +329,69 @@ def enable_observability(
                     _s3_client.delete_bucket(Bucket=bucket_name)
 
         raise click.Abort()
+
+
+def attach_clusters_to_acm_hub(
+    clusters_install_data_directory,
+    ocp_client,
+    acm_cluster_kubeconfig,
+    timeout_watch,
+    hub_cluster_data,
+    managed_clusters,
+    parallel,
+):
+    managed_acm_clusters = get_managed_acm_clusters_from_user_input(
+        cluster=hub_cluster_data
+    )
+    if not managed_acm_clusters:
+        return
+
+    section = "Attach cluster to ACM hub"
+    futures = []
+    processed_clusters = []
+    hub_cluster_data_name = hub_cluster_data["name"]
+    hub_cluster_data_platform = hub_cluster_data["platform"]
+    with ThreadPoolExecutor() as executor:
+        for _managed_acm_cluster in managed_acm_clusters:
+            _managed_acm_cluster_data = get_cluster_data_by_name_from_clusters(
+                name=_managed_acm_cluster, clusters=managed_clusters
+            )
+            _managed_cluster_name = _managed_acm_cluster_data["name"]
+            _managed_cluster_platform = _managed_acm_cluster_data["platform"]
+            managed_acm_cluster_kubeconfig = get_managed_acm_cluster_kubeconfig(
+                managed_acm_cluster_name=_managed_cluster_name,
+                managed_cluster_platform=_managed_cluster_platform,
+                clusters_install_data_directory=clusters_install_data_directory,
+            )
+            action_kwargs = {
+                "managed_acm_cluster_name": _managed_cluster_name,
+                "hub_cluster_name": hub_cluster_data_name,
+                "acm_hub_ocp_client": ocp_client,
+                "acm_cluster_kubeconfig": acm_cluster_kubeconfig,
+                "managed_acm_cluster_kubeconfig": managed_acm_cluster_kubeconfig,
+                "timeout_watch": timeout_watch,
+                "managed_cluster_platform": _managed_cluster_platform,
+            }
+            click_echo(
+                name=hub_cluster_data_name,
+                platform=hub_cluster_data_platform,
+                section=section,
+                msg=f"Attach {_managed_cluster_name} to ACM hub",
+            )
+
+            if parallel:
+                futures.append(executor.submit(attach_cluster_to_acm, **action_kwargs))
+            else:
+                processed_clusters.append(attach_cluster_to_acm(**action_kwargs))
+
+    if futures:
+        for result in as_completed(futures):
+            if result.exception():
+                click_echo(
+                    name=hub_cluster_data_name,
+                    platform=hub_cluster_data_platform,
+                    section=section,
+                    msg=f"Failed to attach {_managed_cluster_name} to ACM hub",
+                    error=True,
+                )
+                raise click.Abort()

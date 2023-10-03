@@ -320,6 +320,7 @@ def main(**kwargs):
             ssh_key_file=ssh_key_file,
             registry_config_file=registry_config_file,
             clusters_install_data_directory=clusters_install_data_directory,
+            parallel=parallel,
         )
 
 
