@@ -194,6 +194,15 @@ Path to GCP service account json file.
 """,
     type=click.Path(exists=True),
 )
+@click.option(
+    "--must-gather-output-dir",
+    help="""
+\b
+Path to must-gather output directory.
+must-gather will try to collect data when cluster installation fails and cluster can be accessed.
+""",
+    type=click.Path(exists=True),
+)
 def main(**kwargs):
     """
     Create/Destroy Openshift cluster/s
@@ -225,6 +234,7 @@ def main(**kwargs):
     aws_secret_access_key = user_kwargs.get("aws_secret_access_key")
     aws_account_id = user_kwargs.get("aws_account_id")
     gcp_service_account_file = user_kwargs.get("gcp_service_account_file")
+    must_gather_output_dir = user_kwargs.get("must_gather_output_dir")
 
     create = action == CREATE_STR
     verify_user_input(
@@ -310,6 +320,7 @@ def main(**kwargs):
         create=create,
         action=action,
         parallel=parallel,
+        must_gather_output_dir=must_gather_output_dir,
     )
 
     if create:

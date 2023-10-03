@@ -26,7 +26,7 @@ Action also can be passed to the CLI as `--action create/destroy` instead of spe
 * `--parallel`: To create / destroy clusters in parallel
 * Pass `--s3-bucket-name` (and optionally `--s3-bucket-path`) to backup <cluster directory> in an S3 bucket.  
 * `--ocm-token`: OCM token, defaults to `OCM_TOKEN` environment variable.
-
+* `--must-gather-output-dir`: Path to must-gather output dir. `must-gather` will try to collect data when cluster installation fails and cluster can be accessed.
 
 * AWS IPI clusters:
   * The installer output is saved in the <cluster directory>.

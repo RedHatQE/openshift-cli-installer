@@ -15,13 +15,12 @@ from ocp_resources.utils import TimeoutWatch
 from ocp_utilities.utils import run_command
 
 from openshift_cli_installer.utils.cli_utils import click_echo
+from openshift_cli_installer.utils.clusters import get_kubeconfig_path
 from openshift_cli_installer.utils.const import (
     AWS_BASED_PLATFORMS,
-    AWS_OSD_STR,
     AWS_STR,
     GCP_OSD_STR,
-    HYPERSHIFT_STR,
-    ROSA_STR,
+    OCM_MANAGED_PLATFORMS,
 )
 from openshift_cli_installer.utils.general import tts
 
@@ -33,6 +32,7 @@ def install_acm(
     public_ssh_key_file,
     registry_config_file,
     timeout_watch,
+    acm_cluster_kubeconfig,
 ):
     section = "Install ACM"
     cluster_name = hub_cluster_data["name"]
@@ -150,9 +150,7 @@ def install_and_attach_for_acm(
         )
         ocp_client = hub_cluster_data["ocp-client"]
         ocm_client = hub_cluster_data["ocm-client"]
-        acm_cluster_kubeconfig = os.path.join(
-            hub_cluster_data["auth-dir"], "kubeconfig"
-        )
+        acm_cluster_kubeconfig = get_kubeconfig_path(cluster_data=hub_cluster_data)
 
         if hub_cluster_data.get("acm"):
             install_acm(
@@ -162,6 +160,7 @@ def install_and_attach_for_acm(
                 public_ssh_key_file=ssh_key_file,
                 registry_config_file=registry_config_file,
                 timeout_watch=timeout_watch,
+                acm_cluster_kubeconfig=acm_cluster_kubeconfig,
             )
 
         for _managed_acm_clusters in hub_cluster_data.get("acm-clusters", []):
@@ -195,7 +194,7 @@ def get_managed_acm_cluster_kubeconfig(
 ):
     # In case we deployed the cluster we have the kubeconfig
     managed_acm_cluster_kubeconfig = None
-    if managed_cluster_platform in (ROSA_STR, HYPERSHIFT_STR, AWS_OSD_STR):
+    if managed_cluster_platform in OCM_MANAGED_PLATFORMS:
         managed_acm_cluster_object = Cluster(
             client=ocm_client, name=managed_acm_cluster_name
         )

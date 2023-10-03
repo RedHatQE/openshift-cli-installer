@@ -5,6 +5,7 @@ from pathlib import Path
 import click
 import rosa.cli
 from clouds.aws.aws_utils import set_and_verify_aws_credentials
+from ocm_python_wrapper.cluster import Cluster
 from ocp_resources.utils import TimeoutWatch
 
 from openshift_cli_installer.libs.managed_clusters.helpers import (
@@ -37,6 +38,7 @@ from openshift_cli_installer.utils.const import (
     ERROR_LOG_COLOR,
     GCP_OSD_STR,
     HYPERSHIFT_STR,
+    OCM_MANAGED_PLATFORMS,
     PRODUCTION_STR,
     ROSA_STR,
     STAGE_STR,
@@ -154,21 +156,21 @@ def verify_processes_passed(processes, action):
         raise click.Abort()
 
 
-def create_openshift_cluster(
-    cluster_data,
-):
+def create_openshift_cluster(cluster_data, must_gather_output_dir=None):
     cluster_platform = cluster_data["platform"]
     if cluster_platform == AWS_STR:
         return aws_ipi_create_cluster(
-            cluster_data=cluster_data,
+            cluster_data=cluster_data, must_gather_output_dir=must_gather_output_dir
         )
 
     elif cluster_platform in (ROSA_STR, HYPERSHIFT_STR):
         return rosa_create_cluster(
-            cluster_data=cluster_data,
+            cluster_data=cluster_data, must_gather_output_dir=must_gather_output_dir
         )
     elif cluster_platform in (AWS_OSD_STR, GCP_OSD_STR):
-        return osd_create_cluster(cluster_data=cluster_data)
+        return osd_create_cluster(
+            cluster_data=cluster_data, must_gather_output_dir=must_gather_output_dir
+        )
 
 
 def destroy_openshift_cluster(cluster_data):
@@ -419,10 +421,16 @@ def prepare_ocm_managed_clusters(
     return osd_managed_clusters
 
 
-def run_create_or_destroy_clusters(clusters, create, action, parallel):
+def run_create_or_destroy_clusters(
+    clusters, create, action, parallel, must_gather_output_dir
+):
     futures = []
     action_func = create_openshift_cluster if create else destroy_openshift_cluster
     processed_clusters = []
+    action_kwargs = {}
+
+    if create and must_gather_output_dir:
+        action_kwargs["must_gather_output_dir"] = must_gather_output_dir
 
     with ThreadPoolExecutor() as executor:
         for cluster_data in clusters:
@@ -430,7 +438,7 @@ def run_create_or_destroy_clusters(clusters, create, action, parallel):
                 timeout=cluster_data["timeout"]
             )
             _cluster_name = cluster_data["name"]
-            action_kwargs = {"cluster_data": cluster_data}
+            action_kwargs["cluster_data"] = cluster_data
             click.echo(
                 f"Executing {action} cluster {_cluster_name} [parallel: {parallel}]"
             )
@@ -501,8 +509,10 @@ def assert_gcp_osd_user_input(create, clusters, gcp_service_account_file):
 def prepare_clusters(clusters, ocm_token):
     supported_envs = (PRODUCTION_STR, STAGE_STR)
     for _cluster in clusters:
+        name = _cluster["name"]
+        platform = _cluster["platform"]
         _cluster["timeout"] = tts(ts=_cluster.get("timeout", TIMEOUT_60MIN))
-        if _cluster["platform"] == AWS_STR:
+        if platform == AWS_STR:
             ocm_env = PRODUCTION_STR
         else:
             ocm_env = _cluster.get("ocm-env", STAGE_STR)
@@ -510,12 +520,18 @@ def prepare_clusters(clusters, ocm_token):
 
         if ocm_env not in supported_envs:
             click.secho(
-                f"{_cluster['name']} got unsupported OCM env - {ocm_env}, supported"
+                f"{name} got unsupported OCM env - {ocm_env}, supported"
                 f" envs: {supported_envs}"
             )
             raise click.Abort()
 
-        _cluster["ocm-client"] = get_ocm_client(ocm_token=ocm_token, ocm_env=ocm_env)
+        ocm_client = get_ocm_client(ocm_token=ocm_token, ocm_env=ocm_env)
+        _cluster["ocm-client"] = ocm_client
+        if platform in OCM_MANAGED_PLATFORMS:
+            _cluster["cluster-object"] = Cluster(
+                client=ocm_client,
+                name=name,
+            )
 
     return clusters
 

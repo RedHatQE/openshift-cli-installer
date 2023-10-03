@@ -11,6 +11,7 @@ from ocp_utilities.utils import run_command
 from openshift_cli_installer.utils.cluster_versions import set_clusters_versions
 from openshift_cli_installer.utils.clusters import (
     add_cluster_info_to_cluster_data,
+    collect_must_gather,
     dump_cluster_data_to_file,
 )
 from openshift_cli_installer.utils.const import (
@@ -145,9 +146,7 @@ def download_openshift_install_binary(clusters, registry_config_file):
     return clusters
 
 
-def aws_ipi_create_cluster(
-    cluster_data,
-):
+def aws_ipi_create_cluster(cluster_data, must_gather_output_dir=None):
     res, _, _ = run_aws_installer_command(
         cluster_data=cluster_data, action=CREATE_STR, raise_on_failure=False
     )
@@ -171,6 +170,11 @@ def aws_ipi_create_cluster(
         )
 
     if not res:
+        if must_gather_output_dir:
+            collect_must_gather(
+                must_gather_output_dir=must_gather_output_dir, cluster_data=cluster_data
+            )
+
         click.echo(f"Cleaning {AWS_STR} cluster {name} leftovers.")
         aws_ipi_destroy_cluster(
             cluster_data=cluster_data,

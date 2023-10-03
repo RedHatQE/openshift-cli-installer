@@ -11,6 +11,7 @@ aws_access_key_id: !ENV "${AWS_ACCESS_KEY}"
 aws_secret_access_key: !ENV "${AWS_SECRET_ACCESS_KEY}"
 aws_account_id: !ENV "${AWS_ACCOUNT_ID}"
 gcp_service_account_file: !ENV "${HOME}/gcp-service-account.json"
+must_gather_output_dir: null
 
 clusters:
 # AWS OSD cluster

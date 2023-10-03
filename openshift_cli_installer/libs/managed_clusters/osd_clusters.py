@@ -1,8 +1,8 @@
 import click
-from ocm_python_wrapper.cluster import Cluster
 
 from openshift_cli_installer.utils.clusters import (
     add_cluster_info_to_cluster_data,
+    collect_must_gather,
     dump_cluster_data_to_file,
     set_cluster_auth,
 )
@@ -15,11 +15,9 @@ from openshift_cli_installer.utils.const import (
 from openshift_cli_installer.utils.general import zip_and_upload_to_s3
 
 
-def osd_create_cluster(cluster_data):
-    cluster_object = Cluster(
-        client=cluster_data["ocm-client"],
-        name=cluster_data["name"],
-    )
+def osd_create_cluster(cluster_data, must_gather_output_dir=None):
+    cluster_name = cluster_data["name"]
+
     try:
         cluster_platform = cluster_data["platform"]
         ocp_version = (
@@ -52,24 +50,30 @@ def osd_create_cluster(cluster_data):
                 {"gcp_service_account": cluster_data["gcp_service_account"]}
             )
 
-        cluster_object.provision_osd(**provision_osd_kwargs)
+        cluster_data["cluster-object"].provision_osd(**provision_osd_kwargs)
 
         cluster_data = add_cluster_info_to_cluster_data(
             cluster_data=cluster_data,
-            cluster_object=cluster_object,
         )
         dump_cluster_data_to_file(cluster_data=cluster_data)
-        set_cluster_auth(cluster_data=cluster_data, cluster_object=cluster_object)
+        set_cluster_auth(cluster_data=cluster_data)
 
         click.secho(
-            f"Cluster {cluster_data['name']} created successfully", fg=SUCCESS_LOG_COLOR
+            f"Cluster {cluster_name} created successfully", fg=SUCCESS_LOG_COLOR
         )
 
     except Exception as ex:
         click.secho(
-            f"Failed to run cluster create for cluster {cluster_data['name']}\n{ex}",
+            f"Failed to run cluster create for cluster {cluster_name}\n{ex}",
             fg=ERROR_LOG_COLOR,
         )
+        set_cluster_auth(cluster_data=cluster_data)
+
+        if must_gather_output_dir:
+            collect_must_gather(
+                must_gather_output_dir=must_gather_output_dir,
+                cluster_data=cluster_data,
+            )
 
         osd_delete_cluster(cluster_data=cluster_data)
         raise click.Abort()
@@ -91,10 +95,7 @@ def osd_delete_cluster(cluster_data):
     name = cluster_data["name"]
 
     try:
-        Cluster(
-            client=cluster_data["ocm-client"],
-            name=name,
-        ).delete(timeout=cluster_data["timeout"])
+        cluster_data["cluster-object"].delete(timeout=cluster_data["timeout"])
         click.secho(f"Cluster {name} destroyed successfully", fg=SUCCESS_LOG_COLOR)
         return cluster_data
     except Exception as ex:
