@@ -254,8 +254,7 @@ def enable_observability(
     _s3_client = None
     ocp_client = hub_cluster_data["ocp-client"]
     cluster_name = hub_cluster_data["name"]
-    cluster_uuid = hub_cluster_data["shortuuid"]
-    bucket_name = f"{cluster_name}-observability-{cluster_uuid}"
+    bucket_name = f"{cluster_name}-observability-{hub_cluster_data['shortuuid']}"
     hub_cluster_platform = hub_cluster_data["platform"]
 
     if hub_cluster_platform in AWS_BASED_PLATFORMS:
@@ -278,7 +277,7 @@ def enable_observability(
         }
         _s3_client.create_bucket(Bucket=bucket_name.lower())
 
-    elif hub_cluster_data["platform"] == GCP_OSD_STR:
+    elif hub_cluster_platform == GCP_OSD_STR:
         # TODO: Add GCP support
         pass
 

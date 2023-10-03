@@ -529,5 +529,5 @@ def click_echo(name, platform, section, msg, success=None, error=None):
         fg = "white"
 
     click.secho(
-        f"[Cluster: {name}, Platform: {platform},  Section: {section}]: {msg}", fg=fg
+        f"[Cluster: {name} - Platform: {platform} - Section: {section}]: {msg}", fg=fg
     )
