@@ -173,7 +173,6 @@ def install_and_attach_for_acm(
                 _managed_cluster_name, _managed_cluster_platform = (
                     _managed_acm_clusters.split(":")
                 )
-                _managed_cluster_platform = _managed_acm_clusters["platform"]
                 managed_acm_cluster_kubeconfig = get_managed_acm_cluster_kubeconfig(
                     hub_cluster_data=hub_cluster_data,
                     managed_acm_cluster_name=_managed_cluster_name,

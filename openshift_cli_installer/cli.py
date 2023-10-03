@@ -182,8 +182,8 @@ For example:
     "--clusters-yaml-config-file",
     help="""
     \b
-    Yaml file with configuration to create clusters, when using YAML file all other user options are ignored
-    except --action which can be send via CLI or in the YAML file.
+    YAML file with configuration to create clusters, any option in YAML file will override the CLI option.
+    See manifests/clusters.example.yaml for example.
     """,
     type=click.Path(exists=True),
 )
