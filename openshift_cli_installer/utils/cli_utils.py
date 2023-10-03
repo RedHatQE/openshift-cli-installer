@@ -282,6 +282,7 @@ def verify_user_input(**kwargs):
             raise click.Abort()
 
         is_platform_supported(clusters=clusters)
+        assert_unique_cluster_names(clusters=clusters)
         assert_managed_acm_clusters_user_input(clusters=clusters, create=create)
 
         assert_aws_ipi_user_input(
@@ -633,3 +634,16 @@ def get_cluster_data_by_name_from_clusters(name, clusters):
     for cluster in clusters:
         if cluster["name"] == name:
             return cluster
+
+
+def assert_unique_cluster_names(clusters):
+    cluster_names = [cluster["name"] for cluster in clusters]
+    if len(cluster_names) != len(set(cluster_names)):
+        click_echo(
+            name=None,
+            platform="All",
+            section="verify_user_input",
+            error=True,
+            msg="Cluster names must be unique",
+        )
+        raise click.Abort()

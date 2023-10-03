@@ -148,14 +148,14 @@ def install_and_attach_for_acm(
     clusters_install_data_directory,
 ):
     for hub_cluster_data in managed_clusters:
-        timeout_watch = hub_cluster_data.get(
-            "timeout-watch", TimeoutWatch(timeout=tts(ts="15m"))
-        )
-        ocp_client = hub_cluster_data["ocp-client"]
-        ocm_client = hub_cluster_data["ocm-client"]
-        acm_cluster_kubeconfig = get_kubeconfig_path(cluster_data=hub_cluster_data)
-
         if hub_cluster_data.get("acm"):
+            timeout_watch = hub_cluster_data.get(
+                "timeout-watch", TimeoutWatch(timeout=tts(ts="15m"))
+            )
+            ocp_client = hub_cluster_data["ocp-client"]
+            ocm_client = hub_cluster_data["ocm-client"]
+            acm_cluster_kubeconfig = get_kubeconfig_path(cluster_data=hub_cluster_data)
+
             install_acm(
                 hub_cluster_data=hub_cluster_data,
                 ocp_client=ocp_client,
@@ -166,33 +166,33 @@ def install_and_attach_for_acm(
                 acm_cluster_kubeconfig=acm_cluster_kubeconfig,
             )
 
-        managed_acm_clusters = get_managed_acm_clusters_from_user_input(
-            cluster=hub_cluster_data
-        )
-        if managed_acm_clusters:
-            for _managed_acm_cluster in managed_acm_clusters:
-                _managed_acm_cluster_data = get_cluster_data_by_name_from_clusters(
-                    name=_managed_acm_cluster, clusters=managed_clusters
-                )
-                _managed_cluster_name = _managed_acm_cluster_data["name"]
-                _managed_cluster_platform = _managed_acm_cluster_data["platform"]
-                managed_acm_cluster_kubeconfig = get_managed_acm_cluster_kubeconfig(
-                    hub_cluster_data=hub_cluster_data,
-                    managed_acm_cluster_name=_managed_cluster_name,
-                    managed_cluster_platform=_managed_cluster_platform,
-                    ocm_client=ocm_client,
-                    clusters_install_data_directory=clusters_install_data_directory,
-                )
+            managed_acm_clusters = get_managed_acm_clusters_from_user_input(
+                cluster=hub_cluster_data
+            )
+            if managed_acm_clusters:
+                for _managed_acm_cluster in managed_acm_clusters:
+                    _managed_acm_cluster_data = get_cluster_data_by_name_from_clusters(
+                        name=_managed_acm_cluster, clusters=managed_clusters
+                    )
+                    _managed_cluster_name = _managed_acm_cluster_data["name"]
+                    _managed_cluster_platform = _managed_acm_cluster_data["platform"]
+                    managed_acm_cluster_kubeconfig = get_managed_acm_cluster_kubeconfig(
+                        hub_cluster_data=hub_cluster_data,
+                        managed_acm_cluster_name=_managed_cluster_name,
+                        managed_cluster_platform=_managed_cluster_platform,
+                        ocm_client=ocm_client,
+                        clusters_install_data_directory=clusters_install_data_directory,
+                    )
 
-                attach_cluster_to_acm(
-                    managed_acm_cluster_name=_managed_cluster_name,
-                    hub_cluster_name=hub_cluster_data["name"],
-                    acm_hub_ocp_client=ocp_client,
-                    acm_cluster_kubeconfig=acm_cluster_kubeconfig,
-                    managed_acm_cluster_kubeconfig=managed_acm_cluster_kubeconfig,
-                    timeout_watch=timeout_watch,
-                    managed_cluster_platform=_managed_cluster_platform,
-                )
+                    attach_cluster_to_acm(
+                        managed_acm_cluster_name=_managed_cluster_name,
+                        hub_cluster_name=hub_cluster_data["name"],
+                        acm_hub_ocp_client=ocp_client,
+                        acm_cluster_kubeconfig=acm_cluster_kubeconfig,
+                        managed_acm_cluster_kubeconfig=managed_acm_cluster_kubeconfig,
+                        timeout_watch=timeout_watch,
+                        managed_cluster_platform=_managed_cluster_platform,
+                    )
 
 
 def get_managed_acm_cluster_kubeconfig(
