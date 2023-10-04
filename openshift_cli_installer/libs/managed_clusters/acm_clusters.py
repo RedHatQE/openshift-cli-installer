@@ -174,6 +174,8 @@ def install_and_attach_for_acm(
                 parallel=parallel,
             )
 
+    return managed_clusters
+
 
 def get_cluster_kubeconfig_from_install_dir(
     clusters_install_data_directory, cluster_name, cluster_platform

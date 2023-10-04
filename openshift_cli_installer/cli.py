@@ -314,7 +314,7 @@ def main(**kwargs):
     )
 
     if create:
-        install_and_attach_for_acm(
+        processed_clusters = install_and_attach_for_acm(
             managed_clusters=processed_clusters,
             private_ssh_key_file=private_ssh_key_file,
             ssh_key_file=ssh_key_file,
@@ -322,6 +322,8 @@ def main(**kwargs):
             clusters_install_data_directory=clusters_install_data_directory,
             parallel=parallel,
         )
+
+    return processed_clusters
 
 
 if __name__ == "__main__":
