@@ -19,6 +19,7 @@ from openshift_cli_installer.utils.cli_utils import (
     prepare_clusters,
     prepare_ocm_managed_clusters,
     run_create_or_destroy_clusters,
+    save_kubeadmin_token_to_clusters_install_data,
     verify_user_input,
 )
 from openshift_cli_installer.utils.click_dict_type import DictParamType
@@ -316,6 +317,10 @@ def main(**kwargs):
     )
 
     if create:
+        processed_clusters = save_kubeadmin_token_to_clusters_install_data(
+            clusters=processed_clusters,
+        )
+
         processed_clusters = install_and_attach_for_acm(
             managed_clusters=processed_clusters,
             private_ssh_key_file=private_ssh_key_file,

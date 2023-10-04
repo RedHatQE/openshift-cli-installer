@@ -41,7 +41,6 @@ python = "^3.8"
 jinja2 = "^3.1.2"
 shortuuid = "^1.0.11"
 click = "^8.1.4"
-redhat-qe-cloud-tools = "^1.0.9"
 rosa-python-client = "^1.0.16"
 openshift-cluster-management-python-wrapper = "^1.0.27"
 openshift-python-wrapper = "^4.14.1"
@@ -51,6 +50,7 @@ pytest = "^7.4.0"
 openshift-python-utilities = "^5.0.0"
 pyaml-env = "^1.2.1"
 google-cloud-compute = "^1.14.1"
+redhat-qe-cloud-tools = "^1.0.17"
 
 
 [tool.poetry.group.dev.dependencies]
