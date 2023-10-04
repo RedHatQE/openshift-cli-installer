@@ -1,4 +1,6 @@
+import datetime
 import os
+import time
 
 import click
 from pyaml_env import parse_config
@@ -327,4 +329,9 @@ def main(**kwargs):
 
 
 if __name__ == "__main__":
-    main()
+    start_time = time.time()
+    try:
+        main()
+    finally:
+        elapsed_time = datetime.timedelta(seconds=time.time() - start_time)
+        click.echo(f"Total execution time: {elapsed_time}")
