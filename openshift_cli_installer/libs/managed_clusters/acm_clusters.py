@@ -151,12 +151,12 @@ def install_and_attach_for_acm(
             timeout_watch = hub_cluster_data.get(
                 "timeout-watch", TimeoutWatch(timeout=tts(ts="15m"))
             )
-            ocp_client = hub_cluster_data["ocp-client"]
+            acm_cluster_ocp_client = hub_cluster_data["ocp-client"]
             acm_cluster_kubeconfig = get_kubeconfig_path(cluster_data=hub_cluster_data)
 
             install_acm(
                 hub_cluster_data=hub_cluster_data,
-                ocp_client=ocp_client,
+                ocp_client=acm_cluster_ocp_client,
                 private_ssh_key_file=private_ssh_key_file,
                 public_ssh_key_file=ssh_key_file,
                 registry_config_file=registry_config_file,
@@ -166,37 +166,13 @@ def install_and_attach_for_acm(
 
             attach_clusters_to_acm_hub(
                 clusters_install_data_directory=clusters_install_data_directory,
-                ocp_client=ocp_client,
+                ocp_client=acm_cluster_ocp_client,
                 acm_cluster_kubeconfig=acm_cluster_kubeconfig,
                 timeout_watch=timeout_watch,
                 hub_cluster_data=hub_cluster_data,
                 managed_clusters=managed_clusters,
                 parallel=parallel,
             )
-
-
-def get_managed_acm_cluster_kubeconfig(
-    managed_acm_cluster_name,
-    managed_cluster_platform,
-    clusters_install_data_directory,
-):
-    managed_acm_cluster_kubeconfig = get_cluster_kubeconfig_from_install_dir(
-        clusters_install_data_directory=clusters_install_data_directory,
-        cluster_name=managed_acm_cluster_name,
-        cluster_platform=managed_cluster_platform,
-    )
-
-    if not managed_acm_cluster_kubeconfig:
-        click_echo(
-            name=managed_acm_cluster_name,
-            platform=managed_cluster_platform,
-            section="Get managed ACM cluster kubeconfig",
-            msg="No kubeconfig found",
-            error=True,
-        )
-        raise click.Abort()
-
-    return managed_acm_cluster_kubeconfig
 
 
 def get_cluster_kubeconfig_from_install_dir(
@@ -358,9 +334,9 @@ def attach_clusters_to_acm_hub(
             )
             _managed_cluster_name = _managed_acm_cluster_data["name"]
             _managed_cluster_platform = _managed_acm_cluster_data["platform"]
-            managed_acm_cluster_kubeconfig = get_managed_acm_cluster_kubeconfig(
-                managed_acm_cluster_name=_managed_cluster_name,
-                managed_cluster_platform=_managed_cluster_platform,
+            managed_acm_cluster_kubeconfig = get_cluster_kubeconfig_from_install_dir(
+                cluster_name=_managed_cluster_name,
+                cluster_platform=_managed_cluster_platform,
                 clusters_install_data_directory=clusters_install_data_directory,
             )
             action_kwargs = {

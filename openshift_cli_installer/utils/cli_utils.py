@@ -255,7 +255,7 @@ def verify_user_input(**kwargs):
                 platform=no_platform_no_cluster_for_log,
                 section=section,
                 msg=(
-                    "''action' must be provided, supported actions:"
+                    "'action' must be provided, supported actions:"
                     f" `{SUPPORTED_ACTIONS}`"
                 ),
                 error=True,
@@ -354,16 +354,20 @@ def assert_acm_clusters_user_input(
     aws_access_key_id,
     aws_secret_access_key,
 ):
+    supported_platforms = (ROSA_STR, AWS_STR, AWS_OSD_STR)
     acm_clusters = [_cluster for _cluster in clusters if _cluster.get("acm")]
     if acm_clusters and create:
         for _cluster in acm_clusters:
             cluster_platform = _cluster["platform"]
-            if cluster_platform not in (ROSA_STR, AWS_STR, AWS_OSD_STR):
+            if cluster_platform not in supported_platforms:
                 click_echo(
                     name=_cluster["name"],
                     platform=cluster_platform,
                     section="verify_user_input",
-                    msg=f"ACM not supported for {cluster_platform} clusters",
+                    msg=(
+                        f"ACM not supported for {cluster_platform} clusters, supported"
+                        f" platforms are: {supported_platforms}"
+                    ),
                     error=True,
                 )
                 raise click.Abort()
@@ -598,16 +602,6 @@ def assert_managed_acm_clusters_user_input(clusters, create):
                         section=section,
                         error=True,
                         msg=f"Cluster {managed_acm_cluster} not found",
-                    )
-                    raise click.Abort()
-                managed_acm_cluster_platform = managed_acm_cluster_data["platform"]
-                if managed_acm_cluster_platform not in SUPPORTED_PLATFORMS:
-                    click_echo(
-                        name=managed_acm_cluster_platform["name"],
-                        platform=managed_acm_cluster_platform,
-                        section=section,
-                        error=True,
-                        msg=f"{managed_acm_cluster_platform} is not supported",
                     )
                     raise click.Abort()
 
