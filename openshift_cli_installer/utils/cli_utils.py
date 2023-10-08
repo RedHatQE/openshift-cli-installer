@@ -1,17 +1,13 @@
 import ast
 import os
-import re
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
 import click
-import requests
 import rosa.cli
 from clouds.aws.aws_utils import set_and_verify_aws_credentials
 from ocm_python_wrapper.cluster import Cluster
-from ocp_resources.route import Route
 from ocp_resources.utils import TimeoutWatch
-from requests.auth import HTTPBasicAuth
 
 from openshift_cli_installer.libs.managed_clusters.helpers import (
     prepare_managed_clusters_data,
@@ -33,6 +29,7 @@ from openshift_cli_installer.libs.unmanaged_clusters.aws_ipi_clusters import (
 )
 from openshift_cli_installer.utils.clusters import (
     dump_cluster_data_to_file,
+    get_kubeadmin_token,
     get_ocm_client,
     update_rosa_osd_clusters_versions,
 )
@@ -667,31 +664,10 @@ def assert_unique_cluster_names(clusters):
 
 
 def save_kubeadmin_token_to_clusters_install_data(clusters):
+    # Do not run this function in parallel, get_kubeadmin_token() do `oc login`.
     for cluster_data in clusters:
-        oauth_url = Route(
-            client=cluster_data["ocp-client"],
-            name="oauth-openshift",
-            namespace="openshift-authentication",
-        ).instance.spec.host
-        full_oauth_url = (
-            f"https://{oauth_url}/oauth/authorize?response_type=token"
-            "&client_id=openshift-challenging-client"
-        )
-        with open(
-            os.path.join(cluster_data["install-dir"], "auth", "kubeadmin-password")
-        ) as fd:
-            kubeadmin_password = fd.read()
-
-        res = requests.get(
-            full_oauth_url,
-            auth=HTTPBasicAuth("kubeadmin", kubeadmin_password),
-            headers={"X-CSRF-Token": "xxx"},
-            allow_redirects=False,
-        )
-
-        cluster_data["kubeadmin-token"] = re.findall(
-            r"sha256~.*?(?=&)", res.headers["Location"]
-        )[0]
+        with get_kubeadmin_token(cluster_data=cluster_data) as kubeadmin_token:
+            cluster_data["kubeadmin-token"] = kubeadmin_token
 
         dump_cluster_data_to_file(cluster_data=cluster_data)
 

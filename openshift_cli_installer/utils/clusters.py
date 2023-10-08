@@ -1,5 +1,7 @@
+import contextlib
 import copy
 import os
+import shlex
 import shutil
 from pathlib import Path
 
@@ -12,6 +14,7 @@ from ocm_python_wrapper.versions import Versions
 from ocp_resources.route import Route
 from ocp_utilities.infra import get_client
 from ocp_utilities.must_gather import run_must_gather
+from ocp_utilities.utils import run_command
 
 from openshift_cli_installer.utils.cluster_versions import set_clusters_versions
 from openshift_cli_installer.utils.const import (
@@ -206,3 +209,14 @@ def collect_must_gather(must_gather_output_dir, cluster_data):
 
 def get_kubeconfig_path(cluster_data):
     return os.path.join(cluster_data["auth-dir"], "kubeconfig")
+
+
+@contextlib.contextmanager
+def get_kubeadmin_token(cluster_data):
+    with open(
+        os.path.join(cluster_data["install-dir"], "auth", "kubeadmin-password")
+    ) as fd:
+        kubeadmin_password = fd.read()
+    run_command(shlex.split(f"oc login -u kubeadmin -p {kubeadmin_password}"))
+    yield run_command(shlex.split("oc whoami -t"))[1].strip()
+    run_command(shlex.split("oc logout"))
