@@ -1,4 +1,5 @@
 import ast
+import contextlib
 import os
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
@@ -676,19 +677,28 @@ def save_kubeadmin_token_to_clusters_install_data(clusters):
 
 def assert_boolean_values(clusters, create):
     if create:
-        for cluster in clusters:
-            non_bool_keys = [
-                cluster_data_key
-                for cluster_data_key, cluster_data_value in cluster.items()
-                if cluster_data_key in USER_INPUT_CLUSTER_BOOLEAN_KEYS
-                and not isinstance(cluster_data_value, bool)
-            ]
-            if non_bool_keys:
-                click_echo(
-                    name=cluster["name"],
-                    platform=cluster["platform"],
-                    section="verify_user_input",
-                    error=True,
-                    msg=f"The following keys must be booleans: {non_bool_keys}",
-                )
-                raise click.Abort()
+        with change_home_environment():
+            for cluster in clusters:
+                non_bool_keys = [
+                    cluster_data_key
+                    for cluster_data_key, cluster_data_value in cluster.items()
+                    if cluster_data_key in USER_INPUT_CLUSTER_BOOLEAN_KEYS
+                    and not isinstance(cluster_data_value, bool)
+                ]
+                if non_bool_keys:
+                    click_echo(
+                        name=cluster["name"],
+                        platform=cluster["platform"],
+                        section="verify_user_input",
+                        error=True,
+                        msg=f"The following keys must be booleans: {non_bool_keys}",
+                    )
+                    raise click.Abort()
+
+
+@contextlib.contextmanager
+def change_home_environment():
+    current_home = os.environ.get("HOME")
+    os.environ["HOME"] = "/tmp/"
+    yield
+    os.environ["HOME"] = current_home
