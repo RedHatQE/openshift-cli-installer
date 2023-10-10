@@ -9,6 +9,7 @@ from python_terraform import IsNotFlagged, Terraform
 
 from openshift_cli_installer.utils.clusters import (
     add_cluster_info_to_cluster_data,
+    collect_must_gather,
     dump_cluster_data_to_file,
     set_cluster_auth,
 )
@@ -196,11 +197,11 @@ def rosa_create_cluster(cluster_data, must_gather_output_dir=None):
     cluster_name = cluster_data["name"]
 
     try:
-        # rosa.cli.execute(
-        #     command=command,
-        #     ocm_client=cluster_data["ocm-client"],
-        #     aws_region=cluster_data["region"],
-        # )
+        rosa.cli.execute(
+            command=command,
+            ocm_client=cluster_data["ocm-client"],
+            aws_region=cluster_data["region"],
+        )
 
         cluster_data["cluster-object"].wait_for_cluster_ready(
             wait_timeout=cluster_data["timeout"]
@@ -219,16 +220,16 @@ def rosa_create_cluster(cluster_data, must_gather_output_dir=None):
             f"Failed to run cluster create for cluster {cluster_name}\n{ex}",
             fg=ERROR_LOG_COLOR,
         )
-        # set_cluster_auth(cluster_data=cluster_data)
-        #
-        # if must_gather_output_dir:
-        #     collect_must_gather(
-        #         must_gather_output_dir=must_gather_output_dir,
-        #         cluster_data=cluster_data,
-        #     )
-        #
-        # rosa_delete_cluster(cluster_data=cluster_data)
-        # raise click.Abort()
+        set_cluster_auth(cluster_data=cluster_data)
+
+        if must_gather_output_dir:
+            collect_must_gather(
+                must_gather_output_dir=must_gather_output_dir,
+                cluster_data=cluster_data,
+            )
+
+        rosa_delete_cluster(cluster_data=cluster_data)
+        raise click.Abort()
 
     finally:
         s3_bucket_name = cluster_data.get("s3-bucket-name")

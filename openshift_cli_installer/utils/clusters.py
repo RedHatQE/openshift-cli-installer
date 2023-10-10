@@ -217,6 +217,10 @@ def get_kubeadmin_token(cluster_data):
         os.path.join(cluster_data["install-dir"], "auth", "kubeadmin-password")
     ) as fd:
         kubeadmin_password = fd.read()
-    run_command(shlex.split(f"oc login -u kubeadmin -p {kubeadmin_password}"))
+    run_command(
+        shlex.split(
+            f"oc login {cluster_data['api-url']} -u kubeadmin -p {kubeadmin_password}"
+        )
+    )
     yield run_command(shlex.split("oc whoami -t"))[1].strip()
     run_command(shlex.split("oc logout"))
