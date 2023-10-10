@@ -12,9 +12,6 @@ from openshift_cli_installer.libs.managed_clusters.acm_clusters import (
 from openshift_cli_installer.utils.cli_utils import (
     get_clusters_by_type,
     get_clusters_from_user_input,
-    is_region_support_aws,
-    is_region_support_gcp,
-    is_region_support_hypershift,
     prepare_aws_ipi_clusters,
     prepare_clusters,
     prepare_ocm_managed_clusters,
@@ -23,10 +20,7 @@ from openshift_cli_installer.utils.cli_utils import (
     verify_user_input,
 )
 from openshift_cli_installer.utils.click_dict_type import DictParamType
-from openshift_cli_installer.utils.clusters import (
-    add_s3_bucket_data,
-    check_ocm_managed_existing_clusters,
-)
+from openshift_cli_installer.utils.clusters import add_s3_bucket_data
 from openshift_cli_installer.utils.const import (
     AWS_OSD_STR,
     AWS_STR,
@@ -279,14 +273,14 @@ def main(**kwargs):
     aws_managed_clusters = rosa_clusters + hypershift_clusters + aws_osd_clusters
     ocm_managed_clusters = aws_managed_clusters + gcp_osd_clusters
 
-    if create:
-        check_ocm_managed_existing_clusters(clusters=ocm_managed_clusters)
-        is_region_support_hypershift(hypershift_clusters=hypershift_clusters)
-        is_region_support_aws(clusters=aws_ipi_clusters + aws_managed_clusters)
-        is_region_support_gcp(
-            gcp_osd_clusters=gcp_osd_clusters,
-            gcp_service_account_file=gcp_service_account_file,
-        )
+    # if create:
+    #     check_ocm_managed_existing_clusters(clusters=ocm_managed_clusters)
+    #     is_region_support_hypershift(hypershift_clusters=hypershift_clusters)
+    #     is_region_support_aws(clusters=aws_ipi_clusters + aws_managed_clusters)
+    #     is_region_support_gcp(
+    #         gcp_osd_clusters=gcp_osd_clusters,
+    #         gcp_service_account_file=gcp_service_account_file,
+    #     )
 
     aws_ipi_clusters = prepare_aws_ipi_clusters(
         aws_ipi_clusters=aws_ipi_clusters,
