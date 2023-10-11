@@ -669,7 +669,7 @@ def assert_unique_cluster_names(clusters):
 
 def save_kubeadmin_token_to_clusters_install_data(clusters):
     # Do not run this function in parallel, get_kubeadmin_token() do `oc login`.
-    with change_home_environment():
+    with change_home_environment_on_openshift_ci():
         for cluster_data in clusters:
             with get_kubeadmin_token(cluster_data=cluster_data) as kubeadmin_token:
                 cluster_data["kubeadmin-token"] = kubeadmin_token
@@ -700,14 +700,23 @@ def assert_boolean_values(clusters, create):
 
 
 @contextlib.contextmanager
-def change_home_environment():
-    home_atr = "HOME"
-    tmp_home_dir = "/tmp/"
-    LOGGER.info(f"Changing {home_atr} environment variable to {tmp_home_dir}")
-    current_home = os.environ.get(home_atr)
-    os.environ[home_atr] = tmp_home_dir
-    yield
-    LOGGER.info(
-        f"Changing {home_atr} environment variable to previous value. {current_home}"
-    )
-    os.environ[home_atr] = current_home
+def change_home_environment_on_openshift_ci():
+    home_str = "HOME"
+    current_home = os.environ.get(home_str)
+    run_in_openshift_ci = os.environ.get("OPENSHIFT_CI") == "true"
+    # If running on openshift-ci we need to change $HOME to /tmp
+    if run_in_openshift_ci:
+        LOGGER.info("Running in openshift ci")
+        tmp_home_dir = "/tmp/"
+        LOGGER.info(f"Changing {home_str} environment variable to {tmp_home_dir}")
+        os.environ[home_str] = tmp_home_dir
+        yield
+    else:
+        yield
+
+    if run_in_openshift_ci:
+        LOGGER.info(
+            f"Changing {home_str} environment variable to previous value."
+            f" {current_home}"
+        )
+        os.environ[home_str] = current_home
