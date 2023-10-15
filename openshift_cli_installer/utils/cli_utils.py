@@ -685,7 +685,7 @@ def assert_cluster_platform_support_observability(
     not_supported_clusters = []
     missing_storage_data = []
     for cluster in clusters:
-        if not create and not cluster.get("acm-observability"):
+        if not (create and cluster.get("acm-observability")):
             continue
 
         cluster_name = cluster["name"]
