@@ -41,9 +41,11 @@ from openshift_cli_installer.utils.const import (
     ERROR_LOG_COLOR,
     GCP_OSD_STR,
     HYPERSHIFT_STR,
+    OBSERVABILITY_SUPPORTED_STORAGE_TYPES,
     OCM_MANAGED_PLATFORMS,
     PRODUCTION_STR,
     ROSA_STR,
+    S3_STR,
     STAGE_STR,
     SUCCESS_LOG_COLOR,
     SUPPORTED_ACTIONS,
@@ -228,7 +230,6 @@ def verify_user_input(**kwargs):
     action = kwargs.get("action")
     clusters = kwargs.get("clusters")
     ssh_key_file = kwargs.get("ssh_key_file")
-    private_ssh_key_file = kwargs.get("private_ssh_key_file")
     docker_config_file = kwargs.get("docker_config_file")
     registry_config_file = kwargs.get("registry_config_file")
     aws_access_key_id = kwargs.get("aws_access_key_id")
@@ -305,21 +306,19 @@ def verify_user_input(**kwargs):
             aws_secret_access_key=aws_secret_access_key,
             aws_account_id=aws_account_id,
         )
-        assert_acm_clusters_user_input(
-            create=create,
-            clusters=clusters,
-            ssh_key_file=ssh_key_file,
-            private_ssh_key_file=private_ssh_key_file,
-            registry_config_file=registry_config_file,
-            aws_access_key_id=aws_access_key_id,
-            aws_secret_access_key=aws_secret_access_key,
-        )
+
         assert_gcp_osd_user_input(
             clusters=clusters,
             gcp_service_account_file=gcp_service_account_file,
             create=create,
         )
         assert_boolean_values(clusters=clusters, create=create)
+        assert_cluster_platform_support_observability(
+            clusters=clusters,
+            create=create,
+            aws_access_key_id=aws_access_key_id,
+            aws_secret_access_key=aws_secret_access_key,
+        )
 
 
 def assert_aws_ipi_user_input(
@@ -349,48 +348,6 @@ def assert_aws_osd_user_input(
         if not aws_account_id:
             click.secho(
                 "--aws-account_id required for AWS OSD installations.",
-                fg=ERROR_LOG_COLOR,
-            )
-            raise click.Abort()
-
-
-def assert_acm_clusters_user_input(
-    create,
-    clusters,
-    ssh_key_file,
-    private_ssh_key_file,
-    registry_config_file,
-    aws_access_key_id,
-    aws_secret_access_key,
-):
-    supported_platforms = (ROSA_STR, AWS_STR, AWS_OSD_STR)
-    acm_clusters = [_cluster for _cluster in clusters if _cluster.get("acm") is True]
-    if acm_clusters and create:
-        for _cluster in acm_clusters:
-            cluster_platform = _cluster["platform"]
-            if cluster_platform not in supported_platforms:
-                click_echo(
-                    name=_cluster["name"],
-                    platform=cluster_platform,
-                    section="verify_user_input",
-                    msg=(
-                        f"ACM not supported for {cluster_platform} clusters, supported"
-                        f" platforms are: {supported_platforms}"
-                    ),
-                    error=True,
-                )
-                raise click.Abort()
-
-        assert_public_ssh_key_file_exists(ssh_key_file=ssh_key_file)
-        assert_registry_config_file_exists(registry_config_file=registry_config_file)
-        assert_aws_credentials_exist(
-            aws_access_key_id=aws_access_key_id,
-            aws_secret_access_key=aws_secret_access_key,
-        )
-        if not private_ssh_key_file or not os.path.exists(private_ssh_key_file):
-            click.secho(
-                "SSH private file is required for ACM cluster installations."
-                f" {private_ssh_key_file} file does not exist.",
                 fg=ERROR_LOG_COLOR,
             )
             raise click.Abort()
@@ -720,3 +677,83 @@ def change_home_environment_on_openshift_ci():
             f" {current_home}"
         )
         os.environ[home_str] = current_home
+
+
+def assert_cluster_platform_support_observability(
+    clusters, create, aws_access_key_id, aws_secret_access_key
+):
+    not_supported_clusters = []
+    missing_storage_data = []
+    for cluster in clusters:
+        if not create and not cluster.get("acm-observability"):
+            continue
+
+        cluster_name = cluster["name"]
+        storage_type = cluster.get("acm-observability-storage-type")
+        base_error_str = f"cluster: {cluster_name} - storage type: {storage_type}"
+        if storage_type not in OBSERVABILITY_SUPPORTED_STORAGE_TYPES:
+            not_supported_clusters.append(base_error_str)
+        else:
+            missing_storage_data.extend(
+                check_missing_observability_storage_data(
+                    cluster=cluster,
+                    storage_type=storage_type,
+                    base_error_str=base_error_str,
+                    aws_access_key_id=aws_access_key_id,
+                    aws_secret_access_key=aws_secret_access_key,
+                )
+            )
+
+    if not_supported_clusters or missing_storage_data:
+        if not_supported_clusters:
+            _error_clusters = "\n".join(not_supported_clusters)
+            LOGGER.error(
+                "The following storage types are not supported for"
+                f" observability:\n{_error_clusters}\nsupported storage types are"
+                f" {OBSERVABILITY_SUPPORTED_STORAGE_TYPES}\n"
+            )
+
+        if missing_storage_data:
+            _storage_clusters = "\n".join(missing_storage_data)
+            LOGGER.error(
+                "The following clusters are missing storage data for"
+                f" observability:\n{_storage_clusters}\n"
+            )
+        raise click.Abort()
+
+
+def check_missing_observability_storage_data(
+    cluster, storage_type, base_error_str, aws_access_key_id, aws_secret_access_key
+):
+    missing_storage_data = []
+    if storage_type == S3_STR:
+        (
+            aws_access_key_id,
+            aws_secret_access_key,
+        ) = get_aws_credentials_for_acm_observability(
+            cluster=cluster,
+            aws_access_key_id=aws_access_key_id,
+            aws_secret_access_key=aws_secret_access_key,
+        )
+        if not aws_access_key_id:
+            missing_storage_data.append(
+                f"{base_error_str} is missing `acm-observability-s3-access-key-id`"
+            )
+        if not aws_secret_access_key:
+            missing_storage_data.append(
+                f"{base_error_str} is missing `acm-observability-s3-secret-access-key`"
+            )
+
+    return missing_storage_data
+
+
+def get_aws_credentials_for_acm_observability(
+    cluster, aws_access_key_id, aws_secret_access_key
+):
+    _aws_access_key_id = cluster.get(
+        "acm-observability-s3-access-key-id", aws_access_key_id
+    )
+    _aws_secret_access_key = cluster.get(
+        "acm-observability-s3-secret-access-key", aws_secret_access_key
+    )
+    return _aws_access_key_id, _aws_secret_access_key

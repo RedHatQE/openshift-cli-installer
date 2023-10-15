@@ -61,13 +61,6 @@ from openshift_cli_installer.utils.const import (
     show_default=True,
 )
 @click.option(
-    "--private-ssh-key-file",
-    help="id_rsa file path for ACM clusters",
-    default="/openshift-cli-installer/ssh-key/id_rsa",
-    type=click.Path(),
-    show_default=True,
-)
-@click.option(
     "--clusters-install-data-directory",
     help="""
 \b
@@ -216,7 +209,9 @@ def main(**kwargs):
     if clusters_yaml_config_file:
         # Update CLI user input from YAML file if exists
         # Since CLI user input has some defaults, YAML file will override them
-        user_kwargs.update(parse_config(path=clusters_yaml_config_file))
+        user_kwargs.update(
+            parse_config(path=clusters_yaml_config_file, default_value="")
+        )
 
     action = user_kwargs.get("action")
     clusters = get_clusters_from_user_input(**user_kwargs)
@@ -234,7 +229,6 @@ def main(**kwargs):
     destroy_all_clusters = user_kwargs.get("destroy_all_clusters")
     registry_config_file = user_kwargs.get("registry_config_file")
     ssh_key_file = user_kwargs.get("ssh_key_file")
-    private_ssh_key_file = user_kwargs.get("private_ssh_key_file")
     docker_config_file = user_kwargs.get("docker_config_file")
     aws_access_key_id = user_kwargs.get("aws_access_key_id")
     aws_secret_access_key = user_kwargs.get("aws_secret_access_key")
@@ -323,9 +317,6 @@ def main(**kwargs):
 
         processed_clusters = install_and_attach_for_acm(
             managed_clusters=processed_clusters,
-            private_ssh_key_file=private_ssh_key_file,
-            ssh_key_file=ssh_key_file,
-            registry_config_file=registry_config_file,
             clusters_install_data_directory=clusters_install_data_directory,
             parallel=parallel,
         )

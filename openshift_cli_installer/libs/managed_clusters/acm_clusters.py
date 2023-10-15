@@ -12,35 +12,30 @@ from ocp_resources.namespace import Namespace
 from ocp_resources.secret import Secret
 from ocp_resources.utils import TimeoutWatch
 from ocp_utilities.utils import run_command
+from simple_logger.logger import get_logger
 
 from openshift_cli_installer.utils.cli_utils import (
     click_echo,
+    get_aws_credentials_for_acm_observability,
     get_cluster_data_by_name_from_clusters,
     get_managed_acm_clusters_from_user_input,
 )
 from openshift_cli_installer.utils.clusters import get_kubeconfig_path
-from openshift_cli_installer.utils.const import (
-    AWS_BASED_PLATFORMS,
-    AWS_STR,
-    GCP_OSD_STR,
-)
+from openshift_cli_installer.utils.const import AWS_BASED_PLATFORMS, S3_STR
 from openshift_cli_installer.utils.general import tts
+
+LOGGER = get_logger(name=__name__)
 
 
 def install_acm(
     hub_cluster_data,
     ocp_client,
-    private_ssh_key_file,
-    public_ssh_key_file,
-    registry_config_file,
     timeout_watch,
     acm_cluster_kubeconfig,
 ):
     section = "Install ACM"
     cluster_name = hub_cluster_data["name"]
     platform = hub_cluster_data["platform"]
-    aws_access_key_id = hub_cluster_data["aws-access-key-id"]
-    aws_secret_access_key = hub_cluster_data["aws-secret-access-key"]
     click_echo(
         name=cluster_name, platform=platform, section=section, msg="Installing ACM"
     )
@@ -55,32 +50,7 @@ def install_acm(
     cluster_hub.wait_for_status(
         status=cluster_hub.Status.RUNNING, timeout=timeout_watch.remaining_time()
     )
-    labels = {
-        f"{cluster_hub.api_group}/credentials": "",
-        f"{cluster_hub.api_group}/type": AWS_STR,
-    }
 
-    with open(private_ssh_key_file, "r") as fd:
-        ssh_privatekey = fd.read()
-
-    with open(public_ssh_key_file, "r") as fd:
-        ssh_publickey = fd.read()
-
-    secret_data = {
-        "aws_access_key_id": aws_access_key_id,
-        "aws_secret_access_key": aws_secret_access_key,
-        "pullSecret": registry_config_file,
-        "ssh-privatekey": ssh_privatekey,
-        "ssh-publickey": ssh_publickey,
-    }
-    secret = Secret(
-        client=ocp_client,
-        name="aws-creds",
-        namespace="default",
-        label=labels,
-        string_data=secret_data,
-    )
-    secret.deploy(wait=True)
     click_echo(
         name=cluster_name,
         platform=platform,
@@ -88,10 +58,12 @@ def install_acm(
         msg="ACM installed successfully",
         success=True,
     )
-    if hub_cluster_data.get("acm-observability") is True:
+    if hub_cluster_data.get("acm-observability"):
         enable_observability(
             hub_cluster_data=hub_cluster_data,
             timeout_watch=timeout_watch,
+            aws_access_key_id=hub_cluster_data.get("aws-access-key-id"),
+            aws_secret_access_key=hub_cluster_data.get("aws-secret-access-key"),
         )
 
 
@@ -140,9 +112,6 @@ def attach_cluster_to_acm(
 
 def install_and_attach_for_acm(
     managed_clusters,
-    private_ssh_key_file,
-    ssh_key_file,
-    registry_config_file,
     clusters_install_data_directory,
     parallel,
 ):
@@ -157,9 +126,6 @@ def install_and_attach_for_acm(
             install_acm(
                 hub_cluster_data=hub_cluster_data,
                 ocp_client=acm_cluster_ocp_client,
-                private_ssh_key_file=private_ssh_key_file,
-                public_ssh_key_file=ssh_key_file,
-                registry_config_file=registry_config_file,
                 timeout_watch=timeout_watch,
                 acm_cluster_kubeconfig=acm_cluster_kubeconfig,
             )
@@ -199,6 +165,8 @@ def get_cluster_kubeconfig_from_install_dir(
 def enable_observability(
     hub_cluster_data,
     timeout_watch,
+    aws_access_key_id,
+    aws_secret_access_key,
 ):
     section = "Observability"
     thanos_secret_data = None
@@ -207,14 +175,22 @@ def enable_observability(
     cluster_name = hub_cluster_data["name"]
     bucket_name = f"{cluster_name}-observability-{hub_cluster_data['shortuuid']}"
     hub_cluster_platform = hub_cluster_data["platform"]
+    storage_type = hub_cluster_data["acm-observability-storage-type"]
 
-    if hub_cluster_platform in AWS_BASED_PLATFORMS:
-        _s3_client = s3_client()
-        aws_access_key_id = hub_cluster_data["aws-access-key-id"]
-        aws_secret_access_key = hub_cluster_data["aws-secret-access-key"]
-        aws_region = hub_cluster_data["region"]
+    if storage_type == S3_STR:
+        aws_region = hub_cluster_data.get(
+            "acm-observability-s3-region", hub_cluster_data.get("region")
+        )
+        _s3_client = s3_client(region_name=aws_region)
+        aws_access_key_id, aws_secret_access_key = (
+            get_aws_credentials_for_acm_observability(
+                cluster=hub_cluster_data,
+                aws_access_key_id=aws_access_key_id,
+                aws_secret_access_key=aws_secret_access_key,
+            )
+        )
         s3_secret_data = f"""
-        type: s3
+        type: {S3_STR}
         config:
           bucket: {bucket_name}
           endpoint: s3.{aws_region}.amazonaws.com
@@ -226,21 +202,15 @@ def enable_observability(
         thanos_secret_data = {
             "thanos.yaml": base64.b64encode(s3_secret_data_bytes).decode("utf-8")
         }
-        _s3_client.create_bucket(Bucket=bucket_name.lower())
+        LOGGER.info(f"Create S3 bucket {bucket_name} in {aws_region}")
+        _s3_client.create_bucket(
+            Bucket=bucket_name.lower(),
+            CreateBucketConfiguration={"LocationConstraint": aws_region},
+        )
 
-    elif hub_cluster_platform == GCP_OSD_STR:
+    elif storage_type == "gcp":
         # TODO: Add GCP support
         pass
-
-    else:
-        click_echo(
-            name=cluster_name,
-            platform=hub_cluster_platform,
-            section=section,
-            msg="Platform not supported",
-            error=True,
-        )
-        raise click.Abort()
 
     try:
         open_cluster_management_observability_ns = Namespace(

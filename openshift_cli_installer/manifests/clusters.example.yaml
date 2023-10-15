@@ -39,8 +39,13 @@ clusters:
   fips: True
   ocm-env: stage
   expiration-time: 4h
+  acm-observability: True
+  acm-observability-storage-type: s3
+  acm-observability-s3-access-key-id: !ENV "${AWS_ACCESS_KEY_ID}"
+  acm-observability-s3-secret-access-key: !ENV "${AWS_SECRET_ACCESS_KEY}"
+  acm-observability-s3-region: us-east-1
 
-# Rosa cluster with ACM deployed and attach `rosa-c2` cluster to the ACM hub
+# Rosa cluster with ACM and observability deployed and attach `rosa-c2` cluster to the ACM hub
 - name: rosa-c1
   platform: rosa
   region: us-east-2
@@ -53,6 +58,7 @@ clusters:
   ocm-env: stage
   acm: True
   acm-observability: True
+  acm-observability-storage-type: s3
   acm-clusters:
     - rosa-c2
 
