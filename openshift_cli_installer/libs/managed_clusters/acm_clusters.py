@@ -334,12 +334,10 @@ def attach_clusters_to_acm_hub(
 
     if futures:
         for result in as_completed(futures):
-            if result.exception():
-                click_echo(
-                    name=hub_cluster_data_name,
-                    platform=hub_cluster_data_platform,
-                    section=section,
-                    msg=f"Failed to attach {_managed_cluster_name} to ACM hub",
-                    error=True,
+            _exception = result.exception()
+            if _exception:
+                LOGGER.error(
+                    f"Failed to attach {_managed_cluster_name} to ACM hub"
+                    f" {hub_cluster_data_name}. Error: {_exception}"
                 )
                 raise click.Abort()
