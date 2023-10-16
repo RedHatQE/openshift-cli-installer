@@ -32,8 +32,6 @@ def prepare_managed_clusters_data(
         _cluster["multi-az"] = _cluster.get("multi-az", False)
 
         if cluster_platform in (ROSA_STR, HYPERSHIFT_STR, AWS_OSD_STR):
-            _cluster["aws-access-key-id"] = aws_access_key_id
-            _cluster["aws-secret-access-key"] = aws_secret_access_key
             _cluster["aws-account-id"] = aws_account_id
 
             if cluster_platform == HYPERSHIFT_STR:

@@ -399,12 +399,6 @@ def prepare_aws_ipi_clusters(
                 ssh_key_file=ssh_key_file,
                 docker_config_file=docker_config_file,
             )
-            acm_clusters = [
-                _cluster for _cluster in aws_ipi_clusters if _cluster.get("acm") is True
-            ]
-            for _acm_cluster in acm_clusters:
-                _acm_cluster["aws-access-key-id"] = aws_access_key_id
-                _acm_cluster["aws-secret-access-key"] = aws_secret_access_key
 
     return aws_ipi_clusters
 
@@ -620,8 +614,8 @@ def get_clusters_from_user_input(**kwargs):
             aws_access_key_id=kwargs.get("aws_access_key_id"),
             aws_secret_access_key=kwargs.get("aws_secret_access_key"),
         )
-        _cluster["aws_access_key_id"] = aws_access_key_id
-        _cluster["aws_secret_access_key"] = aws_secret_access_key
+        _cluster["aws-access-key-id"] = aws_access_key_id
+        _cluster["aws-secret-access-key"] = aws_secret_access_key
 
         for key in USER_INPUT_CLUSTER_BOOLEAN_KEYS:
             cluster_key_value = _cluster.get(key)
