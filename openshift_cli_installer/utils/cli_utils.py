@@ -748,11 +748,11 @@ def check_missing_observability_storage_data(
 ):
     missing_storage_data = []
     if storage_type == S3_STR:
-        if not cluster.get("aws_access_key_id"):
+        if not cluster.get("aws-access-key-id"):
             missing_storage_data.append(
                 f"{base_error_str} is missing `acm-observability-s3-access-key-id`"
             )
-        if not cluster.get("aws_secret_access_key"):
+        if not cluster.get("aws-secret-access-key"):
             missing_storage_data.append(
                 f"{base_error_str} is missing `acm-observability-s3-secret-access-key`"
             )
