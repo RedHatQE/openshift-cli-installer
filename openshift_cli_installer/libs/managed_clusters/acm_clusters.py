@@ -16,7 +16,6 @@ from simple_logger.logger import get_logger
 
 from openshift_cli_installer.utils.cli_utils import (
     click_echo,
-    get_aws_credentials_for_acm_observability,
     get_cluster_data_by_name_from_clusters,
     get_managed_acm_clusters_from_user_input,
 )
@@ -62,8 +61,6 @@ def install_acm(
         enable_observability(
             hub_cluster_data=hub_cluster_data,
             timeout_watch=timeout_watch,
-            aws_access_key_id=hub_cluster_data.get("aws-access-key-id"),
-            aws_secret_access_key=hub_cluster_data.get("aws-secret-access-key"),
         )
 
 
@@ -165,8 +162,6 @@ def get_cluster_kubeconfig_from_install_dir(
 def enable_observability(
     hub_cluster_data,
     timeout_watch,
-    aws_access_key_id,
-    aws_secret_access_key,
 ):
     section = "Observability"
     thanos_secret_data = None
@@ -182,21 +177,14 @@ def enable_observability(
             "acm-observability-s3-region", hub_cluster_data.get("region")
         )
         _s3_client = s3_client(region_name=aws_region)
-        aws_access_key_id, aws_secret_access_key = (
-            get_aws_credentials_for_acm_observability(
-                cluster=hub_cluster_data,
-                aws_access_key_id=aws_access_key_id,
-                aws_secret_access_key=aws_secret_access_key,
-            )
-        )
         s3_secret_data = f"""
         type: {S3_STR}
         config:
           bucket: {bucket_name}
           endpoint: s3.{aws_region}.amazonaws.com
           insecure: true
-          access_key: {aws_access_key_id}
-          secret_key: {aws_secret_access_key}
+          access_key: {hub_cluster_data['aws-access-key-id']}
+          secret_key: {hub_cluster_data['aws-secret-access-key']}
         """
         s3_secret_data_bytes = s3_secret_data.encode("ascii")
         thanos_secret_data = {
