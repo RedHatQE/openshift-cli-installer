@@ -319,8 +319,6 @@ def verify_user_input(**kwargs):
         assert_cluster_platform_support_observability(
             clusters=clusters,
             create=create,
-            aws_access_key_id=aws_access_key_id,
-            aws_secret_access_key=aws_secret_access_key,
         )
 
 
@@ -532,6 +530,7 @@ def prepare_clusters(clusters, ocm_token):
         name = _cluster["name"]
         platform = _cluster["platform"]
         _cluster["timeout"] = tts(ts=_cluster.get("timeout", TIMEOUT_60MIN))
+
         if platform == AWS_STR:
             ocm_env = PRODUCTION_STR
         else:
@@ -613,6 +612,17 @@ def get_clusters_from_user_input(**kwargs):
         clusters = kwargs.get("clusters", [])
 
     for _cluster in clusters:
+        (
+            aws_access_key_id,
+            aws_secret_access_key,
+        ) = get_aws_credentials_for_acm_observability(
+            cluster=_cluster,
+            aws_access_key_id=kwargs.get("aws_access_key_id"),
+            aws_secret_access_key=kwargs.get("aws_secret_access_key"),
+        )
+        _cluster["aws_access_key_id"] = aws_access_key_id
+        _cluster["aws_secret_access_key"] = aws_secret_access_key
+
         for key in USER_INPUT_CLUSTER_BOOLEAN_KEYS:
             cluster_key_value = _cluster.get(key)
             if cluster_key_value and isinstance(cluster_key_value, str):
@@ -698,9 +708,7 @@ def change_home_environment_on_openshift_ci():
         os.environ[home_str] = current_home
 
 
-def assert_cluster_platform_support_observability(
-    clusters, create, aws_access_key_id, aws_secret_access_key
-):
+def assert_cluster_platform_support_observability(clusters, create):
     not_supported_clusters = []
     missing_storage_data = []
     for cluster in clusters:
@@ -718,8 +726,6 @@ def assert_cluster_platform_support_observability(
                     cluster=cluster,
                     storage_type=storage_type,
                     base_error_str=base_error_str,
-                    aws_access_key_id=aws_access_key_id,
-                    aws_secret_access_key=aws_secret_access_key,
                 )
             )
 
@@ -742,23 +748,17 @@ def assert_cluster_platform_support_observability(
 
 
 def check_missing_observability_storage_data(
-    cluster, storage_type, base_error_str, aws_access_key_id, aws_secret_access_key
+    cluster,
+    storage_type,
+    base_error_str,
 ):
     missing_storage_data = []
     if storage_type == S3_STR:
-        (
-            aws_access_key_id,
-            aws_secret_access_key,
-        ) = get_aws_credentials_for_acm_observability(
-            cluster=cluster,
-            aws_access_key_id=aws_access_key_id,
-            aws_secret_access_key=aws_secret_access_key,
-        )
-        if not aws_access_key_id:
+        if not cluster.get("aws_access_key_id"):
             missing_storage_data.append(
                 f"{base_error_str} is missing `acm-observability-s3-access-key-id`"
             )
-        if not aws_secret_access_key:
+        if not cluster.get("aws_secret_access_key"):
             missing_storage_data.append(
                 f"{base_error_str} is missing `acm-observability-s3-secret-access-key`"
             )

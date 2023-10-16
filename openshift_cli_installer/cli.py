@@ -254,7 +254,10 @@ def main(**kwargs):
         )
 
     # General prepare for all clusters
-    clusters = prepare_clusters(clusters=clusters, ocm_token=ocm_token)
+    clusters = prepare_clusters(
+        clusters=clusters,
+        ocm_token=ocm_token,
+    )
 
     if create and s3_bucket_name:
         clusters = add_s3_bucket_data(

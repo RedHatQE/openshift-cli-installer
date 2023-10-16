@@ -152,7 +152,8 @@ def set_clusters_data(cluster_dirs, clusters_dict, ocm_token):
     _clusters_dict = copy.copy(clusters_dict)
     for cluster_type, clusters_list in clusters_dict.items():
         _clusters_dict[cluster_type] = prepare_clusters(
-            clusters=clusters_list, ocm_token=ocm_token
+            clusters=clusters_list,
+            ocm_token=ocm_token,
         )
 
     return _clusters_dict
