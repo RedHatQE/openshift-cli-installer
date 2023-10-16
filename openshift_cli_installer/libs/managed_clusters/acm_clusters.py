@@ -19,7 +19,10 @@ from openshift_cli_installer.utils.cli_utils import (
     get_cluster_data_by_name_from_clusters,
     get_managed_acm_clusters_from_user_input,
 )
-from openshift_cli_installer.utils.clusters import get_kubeconfig_path
+from openshift_cli_installer.utils.clusters import (
+    dump_cluster_data_to_file,
+    get_kubeconfig_path,
+)
 from openshift_cli_installer.utils.const import AWS_BASED_PLATFORMS, S3_STR
 from openshift_cli_installer.utils.general import tts
 
@@ -159,10 +162,7 @@ def get_cluster_kubeconfig_from_install_dir(
     return os.path.join(cluster_install_dir, "auth", "kubeconfig")
 
 
-def enable_observability(
-    hub_cluster_data,
-    timeout_watch,
-):
+def enable_observability(hub_cluster_data, timeout_watch):
     section = "Observability"
     thanos_secret_data = None
     _s3_client = None
@@ -195,6 +195,8 @@ def enable_observability(
             Bucket=bucket_name.lower(),
             CreateBucketConfiguration={"LocationConstraint": aws_region},
         )
+        hub_cluster_data["acm-observability-s3-bucket-name"] = bucket_name
+        dump_cluster_data_to_file(cluster_data=hub_cluster_data)
 
     elif storage_type == "gcp":
         # TODO: Add GCP support

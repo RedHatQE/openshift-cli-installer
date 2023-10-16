@@ -106,6 +106,12 @@ def _destroy_cluster(cluster_data, cluster_type):
         if s3_bucket_name:
             delete_s3_object(cluster_data=cluster_data, s3_bucket_name=s3_bucket_name)
 
+        acm_observability_s3_bucket_name = cluster_data.get(
+            "acm-observability-s3-bucket-name"
+        )
+        if acm_observability_s3_bucket_name:
+            delete_s3_bucket(s3_bucket_name=acm_observability_s3_bucket_name)
+
     except Exception as ex:
         click.secho(
             f"Cannot delete cluster {cluster_data['name']} on {ex}", fg=ERROR_LOG_COLOR
@@ -116,6 +122,14 @@ def delete_s3_object(cluster_data, s3_bucket_name):
     bucket_key = cluster_data["s3-object-name"]
     click.echo(f"Delete {bucket_key} from bucket {s3_bucket_name}")
     s3_client().delete_object(Bucket=s3_bucket_name, Key=bucket_key)
+
+
+def delete_s3_bucket(s3_bucket_name):
+    _s3_client = s3_client()
+    for _object in _s3_client.list_objects(Bucket=s3_bucket_name)["Contents"]:
+        _s3_client.delete_object(Bucket=s3_bucket_name, Key=_object["Key"])
+
+    _s3_client.delete_bucket(Bucket=s3_bucket_name)
 
 
 def prepare_cluster_directories(s3_bucket_path, dir_prefix):
