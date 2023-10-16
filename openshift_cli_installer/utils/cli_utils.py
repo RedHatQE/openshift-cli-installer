@@ -306,7 +306,10 @@ def verify_user_input(**kwargs):
             aws_secret_access_key=aws_secret_access_key,
             aws_account_id=aws_account_id,
         )
-
+        assert_acm_clusters_user_input(
+            create=create,
+            clusters=clusters,
+        )
         assert_gcp_osd_user_input(
             clusters=clusters,
             gcp_service_account_file=gcp_service_account_file,
@@ -351,6 +354,22 @@ def assert_aws_osd_user_input(
                 fg=ERROR_LOG_COLOR,
             )
             raise click.Abort()
+
+
+def assert_acm_clusters_user_input(create, clusters):
+    acm_clusters = [_cluster for _cluster in clusters if _cluster.get("acm") is True]
+    if acm_clusters and create:
+        for _cluster in acm_clusters:
+            cluster_platform = _cluster["platform"]
+            if cluster_platform == HYPERSHIFT_STR:
+                click_echo(
+                    name=_cluster["name"],
+                    platform=cluster_platform,
+                    section="verify_user_input",
+                    msg=f"ACM not supported for {cluster_platform} clusters",
+                    error=True,
+                )
+                raise click.Abort()
 
 
 def prepare_aws_ipi_clusters(
