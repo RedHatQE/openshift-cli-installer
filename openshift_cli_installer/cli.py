@@ -4,6 +4,7 @@ import time
 
 import click
 
+from openshift_cli_installer.libs.clusters import OCPClusters
 from openshift_cli_installer.libs.destroy_clusters import destroy_clusters
 from openshift_cli_installer.libs.managed_clusters.acm_clusters import (
     install_and_attach_for_acm,
@@ -228,47 +229,40 @@ def main(**kwargs):
         )
 
     # General prepare for all clusters
-    clusters = prepare_clusters(
-        clusters=user_input.clusters,
-        ocm_token=user_input.ocm_token,
-    )
-
-    if user_input.create and user_input.s3_bucket_name:
-        clusters = add_s3_bucket_data(
-            clusters=clusters,
-            s3_bucket_name=user_input.s3_bucket_name,
-            s3_bucket_path=user_input.s3_bucket_path,
-        )
-
-    clusters_dict = get_clusters_by_type(clusters=clusters)
-    aws_ipi_clusters = clusters_dict.get(AWS_STR)
-    rosa_clusters = clusters_dict.get(ROSA_STR)
-    hypershift_clusters = clusters_dict.get(HYPERSHIFT_STR)
-    aws_osd_clusters = clusters_dict.get(AWS_OSD_STR)
-    gcp_osd_clusters = clusters_dict.get(GCP_OSD_STR)
-
-    aws_managed_clusters = rosa_clusters + hypershift_clusters + aws_osd_clusters
-    ocm_managed_clusters = aws_managed_clusters + gcp_osd_clusters
-
+    clusters = OCPClusters(user_input=user_input)
     if user_input.create:
-        check_ocm_managed_existing_clusters(clusters=ocm_managed_clusters)
-        is_region_support_hypershift(hypershift_clusters=hypershift_clusters)
-        is_region_support_aws(clusters=aws_ipi_clusters + aws_managed_clusters)
-        is_region_support_gcp(
-            gcp_osd_clusters=gcp_osd_clusters,
-            gcp_service_account_file=user_input.gcp_service_account_file,
-        )
+        clusters.check_ocm_managed_existing_clusters()
+        clusters.is_region_support_hypershift()
+        clusters.is_region_support_aws()
+        clusters.is_region_support_gcp()
+
+    import ipdb;ipdb.set_trace()
+
+
+    #
+    # aws_managed_clusters = clusters.rosa_clusters + clusters.hypershift_clusters + clusters.aws_osd_clusters
+    # ocm_managed_clusters = aws_managed_clusters + clusters.gcp_osd_clusters
+
+    # if user_input.create:
+    #     check_ocm_managed_existing_clusters(clusters=clusters.ocm_managed_clusters)
+    #     is_region_support_hypershift(hypershift_clusters=clusters.hypershift_clusters)
+    #     is_region_support_aws(clusters=clusters.aws_ipi_clusters + clusters.aws_managed_clusters)
+    #     is_region_support_gcp(
+    #         gcp_osd_clusters=clusters.gcp_osd_clusters,
+    #         gcp_service_account_file=user_input.gcp_service_account_file,
+    #     )
 
     aws_ipi_clusters = prepare_aws_ipi_clusters(
-        aws_ipi_clusters=aws_ipi_clusters,
+        aws_ipi_clusters=clusters.aws_ipi_clusters,
         clusters_install_data_directory=user_input.clusters_install_data_directory,
         registry_config_file=user_input.registry_config_file,
         ssh_key_file=user_input.ssh_key_file,
         docker_config_file=user_input.docker_config_file,
         create=user_input.create,
     )
+    import ipdb;ipdb.set_trace()
     ocm_managed_clusters = prepare_ocm_managed_clusters(
-        osd_managed_clusters=ocm_managed_clusters,
+        osd_managed_clusters=clusters.ocm_managed_clusters,
         clusters_install_data_directory=user_input.clusters_install_data_directory,
         aws_access_key_id=user_input.aws_access_key_id,
         aws_secret_access_key=user_input.aws_secret_access_key,

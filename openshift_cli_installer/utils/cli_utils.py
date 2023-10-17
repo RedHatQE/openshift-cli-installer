@@ -11,6 +11,7 @@ from ocm_python_wrapper.cluster import Cluster
 from ocp_resources.utils import TimeoutWatch
 from simple_logger.logger import get_logger
 
+from openshift_cli_installer.libs.clusters import OCPCluster
 from openshift_cli_installer.libs.managed_clusters.helpers import (
     prepare_managed_clusters_data,
 )
