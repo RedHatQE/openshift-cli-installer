@@ -135,33 +135,6 @@ def set_cluster_auth(cluster_data):
         fd.write(cluster_object.kubeadmin_password)
 
 
-def check_ocm_managed_existing_clusters(clusters):
-    if clusters:
-        click.echo("Check for existing OCM-managed clusters.")
-        existing_clusters_list = []
-        for _cluster in clusters:
-            cluster_name = _cluster["name"]
-            if _cluster["cluster-object"].exists:
-                existing_clusters_list.append(cluster_name)
-
-        if existing_clusters_list:
-            click.secho(
-                f"At least one cluster already exists: {existing_clusters_list}",
-                fg=ERROR_LOG_COLOR,
-            )
-            raise click.Abort()
-
-
-def add_s3_bucket_data(clusters, s3_bucket_name, s3_bucket_path=None):
-    for cluster in clusters:
-        cluster["shortuuid"] = shortuuid.uuid()
-        cluster["s3-bucket-name"] = s3_bucket_name
-        cluster["s3-bucket-path"] = s3_bucket_path
-        cluster["s3-object-name"] = bucket_object_name(
-            cluster_data=cluster, s3_bucket_path=s3_bucket_path
-        )
-
-    return clusters
 
 
 def collect_must_gather(must_gather_output_dir, cluster_data):

@@ -63,22 +63,6 @@ def generate_unified_pull_secret(registry_config_file, docker_config_file):
     return json.dumps(docker_config)
 
 
-def create_install_config_file(
-    clusters, registry_config_file, ssh_key_file, docker_config_file
-):
-    pull_secret = generate_unified_pull_secret(
-        registry_config_file=registry_config_file, docker_config_file=docker_config_file
-    )
-    for _cluster in clusters:
-        install_dir = _cluster["install-dir"]
-        _cluster["ssh_key"] = get_local_ssh_key(ssh_key_file=ssh_key_file)
-        _cluster["pull_secret"] = pull_secret
-        cluster_install_config = get_install_config_j2_template(cluster_dict=_cluster)
-
-        with open(os.path.join(install_dir, "install-config.yaml"), "w") as fd:
-            fd.write(yaml.dump(cluster_install_config))
-
-    return clusters
 
 
 def get_pull_secret_data(registry_config_file):

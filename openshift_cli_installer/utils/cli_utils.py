@@ -26,7 +26,6 @@ from openshift_cli_installer.libs.managed_clusters.rosa_clusters import (
 from openshift_cli_installer.libs.unmanaged_clusters.aws_ipi_clusters import (
     aws_ipi_create_cluster,
     aws_ipi_destroy_cluster,
-    create_install_config_file,
     download_openshift_install_binary,
     update_aws_clusters_versions,
 )
@@ -66,51 +65,6 @@ def get_clusters_by_type(clusters):
 
     return clusters_dict
 
-
-def rosa_regions(ocm_client):
-    return rosa.cli.execute(
-        command="list regions",
-        aws_region="us-west-2",
-        ocm_client=ocm_client,
-    )["out"]
-
-
-def hypershift_regions(ocm_client):
-    return [
-        region["id"]
-        for region in rosa_regions(ocm_client=ocm_client)
-        if region["supports_hypershift"] is True
-    ]
-
-
-def is_region_support_hypershift(hypershift_clusters):
-    if hypershift_clusters:
-        click.echo(f"Check if regions are {HYPERSHIFT_STR}-supported.")
-        hypershift_regions_dict = {PRODUCTION_STR: None, STAGE_STR: None}
-        unsupported_regions = []
-        for _cluster in hypershift_clusters:
-            cluster_ocm_env = _cluster["ocm-env"]
-            _hypershift_regions = hypershift_regions_dict[cluster_ocm_env]
-            if not _hypershift_regions:
-                _hypershift_regions = hypershift_regions(
-                    ocm_client=_cluster["ocm-client"]
-                )
-                hypershift_regions_dict[cluster_ocm_env] = _hypershift_regions
-
-            _region = _cluster["region"]
-            if _region not in _hypershift_regions:
-                unsupported_regions.append(
-                    f"Cluster {_cluster['name']}, region: {_region}\n"
-                )
-
-            if unsupported_regions:
-                click.secho(
-                    f"The following {HYPERSHIFT_STR} clusters regions are no supported:"
-                    f" {unsupported_regions}.\nSupported hypershift regions are:"
-                    f" {_hypershift_regions}",
-                    fg=ERROR_LOG_COLOR,
-                )
-                raise click.Abort()
 
 
 def generate_cluster_dirs_path(clusters, base_directory):
@@ -158,35 +112,6 @@ def destroy_openshift_cluster(cluster_data):
     delete_cluster_s3_buckets(cluster_data=cluster_data)
 
 
-def prepare_aws_ipi_clusters(
-    aws_ipi_clusters,
-    clusters_install_data_directory,
-    registry_config_file,
-    ssh_key_file,
-    docker_config_file,
-    create,
-):
-    if aws_ipi_clusters:
-        aws_ipi_clusters = generate_cluster_dirs_path(
-            clusters=aws_ipi_clusters, base_directory=clusters_install_data_directory
-        )
-
-        aws_ipi_clusters = update_aws_clusters_versions(
-            clusters=aws_ipi_clusters,
-        )
-
-        aws_ipi_clusters = download_openshift_install_binary(
-            clusters=aws_ipi_clusters, registry_config_file=registry_config_file
-        )
-        if create:
-            aws_ipi_clusters = create_install_config_file(
-                clusters=aws_ipi_clusters,
-                registry_config_file=registry_config_file,
-                ssh_key_file=ssh_key_file,
-                docker_config_file=docker_config_file,
-            )
-
-    return aws_ipi_clusters
 
 
 def prepare_ocm_managed_clusters(
@@ -258,36 +183,7 @@ def run_create_or_destroy_clusters(
     return processed_clusters
 
 
-def is_region_support_gcp(gcp_osd_clusters, gcp_service_account_file):
-    if gcp_osd_clusters:
-        click.echo("Check if regions are GCP-supported.")
-        supported_regions = get_gcp_regions(gcp_service_account_file)
-        unsupported_regions = []
-        for cluster_data in gcp_osd_clusters:
-            cluster_region = cluster_data["region"]
-            if cluster_region not in supported_regions:
-                unsupported_regions.append(
-                    f"cluster: {cluster_data['name']}, region: {cluster_region}"
-                )
 
-        if unsupported_regions:
-            click.secho(
-                "The following clusters regions are not supported in GCP:"
-                f" {unsupported_regions}",
-                fg=ERROR_LOG_COLOR,
-            )
-            raise click.Abort()
-
-
-def is_region_support_aws(clusters):
-    if clusters:
-        click.echo(f"Check if regions are {AWS_STR}-supported.")
-        _regions_to_verify = set()
-        for cluster_data in clusters:
-            _regions_to_verify.add(cluster_data["region"])
-
-        for _region in _regions_to_verify:
-            set_and_verify_aws_credentials(region_name=_region)
 
 
 def prepare_clusters(clusters, ocm_token):

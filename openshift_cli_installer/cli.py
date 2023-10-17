@@ -230,37 +230,7 @@ def main(**kwargs):
 
     # General prepare for all clusters
     clusters = OCPClusters(user_input=user_input)
-    if user_input.create:
-        clusters.check_ocm_managed_existing_clusters()
-        clusters.is_region_support_hypershift()
-        clusters.is_region_support_aws()
-        clusters.is_region_support_gcp()
 
-    import ipdb;ipdb.set_trace()
-
-
-    #
-    # aws_managed_clusters = clusters.rosa_clusters + clusters.hypershift_clusters + clusters.aws_osd_clusters
-    # ocm_managed_clusters = aws_managed_clusters + clusters.gcp_osd_clusters
-
-    # if user_input.create:
-    #     check_ocm_managed_existing_clusters(clusters=clusters.ocm_managed_clusters)
-    #     is_region_support_hypershift(hypershift_clusters=clusters.hypershift_clusters)
-    #     is_region_support_aws(clusters=clusters.aws_ipi_clusters + clusters.aws_managed_clusters)
-    #     is_region_support_gcp(
-    #         gcp_osd_clusters=clusters.gcp_osd_clusters,
-    #         gcp_service_account_file=user_input.gcp_service_account_file,
-    #     )
-
-    aws_ipi_clusters = prepare_aws_ipi_clusters(
-        aws_ipi_clusters=clusters.aws_ipi_clusters,
-        clusters_install_data_directory=user_input.clusters_install_data_directory,
-        registry_config_file=user_input.registry_config_file,
-        ssh_key_file=user_input.ssh_key_file,
-        docker_config_file=user_input.docker_config_file,
-        create=user_input.create,
-    )
-    import ipdb;ipdb.set_trace()
     ocm_managed_clusters = prepare_ocm_managed_clusters(
         osd_managed_clusters=clusters.ocm_managed_clusters,
         clusters_install_data_directory=user_input.clusters_install_data_directory,
@@ -272,7 +242,7 @@ def main(**kwargs):
     )
 
     processed_clusters = run_create_or_destroy_clusters(
-        clusters=aws_ipi_clusters + ocm_managed_clusters,
+        clusters=clusters.aws_ipi_clusters + ocm_managed_clusters,
         create=user_input.create,
         action=user_input.action,
         parallel=user_input.parallel,

@@ -4,6 +4,7 @@ import shlex
 from pathlib import Path
 
 import click
+import jsons
 import shortuuid
 import yaml
 from clouds.aws.aws_utils import set_and_verify_aws_credentials
@@ -51,6 +52,12 @@ class OCPClusters:
         self.list = []
         for _cluster in self.user_input.clusters:
             self.list.append(OCPCluster(cluster=_cluster, user_input=user_input))
+
+        if self.user_input.create:
+            self.check_ocm_managed_existing_clusters()
+            self.is_region_support_hypershift()
+            self.is_region_support_aws()
+            self.is_region_support_gcp()
 
     @functools.cache
     def _get_clusters_by_platform(self, platform):
@@ -212,6 +219,7 @@ class OCPCluster:
         self.ssh_key_file = None
         self.ssh_key = None
         self.pull_secret = None
+        self.base_domain = None
         self.all_available_versions = {}
 
         self.version = self.cluster["version"]
@@ -231,6 +239,10 @@ class OCPCluster:
         self._prepare_cluster_data()
         self._add_s3_bucket_data()
         self._prepare_aws_ipi_clusters()
+
+    @property
+    def to_dict(self):
+        return self.__dict__
 
     def _prepare_cluster_data(self):
         supported_envs = (PRODUCTION_STR, STAGE_STR)
@@ -269,6 +281,7 @@ class OCPCluster:
             self.ssh_key_file = self.user_input.ssh_key_file
             self.docker_config_file = self.user_input.docker_config_file
             self.registry_config_file = self.user_input.registry_config_file
+            self.base_domain = self.cluster["base_domain"]
             self.aws_base_available_versions = get_aws_versions()
             self.all_available_versions.update(
                 filter_versions(
@@ -280,13 +293,14 @@ class OCPCluster:
             )
             self._set_cluster_install_version()
             self._aws_download_installer()
-            self._create_install_config_file()
+            if self.create:
+                self._create_install_config_file()
 
     def _aws_download_installer(self):
         openshift_install_str = "openshift-install"
         binary_dir = os.path.join("/tmp", self.version_url)
         self.openshift_install_binary_path = os.path.join(
-            os.path.join("/tmp", self.version_url), openshift_install_str
+            binary_dir, openshift_install_str
         )
         rc, _, err = run_command(
             command=shlex.split(
@@ -310,7 +324,7 @@ class OCPCluster:
         )
         self.ssh_key = get_local_ssh_key(ssh_key_file=self.ssh_key_file)
         cluster_install_config = get_install_config_j2_template(
-            cluster_dict=self.cluster
+            cluster_dict=self.to_dict
         )
 
         with open(os.path.join(self.cluster_dir, "install-config.yaml"), "w") as fd:
@@ -348,9 +362,8 @@ class OCPCluster:
             version_url = [
                 url
                 for url, versions in self.aws_base_available_versions.items()
-                if self.version in versions
+                if self.install_version in versions
             ]
-            import ipdb;ipdb.set_trace()
             if version_url:
                 self.version_url = f"{version_url[0]}:{self.install_version}"
             else:
