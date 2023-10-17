@@ -124,21 +124,6 @@ def generate_cluster_dirs_path(clusters, base_directory):
     return clusters
 
 
-def verify_processes_passed(processes, action):
-    failed_processes = {}
-
-    for _proc in processes:
-        _proc.join()
-        if _proc.exitcode != 0:
-            failed_processes[_proc.name] = _proc.exitcode
-
-    if failed_processes:
-        click.secho(
-            f"Some jobs failed to {action}: {failed_processes}\n", fg=ERROR_LOG_COLOR
-        )
-        raise click.Abort()
-
-
 def create_openshift_cluster(cluster_data, must_gather_output_dir=None):
     cluster_platform = cluster_data["platform"]
     if cluster_platform == AWS_STR:
