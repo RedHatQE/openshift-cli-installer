@@ -127,7 +127,7 @@ def tts(ts):
         return int(ts)
 
 
-def delete_cluster_s3_bucket(cluster_data):
+def delete_cluster_s3_buckets(cluster_data):
     cluster_name = cluster_data["name"]
     LOGGER.info(f"Deleting S3 bucket for cluster {cluster_name}")
     buckets_to_delete = []

@@ -54,7 +54,7 @@ from openshift_cli_installer.utils.const import (
     USER_INPUT_CLUSTER_BOOLEAN_KEYS,
 )
 from openshift_cli_installer.utils.gcp import get_gcp_regions
-from openshift_cli_installer.utils.general import delete_cluster_s3_bucket, tts
+from openshift_cli_installer.utils.general import delete_cluster_s3_buckets, tts
 
 LOGGER = get_logger(name=__name__)
 
@@ -195,7 +195,7 @@ def destroy_openshift_cluster(cluster_data):
     elif cluster_platform in (AWS_OSD_STR, GCP_OSD_STR):
         return osd_delete_cluster(cluster_data=cluster_data)
 
-    delete_cluster_s3_bucket(cluster_data=cluster_data)
+    delete_cluster_s3_buckets(cluster_data=cluster_data)
 
 
 def assert_public_ssh_key_file_exists(ssh_key_file):
