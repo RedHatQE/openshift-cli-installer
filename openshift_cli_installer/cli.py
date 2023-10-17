@@ -3,15 +3,14 @@ import os
 import time
 
 import click
-from pyaml_env import parse_config
 
 from openshift_cli_installer.libs.destroy_clusters import destroy_clusters
 from openshift_cli_installer.libs.managed_clusters.acm_clusters import (
     install_and_attach_for_acm,
 )
+from openshift_cli_installer.libs.user_input import UserInput
 from openshift_cli_installer.utils.cli_utils import (
     get_clusters_by_type,
-    get_clusters_from_user_input,
     is_region_support_aws,
     is_region_support_gcp,
     is_region_support_hypershift,
@@ -20,7 +19,6 @@ from openshift_cli_installer.utils.cli_utils import (
     prepare_ocm_managed_clusters,
     run_create_or_destroy_clusters,
     save_kubeadmin_token_to_clusters_install_data,
-    verify_user_input,
 )
 from openshift_cli_installer.utils.click_dict_type import DictParamType
 from openshift_cli_installer.utils.clusters import (
@@ -204,66 +202,34 @@ def main(**kwargs):
     """
     Create/Destroy Openshift cluster/s
     """
-    user_kwargs = kwargs
-    clusters_yaml_config_file = user_kwargs.get("clusters_yaml_config_file")
-    if clusters_yaml_config_file:
-        # Update CLI user input from YAML file if exists
-        # Since CLI user input has some defaults, YAML file will override them
-        user_kwargs.update(
-            parse_config(path=clusters_yaml_config_file, default_value="")
-        )
+    user_input = UserInput(**kwargs)
 
-    action = user_kwargs.get("action")
-    clusters = get_clusters_from_user_input(**user_kwargs)
-    ocm_token = user_kwargs.get("ocm_token")
-    parallel = False if clusters and len(clusters) == 1 else user_kwargs.get("parallel")
-    clusters_install_data_directory = user_kwargs.get(
-        "clusters_install_data_directory",
-        "/openshift-cli-installer/clusters-install-data",
-    )
-    destroy_clusters_from_s3_config_files = user_kwargs.get(
-        "destroy_clusters_from_s3_config_files"
-    )
-    s3_bucket_name = user_kwargs.get("s3_bucket_name")
-    s3_bucket_path = user_kwargs.get("s3_bucket_path")
-    destroy_all_clusters = user_kwargs.get("destroy_all_clusters")
-    registry_config_file = user_kwargs.get("registry_config_file")
-    ssh_key_file = user_kwargs.get("ssh_key_file")
-    docker_config_file = user_kwargs.get("docker_config_file")
-    aws_access_key_id = user_kwargs.get("aws_access_key_id")
-    aws_secret_access_key = user_kwargs.get("aws_secret_access_key")
-    aws_account_id = user_kwargs.get("aws_account_id")
-    gcp_service_account_file = user_kwargs.get("gcp_service_account_file")
-    must_gather_output_dir = user_kwargs.get("must_gather_output_dir")
-
-    create = action == CREATE_STR
-    user_kwargs["create"] = create
-    user_kwargs["clusters"] = clusters
-    verify_user_input(**user_kwargs)
-
-    if destroy_clusters_from_s3_config_files or destroy_all_clusters:
+    if (
+        user_input.destroy_clusters_from_s3_config_files
+        or user_input.destroy_all_clusters
+    ):
         return destroy_clusters(
-            s3_bucket_name=s3_bucket_name,
-            s3_bucket_path=s3_bucket_path,
-            clusters_install_data_directory=clusters_install_data_directory,
-            registry_config_file=registry_config_file,
-            clusters_dir_paths=destroy_clusters_from_s3_config_files,
-            destroy_all_clusters=destroy_all_clusters,
-            ocm_token=ocm_token,
-            parallel=parallel,
+            s3_bucket_name=user_input.s3_bucket_name,
+            s3_bucket_path=user_input.s3_bucket_path,
+            clusters_install_data_directory=user_input.clusters_install_data_directory,
+            registry_config_file=user_input.registry_config_file,
+            clusters_dir_paths=user_input.destroy_clusters_from_s3_config_files,
+            destroy_all_clusters=user_input.destroy_all_clusters,
+            ocm_token=user_input.ocm_token,
+            parallel=user_input.parallel,
         )
 
     # General prepare for all clusters
     clusters = prepare_clusters(
-        clusters=clusters,
-        ocm_token=ocm_token,
+        clusters=user_input.clusters,
+        ocm_token=user_input.ocm_token,
     )
 
-    if create and s3_bucket_name:
+    if user_input.create and user_input.s3_bucket_name:
         clusters = add_s3_bucket_data(
             clusters=clusters,
-            s3_bucket_name=s3_bucket_name,
-            s3_bucket_path=s3_bucket_path,
+            s3_bucket_name=user_input.s3_bucket_name,
+            s3_bucket_path=user_input.s3_bucket_path,
         )
 
     clusters_dict = get_clusters_by_type(clusters=clusters)
@@ -276,52 +242,52 @@ def main(**kwargs):
     aws_managed_clusters = rosa_clusters + hypershift_clusters + aws_osd_clusters
     ocm_managed_clusters = aws_managed_clusters + gcp_osd_clusters
 
-    if create:
+    if user_input.create:
         check_ocm_managed_existing_clusters(clusters=ocm_managed_clusters)
         is_region_support_hypershift(hypershift_clusters=hypershift_clusters)
         is_region_support_aws(clusters=aws_ipi_clusters + aws_managed_clusters)
         is_region_support_gcp(
             gcp_osd_clusters=gcp_osd_clusters,
-            gcp_service_account_file=gcp_service_account_file,
+            gcp_service_account_file=user_input.gcp_service_account_file,
         )
 
     aws_ipi_clusters = prepare_aws_ipi_clusters(
         aws_ipi_clusters=aws_ipi_clusters,
-        clusters_install_data_directory=clusters_install_data_directory,
-        registry_config_file=registry_config_file,
-        ssh_key_file=ssh_key_file,
-        docker_config_file=docker_config_file,
-        create=create,
-        aws_access_key_id=aws_access_key_id,
-        aws_secret_access_key=aws_secret_access_key,
+        clusters_install_data_directory=user_input.clusters_install_data_directory,
+        registry_config_file=user_input.registry_config_file,
+        ssh_key_file=user_input.ssh_key_file,
+        docker_config_file=user_input.docker_config_file,
+        create=user_input.create,
+        aws_access_key_id=user_input.aws_access_key_id,
+        aws_secret_access_key=user_input.aws_secret_access_key,
     )
     ocm_managed_clusters = prepare_ocm_managed_clusters(
         osd_managed_clusters=ocm_managed_clusters,
-        clusters_install_data_directory=clusters_install_data_directory,
-        aws_access_key_id=aws_access_key_id,
-        aws_secret_access_key=aws_secret_access_key,
-        aws_account_id=aws_account_id,
-        create=create,
-        gcp_service_account_file=gcp_service_account_file,
+        clusters_install_data_directory=user_input.clusters_install_data_directory,
+        aws_access_key_id=user_input.aws_access_key_id,
+        aws_secret_access_key=user_input.aws_secret_access_key,
+        aws_account_id=user_input.aws_account_id,
+        create=user_input.create,
+        gcp_service_account_file=user_input.gcp_service_account_file,
     )
 
     processed_clusters = run_create_or_destroy_clusters(
         clusters=aws_ipi_clusters + ocm_managed_clusters,
-        create=create,
-        action=action,
-        parallel=parallel,
-        must_gather_output_dir=must_gather_output_dir,
+        create=user_input.create,
+        action=user_input.action,
+        parallel=user_input.parallel,
+        must_gather_output_dir=user_input.must_gather_output_dir,
     )
 
-    if create:
+    if user_input.create:
         processed_clusters = save_kubeadmin_token_to_clusters_install_data(
             clusters=processed_clusters,
         )
 
         processed_clusters = install_and_attach_for_acm(
             managed_clusters=processed_clusters,
-            clusters_install_data_directory=clusters_install_data_directory,
-            parallel=parallel,
+            clusters_install_data_directory=user_input.clusters_install_data_directory,
+            parallel=user_input.parallel,
         )
 
     return processed_clusters

@@ -41,14 +41,11 @@ from openshift_cli_installer.utils.const import (
     ERROR_LOG_COLOR,
     GCP_OSD_STR,
     HYPERSHIFT_STR,
-    OBSERVABILITY_SUPPORTED_STORAGE_TYPES,
     OCM_MANAGED_PLATFORMS,
     PRODUCTION_STR,
     ROSA_STR,
-    S3_STR,
     STAGE_STR,
     SUCCESS_LOG_COLOR,
-    SUPPORTED_ACTIONS,
     SUPPORTED_PLATFORMS,
     TIMEOUT_60MIN,
     USER_INPUT_CLUSTER_BOOLEAN_KEYS,
@@ -67,23 +64,6 @@ def get_clusters_by_type(clusters):
         ]
 
     return clusters_dict
-
-
-def is_platform_supported(clusters):
-    unsupported_platforms = []
-    for _cluster in clusters:
-        _platform = _cluster["platform"]
-        if _platform not in SUPPORTED_PLATFORMS:
-            unsupported_platforms.append(
-                f"Cluster {_cluster['name']} platform '{_platform}' is not supported.\n"
-            )
-
-    if unsupported_platforms:
-        click.secho(
-            unsupported_platforms,
-            fg=ERROR_LOG_COLOR,
-        )
-        raise click.Abort()
 
 
 def rosa_regions(ocm_client):
@@ -144,12 +124,6 @@ def generate_cluster_dirs_path(clusters, base_directory):
     return clusters
 
 
-def abort_no_ocm_token(ocm_token):
-    if not ocm_token:
-        click.secho("--ocm-token is required for clusters", fg=ERROR_LOG_COLOR)
-        raise click.Abort()
-
-
 def verify_processes_passed(processes, action):
     failed_processes = {}
 
@@ -196,180 +170,6 @@ def destroy_openshift_cluster(cluster_data):
         return osd_delete_cluster(cluster_data=cluster_data)
 
 
-def assert_public_ssh_key_file_exists(ssh_key_file):
-    if not ssh_key_file or not os.path.exists(ssh_key_file):
-        click.secho(
-            "SSH file is required for AWS or ACM cluster installations."
-            f" {ssh_key_file} file does not exist.",
-            fg=ERROR_LOG_COLOR,
-        )
-        raise click.Abort()
-
-
-def assert_registry_config_file_exists(registry_config_file):
-    if not registry_config_file or not os.path.exists(registry_config_file):
-        click.secho(
-            "Registry config file is required for AWS or ACM cluster installations."
-            f" {registry_config_file} file does not exist.",
-            fg=ERROR_LOG_COLOR,
-        )
-        raise click.Abort()
-
-
-def assert_aws_credentials_exist(aws_access_key_id, aws_secret_access_key):
-    if not (aws_secret_access_key and aws_access_key_id):
-        click.secho(
-            "--aws-secret-access-key and aws-access-key-id"
-            " required for AWS OSD OR ACM cluster installations.",
-            fg=ERROR_LOG_COLOR,
-        )
-        raise click.Abort()
-
-
-def verify_user_input(**kwargs):
-    action = kwargs.get("action")
-    clusters = kwargs.get("clusters")
-    ssh_key_file = kwargs.get("ssh_key_file")
-    docker_config_file = kwargs.get("docker_config_file")
-    registry_config_file = kwargs.get("registry_config_file")
-    aws_access_key_id = kwargs.get("aws_access_key_id")
-    aws_secret_access_key = kwargs.get("aws_secret_access_key")
-    aws_account_id = kwargs.get("aws_account_id")
-    ocm_token = kwargs.get("ocm_token")
-    destroy_clusters_from_s3_config_files = kwargs.get(
-        "destroy_clusters_from_s3_config_files"
-    )
-    s3_bucket_name = kwargs.get("s3_bucket_name")
-    gcp_service_account_file = kwargs.get("gcp_service_account_file")
-    create = kwargs.get("create")
-
-    abort_no_ocm_token(ocm_token=ocm_token)
-
-    section = "Verify user input"
-    no_platform_no_cluster_for_log = "All"
-
-    if destroy_clusters_from_s3_config_files:
-        if not s3_bucket_name:
-            click.secho(
-                "`--s3-bucket-name` must be provided when running with"
-                " `--destroy-clusters-from-s3-config-files`",
-                fg=ERROR_LOG_COLOR,
-            )
-            raise click.Abort()
-
-    else:
-        if not action:
-            click_echo(
-                name=no_platform_no_cluster_for_log,
-                platform=no_platform_no_cluster_for_log,
-                section=section,
-                msg=(
-                    "'action' must be provided, supported actions:"
-                    f" `{SUPPORTED_ACTIONS}`"
-                ),
-                error=True,
-            )
-            raise click.Abort()
-
-        if action not in SUPPORTED_ACTIONS:
-            click_echo(
-                name=no_platform_no_cluster_for_log,
-                platform=no_platform_no_cluster_for_log,
-                section=section,
-                msg=(
-                    f"'{action}' is not supported, supported actions:"
-                    f" `{SUPPORTED_ACTIONS}`"
-                ),
-                error=True,
-            )
-            raise click.Abort()
-
-        if not clusters:
-            click.secho(
-                "At least one '--cluster' option must be provided.", fg=ERROR_LOG_COLOR
-            )
-            raise click.Abort()
-
-        is_platform_supported(clusters=clusters)
-        assert_unique_cluster_names(clusters=clusters)
-        assert_managed_acm_clusters_user_input(clusters=clusters, create=create)
-
-        assert_aws_ipi_user_input(
-            clusters=clusters,
-            ssh_key_file=ssh_key_file,
-            docker_config_file=docker_config_file,
-            registry_config_file=registry_config_file,
-        )
-        assert_aws_osd_user_input(
-            clusters=clusters,
-            aws_access_key_id=aws_access_key_id,
-            aws_secret_access_key=aws_secret_access_key,
-            aws_account_id=aws_account_id,
-        )
-        assert_acm_clusters_user_input(
-            create=create,
-            clusters=clusters,
-        )
-        assert_gcp_osd_user_input(
-            clusters=clusters,
-            gcp_service_account_file=gcp_service_account_file,
-            create=create,
-        )
-        assert_boolean_values(clusters=clusters, create=create)
-        assert_cluster_platform_support_observability(
-            clusters=clusters,
-            create=create,
-        )
-
-
-def assert_aws_ipi_user_input(
-    clusters, ssh_key_file, docker_config_file, registry_config_file
-):
-    if any([_cluster["platform"] == AWS_STR for _cluster in clusters]):
-        if not docker_config_file or not os.path.exists(docker_config_file):
-            click.secho(
-                "Docker config file is required for AWS installations."
-                f" {docker_config_file} file does not exist.",
-                fg=ERROR_LOG_COLOR,
-            )
-            raise click.Abort()
-
-        assert_public_ssh_key_file_exists(ssh_key_file=ssh_key_file)
-        assert_registry_config_file_exists(registry_config_file=registry_config_file)
-
-
-def assert_aws_osd_user_input(
-    clusters, aws_access_key_id, aws_secret_access_key, aws_account_id
-):
-    if any([_cluster["platform"] == AWS_OSD_STR for _cluster in clusters]):
-        assert_aws_credentials_exist(
-            aws_access_key_id=aws_access_key_id,
-            aws_secret_access_key=aws_secret_access_key,
-        )
-        if not aws_account_id:
-            click.secho(
-                "--aws-account_id required for AWS OSD installations.",
-                fg=ERROR_LOG_COLOR,
-            )
-            raise click.Abort()
-
-
-def assert_acm_clusters_user_input(create, clusters):
-    acm_clusters = [_cluster for _cluster in clusters if _cluster.get("acm") is True]
-    if acm_clusters and create:
-        for _cluster in acm_clusters:
-            cluster_platform = _cluster["platform"]
-            if cluster_platform == HYPERSHIFT_STR:
-                click_echo(
-                    name=_cluster["name"],
-                    platform=cluster_platform,
-                    section="verify_user_input",
-                    msg=f"ACM not supported for {cluster_platform} clusters",
-                    error=True,
-                )
-                raise click.Abort()
-
-
 def prepare_aws_ipi_clusters(
     aws_ipi_clusters,
     clusters_install_data_directory,
@@ -377,8 +177,6 @@ def prepare_aws_ipi_clusters(
     ssh_key_file,
     docker_config_file,
     create,
-    aws_access_key_id,
-    aws_secret_access_key,
 ):
     if aws_ipi_clusters:
         aws_ipi_clusters = generate_cluster_dirs_path(
@@ -504,20 +302,6 @@ def is_region_support_aws(clusters):
             set_and_verify_aws_credentials(region_name=_region)
 
 
-def assert_gcp_osd_user_input(create, clusters, gcp_service_account_file):
-    if (
-        create
-        and any([cluster["platform"] == GCP_OSD_STR for cluster in clusters])
-        and not gcp_service_account_file
-    ):
-        click.secho(
-            "`--gcp-service-account-file` option must be provided for"
-            f" {GCP_OSD_STR} clusters",
-            fg=ERROR_LOG_COLOR,
-        )
-        raise click.Abort()
-
-
 def prepare_clusters(clusters, ocm_token):
     supported_envs = (PRODUCTION_STR, STAGE_STR)
     for _cluster in clusters:
@@ -560,28 +344,6 @@ def click_echo(name, platform, section, msg, success=None, error=None):
     click.secho(
         f"[Cluster: {name} - Platform: {platform} - Section: {section}]: {msg}", fg=fg
     )
-
-
-def assert_managed_acm_clusters_user_input(clusters, create):
-    if create:
-        section = "Verify user input"
-        for cluster in clusters:
-            managed_acm_clusters = get_managed_acm_clusters_from_user_input(
-                cluster=cluster
-            )
-            for managed_acm_cluster in managed_acm_clusters:
-                managed_acm_cluster_data = get_cluster_data_by_name_from_clusters(
-                    name=managed_acm_cluster, clusters=clusters
-                )
-                if not managed_acm_cluster_data:
-                    click_echo(
-                        name=managed_acm_cluster,
-                        platform=None,
-                        section=section,
-                        error=True,
-                        msg=f"Cluster {managed_acm_cluster} not found",
-                    )
-                    raise click.Abort()
 
 
 def get_managed_acm_clusters_from_user_input(cluster):
@@ -634,19 +396,6 @@ def get_cluster_data_by_name_from_clusters(name, clusters):
             return cluster
 
 
-def assert_unique_cluster_names(clusters):
-    cluster_names = [cluster["name"] for cluster in clusters]
-    if len(cluster_names) != len(set(cluster_names)):
-        click_echo(
-            name=None,
-            platform="All",
-            section="verify_user_input",
-            error=True,
-            msg=f"Cluster names must be unique: clusters {cluster_names}",
-        )
-        raise click.Abort()
-
-
 def save_kubeadmin_token_to_clusters_install_data(clusters):
     # Do not run this function in parallel, get_kubeadmin_token() do `oc login`.
     with change_home_environment_on_openshift_ci():
@@ -657,26 +406,6 @@ def save_kubeadmin_token_to_clusters_install_data(clusters):
             dump_cluster_data_to_file(cluster_data=cluster_data)
 
     return clusters
-
-
-def assert_boolean_values(clusters, create):
-    if create:
-        for cluster in clusters:
-            non_bool_keys = [
-                cluster_data_key
-                for cluster_data_key, cluster_data_value in cluster.items()
-                if cluster_data_key in USER_INPUT_CLUSTER_BOOLEAN_KEYS
-                and not isinstance(cluster_data_value, bool)
-            ]
-            if non_bool_keys:
-                click_echo(
-                    name=cluster["name"],
-                    platform=cluster["platform"],
-                    section="verify_user_input",
-                    error=True,
-                    msg=f"The following keys must be booleans: {non_bool_keys}",
-                )
-                raise click.Abort()
 
 
 @contextlib.contextmanager
@@ -700,64 +429,6 @@ def change_home_environment_on_openshift_ci():
             f" {current_home}"
         )
         os.environ[home_str] = current_home
-
-
-def assert_cluster_platform_support_observability(clusters, create):
-    not_supported_clusters = []
-    missing_storage_data = []
-    for cluster in clusters:
-        if not (create and cluster.get("acm-observability")):
-            continue
-
-        cluster_name = cluster["name"]
-        storage_type = cluster.get("acm-observability-storage-type")
-        base_error_str = f"cluster: {cluster_name} - storage type: {storage_type}"
-        if storage_type not in OBSERVABILITY_SUPPORTED_STORAGE_TYPES:
-            not_supported_clusters.append(base_error_str)
-        else:
-            missing_storage_data.extend(
-                check_missing_observability_storage_data(
-                    cluster=cluster,
-                    storage_type=storage_type,
-                    base_error_str=base_error_str,
-                )
-            )
-
-    if not_supported_clusters or missing_storage_data:
-        if not_supported_clusters:
-            _error_clusters = "\n".join(not_supported_clusters)
-            LOGGER.error(
-                "The following storage types are not supported for"
-                f" observability:\n{_error_clusters}\nsupported storage types are"
-                f" {OBSERVABILITY_SUPPORTED_STORAGE_TYPES}\n"
-            )
-
-        if missing_storage_data:
-            _storage_clusters = "\n".join(missing_storage_data)
-            LOGGER.error(
-                "The following clusters are missing storage data for"
-                f" observability:\n{_storage_clusters}\n"
-            )
-        raise click.Abort()
-
-
-def check_missing_observability_storage_data(
-    cluster,
-    storage_type,
-    base_error_str,
-):
-    missing_storage_data = []
-    if storage_type == S3_STR:
-        if not cluster.get("aws-access-key-id"):
-            missing_storage_data.append(
-                f"{base_error_str} is missing `acm-observability-s3-access-key-id`"
-            )
-        if not cluster.get("aws-secret-access-key"):
-            missing_storage_data.append(
-                f"{base_error_str} is missing `acm-observability-s3-secret-access-key`"
-            )
-
-    return missing_storage_data
 
 
 def get_aws_credentials_for_acm_observability(
