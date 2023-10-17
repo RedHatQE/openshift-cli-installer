@@ -63,8 +63,6 @@ def generate_unified_pull_secret(registry_config_file, docker_config_file):
     return json.dumps(docker_config)
 
 
-
-
 def get_pull_secret_data(registry_config_file):
     with open(registry_config_file) as fd:
         return json.load(fd)

@@ -7,7 +7,6 @@ from pathlib import Path
 
 import click
 import rosa.cli
-import shortuuid
 import yaml
 from ocm_python_wrapper.ocm_client import OCMPythonClient
 from ocm_python_wrapper.versions import Versions
@@ -26,7 +25,6 @@ from openshift_cli_installer.utils.const import (
     ROSA_STR,
     WARNING_LOG_COLOR,
 )
-from openshift_cli_installer.utils.general import bucket_object_name
 
 
 def get_ocm_client(ocm_token, ocm_env):
@@ -133,8 +131,6 @@ def set_cluster_auth(cluster_data):
 
     with open(os.path.join(auth_path, "kubeadmin-password"), "w") as fd:
         fd.write(cluster_object.kubeadmin_password)
-
-
 
 
 def collect_must_gather(must_gather_output_dir, cluster_data):

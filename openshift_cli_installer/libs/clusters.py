@@ -4,40 +4,38 @@ import shlex
 from pathlib import Path
 
 import click
-import jsons
+import rosa.cli
 import shortuuid
 import yaml
 from clouds.aws.aws_utils import set_and_verify_aws_credentials
+from google.cloud import compute_v1
+from google.oauth2 import service_account
 from ocm_python_wrapper.cluster import Cluster
 from ocm_python_wrapper.ocm_client import OCMPythonClient
 from ocp_utilities.utils import run_command
 from simple_logger.logger import get_logger
-import rosa.cli
-from google.cloud import compute_v1
-from google.oauth2 import service_account
 
 from openshift_cli_installer.libs.unmanaged_clusters.aws_ipi_clusters import (
-    get_all_versions,
-    get_aws_versions,
     generate_unified_pull_secret,
-    get_local_ssh_key,
+    get_aws_versions,
     get_install_config_j2_template,
+    get_local_ssh_key,
 )
 from openshift_cli_installer.utils.cluster_versions import (
-    get_cluster_stream,
     filter_versions,
+    get_cluster_stream,
     get_split_version,
 )
 from openshift_cli_installer.utils.const import (
-    PRODUCTION_STR,
-    TIMEOUT_60MIN,
-    AWS_STR,
-    STAGE_STR,
-    OCM_MANAGED_PLATFORMS,
-    ROSA_STR,
-    HYPERSHIFT_STR,
     AWS_OSD_STR,
+    AWS_STR,
     GCP_OSD_STR,
+    HYPERSHIFT_STR,
+    OCM_MANAGED_PLATFORMS,
+    PRODUCTION_STR,
+    ROSA_STR,
+    STAGE_STR,
+    TIMEOUT_60MIN,
 )
 from openshift_cli_installer.utils.general import tts
 
@@ -145,9 +143,9 @@ class OCPClusters:
 
                 if unsupported_regions:
                     self.logger.error(
-                        f"The following {HYPERSHIFT_STR} clusters regions are no supported:"
-                        f" {unsupported_regions}.\nSupported hypershift regions are:"
-                        f" {_hypershift_regions}",
+                        f"The following {HYPERSHIFT_STR} clusters regions are no"
+                        f" supported: {unsupported_regions}.\nSupported hypershift"
+                        f" regions are: {_hypershift_regions}",
                     )
                     raise click.Abort()
 
@@ -253,8 +251,8 @@ class OCPCluster:
 
         if self.ocm_env not in supported_envs:
             self.logger.error(
-                f"{self.log_prefix}: got unsupported OCM env - {self.ocm_env}, supported"
-                f" envs: {supported_envs}"
+                f"{self.log_prefix}: got unsupported OCM env - {self.ocm_env},"
+                f" supported envs: {supported_envs}"
             )
             raise click.Abort()
 
@@ -274,7 +272,9 @@ class OCPCluster:
         ).client
 
     def _add_s3_bucket_data(self):
-        self.s3_object_name = f"{f'{self.s3_bucket_path}/' if self.s3_bucket_path else ''}{self.name}-{self.shortuuid}.zip"
+        self.s3_object_name = (
+            f"{f'{self.s3_bucket_path}/' if self.s3_bucket_path else ''}{self.name}-{self.shortuuid}.zip"
+        )
 
     def _prepare_aws_ipi_clusters(self):
         if self.platform == AWS_STR:
@@ -312,8 +312,8 @@ class OCPCluster:
         )
         if not rc:
             self.logger.error(
-                f"{self.log_prefix}: Failed to get {openshift_install_str} for version {self.version_url},"
-                f" error: {err}",
+                f"{self.log_prefix}: Failed to get {openshift_install_str} for version"
+                f" {self.version_url}, error: {err}",
             )
             raise click.Abort()
 

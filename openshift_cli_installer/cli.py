@@ -11,30 +11,15 @@ from openshift_cli_installer.libs.managed_clusters.acm_clusters import (
 )
 from openshift_cli_installer.libs.user_input import UserInput
 from openshift_cli_installer.utils.cli_utils import (
-    get_clusters_by_type,
-    is_region_support_aws,
-    is_region_support_gcp,
-    is_region_support_hypershift,
-    prepare_aws_ipi_clusters,
-    prepare_clusters,
     prepare_ocm_managed_clusters,
     run_create_or_destroy_clusters,
     save_kubeadmin_token_to_clusters_install_data,
 )
 from openshift_cli_installer.utils.click_dict_type import DictParamType
-from openshift_cli_installer.utils.clusters import (
-    add_s3_bucket_data,
-    check_ocm_managed_existing_clusters,
-)
 from openshift_cli_installer.utils.const import (
-    AWS_OSD_STR,
-    AWS_STR,
     CLUSTER_DATA_YAML_FILENAME,
     CREATE_STR,
     DESTROY_STR,
-    GCP_OSD_STR,
-    HYPERSHIFT_STR,
-    ROSA_STR,
 )
 
 

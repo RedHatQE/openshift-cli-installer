@@ -5,13 +5,10 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
 import click
-import rosa.cli
-from clouds.aws.aws_utils import set_and_verify_aws_credentials
 from ocm_python_wrapper.cluster import Cluster
 from ocp_resources.utils import TimeoutWatch
 from simple_logger.logger import get_logger
 
-from openshift_cli_installer.libs.clusters import OCPCluster
 from openshift_cli_installer.libs.managed_clusters.helpers import (
     prepare_managed_clusters_data,
 )
@@ -26,8 +23,6 @@ from openshift_cli_installer.libs.managed_clusters.rosa_clusters import (
 from openshift_cli_installer.libs.unmanaged_clusters.aws_ipi_clusters import (
     aws_ipi_create_cluster,
     aws_ipi_destroy_cluster,
-    download_openshift_install_binary,
-    update_aws_clusters_versions,
 )
 from openshift_cli_installer.utils.clusters import (
     dump_cluster_data_to_file,
@@ -50,7 +45,6 @@ from openshift_cli_installer.utils.const import (
     TIMEOUT_60MIN,
     USER_INPUT_CLUSTER_BOOLEAN_KEYS,
 )
-from openshift_cli_installer.utils.gcp import get_gcp_regions
 from openshift_cli_installer.utils.general import delete_cluster_s3_buckets, tts
 
 LOGGER = get_logger(name=__name__)
@@ -64,7 +58,6 @@ def get_clusters_by_type(clusters):
         ]
 
     return clusters_dict
-
 
 
 def generate_cluster_dirs_path(clusters, base_directory):
@@ -110,8 +103,6 @@ def destroy_openshift_cluster(cluster_data):
         return osd_delete_cluster(cluster_data=cluster_data)
 
     delete_cluster_s3_buckets(cluster_data=cluster_data)
-
-
 
 
 def prepare_ocm_managed_clusters(
@@ -181,9 +172,6 @@ def run_create_or_destroy_clusters(
             processed_clusters.append(result.result())
 
     return processed_clusters
-
-
-
 
 
 def prepare_clusters(clusters, ocm_token):
