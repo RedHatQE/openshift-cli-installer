@@ -159,10 +159,7 @@ def get_cluster_kubeconfig_from_install_dir(
     return os.path.join(cluster_install_dir, "auth", "kubeconfig")
 
 
-def enable_observability(
-    hub_cluster_data,
-    timeout_watch,
-):
+def enable_observability(hub_cluster_data, timeout_watch):
     section = "Observability"
     thanos_secret_data = None
     _s3_client = None

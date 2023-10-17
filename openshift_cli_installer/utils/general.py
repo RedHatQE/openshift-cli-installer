@@ -7,6 +7,9 @@ from time import sleep
 
 import click
 from clouds.aws.session_clients import s3_client
+from simple_logger.logger import get_logger
+
+LOGGER = get_logger(name=__name__)
 
 
 def remove_terraform_folder_from_install_dir(install_dir):
@@ -122,3 +125,20 @@ def tts(ts):
         return _time * 60 * 60
     else:
         return int(ts)
+
+
+def delete_cluster_s3_buckets(cluster_data):
+    cluster_name = cluster_data["name"]
+    LOGGER.info(f"Deleting S3 bucket for cluster {cluster_name}")
+    buckets_to_delete = []
+    _s3_client = s3_client()
+    for _bucket in _s3_client.list_buckets()["Buckets"]:
+        if _bucket["Name"].startswith(cluster_name):
+            buckets_to_delete.append(_bucket["Name"])
+
+    for _bucket in buckets_to_delete:
+        LOGGER.info(f"{cluster_name}: Deleting S3 bucket {_bucket}")
+        for _object in _s3_client.list_objects(Bucket=_bucket)["Contents"]:
+            _s3_client.delete_object(Bucket=_bucket, Key=_object["Key"])
+
+        _s3_client.delete_bucket(Bucket=_bucket)

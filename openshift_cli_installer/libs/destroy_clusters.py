@@ -27,6 +27,7 @@ from openshift_cli_installer.utils.const import (
     GCP_OSD_STR,
     SUPPORTED_PLATFORMS,
 )
+from openshift_cli_installer.utils.general import delete_cluster_s3_buckets
 
 
 def download_and_extract_s3_file(
@@ -102,6 +103,8 @@ def _destroy_cluster(cluster_data, cluster_type):
         s3_bucket_name = cluster_data.get("s3-bucket-name")
         if s3_bucket_name:
             delete_s3_object(cluster_data=cluster_data, s3_bucket_name=s3_bucket_name)
+
+        delete_cluster_s3_buckets(cluster_data=cluster_data)
 
     except Exception as ex:
         click.secho(
