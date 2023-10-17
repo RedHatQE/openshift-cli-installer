@@ -26,7 +26,7 @@ from openshift_cli_installer.utils.const import (
 
 class UserInput:
     def __init__(self, **kwargs):
-        self.logger = get_logger(name=self.__class__.__name__)
+        self.logger = get_logger(name=self.__class__.__module__)
         self.user_kwargs = kwargs
         self.clusters_yaml_config_file = self.user_kwargs.get(
             "clusters_yaml_config_file"
