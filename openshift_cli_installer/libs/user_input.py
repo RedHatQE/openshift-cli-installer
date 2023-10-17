@@ -146,17 +146,28 @@ class UserInput:
 
     def is_platform_supported(self):
         unsupported_platforms = []
+        missing_platforms = []
         for _cluster in self.clusters:
-            _platform = _cluster["platform"]
-            if _platform not in SUPPORTED_PLATFORMS:
-                unsupported_platforms.append(
-                    f"Cluster {_cluster['name']} platform '{_platform}' is not"
-                    " supported.\n"
+            _platform = _cluster.get("platform")
+            if not _platform:
+                missing_platforms.append(
+                    f"Cluster {_cluster['name']} is missing platform"
                 )
 
-        if unsupported_platforms:
-            self.logger.error(unsupported_platforms)
-            raise click.Abort()
+            elif _platform not in SUPPORTED_PLATFORMS:
+                unsupported_platforms.append(
+                    f"Cluster {_cluster['name']} platform '{_platform}' is not"
+                    " supported."
+                )
+
+        if unsupported_platforms or missing_platforms:
+            if unsupported_platforms:
+                self.logger.error("\n".join(unsupported_platforms))
+                raise click.Abort()
+
+            if missing_platforms:
+                self.logger.error("\n".join(missing_platforms))
+                raise click.Abort()
 
     def assert_unique_cluster_names(self):
         cluster_names = [cluster["name"] for cluster in self.clusters]
