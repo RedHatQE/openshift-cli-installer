@@ -266,8 +266,6 @@ def main(**kwargs):
         ssh_key_file=user_input.ssh_key_file,
         docker_config_file=user_input.docker_config_file,
         create=user_input.create,
-        aws_access_key_id=user_input.aws_access_key_id,
-        aws_secret_access_key=user_input.aws_secret_access_key,
     )
     ocm_managed_clusters = prepare_ocm_managed_clusters(
         osd_managed_clusters=ocm_managed_clusters,
