@@ -28,7 +28,9 @@ class UserInput:
     def __init__(self, **kwargs):
         self.logger = get_logger(name=self.__class__.__name__)
         self.user_kwargs = kwargs
-        self.clusters_yaml_config_file = kwargs.get("clusters_yaml_config_file")
+        self.clusters_yaml_config_file = self.user_kwargs.get(
+            "clusters_yaml_config_file"
+        )
         if self.clusters_yaml_config_file:
             # Update CLI user input from YAML file if exists
             # Since CLI user input has some defaults, YAML file will override them
@@ -37,6 +39,9 @@ class UserInput:
             )
 
         self.action = self.user_kwargs.get("action")
+        self.aws_access_key_id = self.user_kwargs.get("aws_access_key_id")
+        self.aws_secret_access_key = self.user_kwargs.get("aws_secret_access_key")
+        self.aws_account_id = self.user_kwargs.get("aws_account_id")
         self.clusters = self.get_clusters_from_user_input()
         self.ocm_token = self.user_kwargs.get("ocm_token")
         self.parallel = (
@@ -57,12 +62,8 @@ class UserInput:
         self.registry_config_file = self.user_kwargs.get("registry_config_file")
         self.ssh_key_file = self.user_kwargs.get("ssh_key_file")
         self.docker_config_file = self.user_kwargs.get("docker_config_file")
-        self.aws_access_key_id = self.user_kwargs.get("aws_access_key_id")
-        self.aws_secret_access_key = self.user_kwargs.get("aws_secret_access_key")
-        self.aws_account_id = self.user_kwargs.get("aws_account_id")
         self.gcp_service_account_file = self.user_kwargs.get("gcp_service_account_file")
         self.must_gather_output_dir = self.user_kwargs.get("must_gather_output_dir")
-
         self.create = self.action == CREATE_STR
         self.verify_user_input()
 
