@@ -38,6 +38,7 @@ class UserInput:
                 parse_config(path=self.clusters_yaml_config_file, default_value="")
             )
 
+        self.dry_run = self.user_kwargs.get("dry_run")
         self.action = self.user_kwargs.get("action")
         self.aws_access_key_id = self.user_kwargs.get("aws_access_key_id")
         self.aws_secret_access_key = self.user_kwargs.get("aws_secret_access_key")

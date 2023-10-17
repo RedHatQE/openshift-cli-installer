@@ -198,11 +198,19 @@ must-gather will try to collect data when cluster installation fails and cluster
 """,
     type=click.Path(exists=True),
 )
+@click.option(
+    "--dry-run",
+    help="For testing, only verify user input",
+    is_flag=True,
+    show_default=True,
+)
 def main(**kwargs):
     """
     Create/Destroy Openshift cluster/s
     """
     user_input = UserInput(**kwargs)
+    if user_input.dry_run:
+        return
 
     if (
         user_input.destroy_clusters_from_s3_config_files
