@@ -3,18 +3,10 @@ import os
 import time
 
 import click
+from simple_logger.logger import get_logger
 
-from openshift_cli_installer.libs.clusters import OCPClusters
-from openshift_cli_installer.libs.destroy_clusters import destroy_clusters
-from openshift_cli_installer.libs.managed_clusters.acm_clusters import (
-    install_and_attach_for_acm,
-)
+from openshift_cli_installer.libs.clusters.ocp_clusters import OCPClusters
 from openshift_cli_installer.libs.user_input import UserInput
-from openshift_cli_installer.utils.cli_utils import (
-    prepare_ocm_managed_clusters,
-    run_create_or_destroy_clusters,
-    save_kubeadmin_token_to_clusters_install_data,
-)
 from openshift_cli_installer.utils.click_dict_type import DictParamType
 from openshift_cli_installer.utils.const import (
     CLUSTER_DATA_YAML_FILENAME,
@@ -194,58 +186,28 @@ def main(**kwargs):
     """
     Create/Destroy Openshift cluster/s
     """
-    user_input = UserInput(**kwargs)
-    if user_input.dry_run:
+    if kwargs["dry_run"]:
+        UserInput(**kwargs)
         return
 
-    if (
-        user_input.destroy_clusters_from_s3_config_files
-        or user_input.destroy_all_clusters
-    ):
-        return destroy_clusters(
-            s3_bucket_name=user_input.s3_bucket_name,
-            s3_bucket_path=user_input.s3_bucket_path,
-            clusters_install_data_directory=user_input.clusters_install_data_directory,
-            registry_config_file=user_input.registry_config_file,
-            clusters_dir_paths=user_input.destroy_clusters_from_s3_config_files,
-            destroy_all_clusters=user_input.destroy_all_clusters,
-            ocm_token=user_input.ocm_token,
-            parallel=user_input.parallel,
-        )
+    # if (
+    #     user_input.destroy_clusters_from_s3_config_files
+    #     or user_input.destroy_all_clusters
+    # ):
+    #     return destroy_clusters(
+    #         s3_bucket_name=user_input.s3_bucket_name,
+    #         s3_bucket_path=user_input.s3_bucket_path,
+    #         clusters_install_data_directory=user_input.clusters_install_data_directory,
+    #         registry_config_file=user_input.registry_config_file,
+    #         clusters_dir_paths=user_input.destroy_clusters_from_s3_config_files,
+    #         destroy_all_clusters=user_input.destroy_all_clusters,
+    #         ocm_token=user_input.ocm_token,
+    #         parallel=user_input.parallel,
+    #     )
 
     # General prepare for all clusters
-    clusters = OCPClusters(user_input=user_input)
-
-    ocm_managed_clusters = prepare_ocm_managed_clusters(
-        osd_managed_clusters=clusters.ocm_managed_clusters,
-        clusters_install_data_directory=user_input.clusters_install_data_directory,
-        aws_access_key_id=user_input.aws_access_key_id,
-        aws_secret_access_key=user_input.aws_secret_access_key,
-        aws_account_id=user_input.aws_account_id,
-        create=user_input.create,
-        gcp_service_account_file=user_input.gcp_service_account_file,
-    )
-
-    processed_clusters = run_create_or_destroy_clusters(
-        clusters=clusters.aws_ipi_clusters + ocm_managed_clusters,
-        create=user_input.create,
-        action=user_input.action,
-        parallel=user_input.parallel,
-        must_gather_output_dir=user_input.must_gather_output_dir,
-    )
-
-    if user_input.create:
-        processed_clusters = save_kubeadmin_token_to_clusters_install_data(
-            clusters=processed_clusters,
-        )
-
-        processed_clusters = install_and_attach_for_acm(
-            managed_clusters=processed_clusters,
-            clusters_install_data_directory=user_input.clusters_install_data_directory,
-            parallel=user_input.parallel,
-        )
-
-    return processed_clusters
+    clusters = OCPClusters(**kwargs)
+    clusters.run_create_or_destroy_clusters()
 
 
 if __name__ == "__main__":
@@ -253,5 +215,6 @@ if __name__ == "__main__":
     try:
         main()
     finally:
+        _logger = get_logger(name="openshift-cli-installer")
         elapsed_time = datetime.timedelta(seconds=time.time() - start_time)
-        click.secho(f"Total execution time: {elapsed_time}", fg="green", bold=True)
+        _logger.info(f"Total execution time: {elapsed_time}")

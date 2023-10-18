@@ -2,28 +2,20 @@ import contextlib
 import copy
 import os
 import shlex
-import shutil
-from pathlib import Path
 
-import click
 import rosa.cli
 import yaml
 from ocm_python_wrapper.ocm_client import OCMPythonClient
 from ocm_python_wrapper.versions import Versions
-from ocp_resources.route import Route
-from ocp_utilities.infra import get_client
-from ocp_utilities.must_gather import run_must_gather
 from ocp_utilities.utils import run_command
 
 from openshift_cli_installer.utils.cluster_versions import set_clusters_versions
 from openshift_cli_installer.utils.const import (
     AWS_OSD_STR,
     CLUSTER_DATA_YAML_FILENAME,
-    ERROR_LOG_COLOR,
     GCP_OSD_STR,
     HYPERSHIFT_STR,
     ROSA_STR,
-    WARNING_LOG_COLOR,
 )
 
 
@@ -81,99 +73,7 @@ def update_rosa_osd_clusters_versions(clusters, _test=False, _test_versions_dict
         base_available_versions=base_available_versions_dict,
     )
 
-
-def add_cluster_info_to_cluster_data(cluster_data):
-    """
-    Adds cluster information to the given clusters data dictionary.
-
-    `cluster-id`, `api-url` and `console-url` (when available) will be added to `cluster_data`.
-
-    Args:
-        cluster_data (dict): A dictionary containing cluster data.
-
-    Returns:
-        dict: The updated cluster data dictionary.
-    """
-    if cluster_data["platform"] == HYPERSHIFT_STR:
-        click.secho(
-            f"{HYPERSHIFT_STR} clusters do not have console URL", fg=WARNING_LOG_COLOR
-        )
-
-    cluster_object = cluster_data.get("cluster-object")
-    if cluster_object:
-        ocp_client = cluster_object.ocp_client
-        cluster_data["cluster-id"] = cluster_object.cluster_id
-
-    else:
-        ocp_client = get_client(config_file=f"{cluster_data['auth-dir']}/kubeconfig")
-
-    cluster_data["ocp-client"] = ocp_client
-    cluster_data["api-url"] = ocp_client.configuration.host
-    console_route = Route(
-        name="console", namespace="openshift-console", client=ocp_client
-    )
-    if console_route.exists:
-        route_spec = console_route.instance.spec
-        cluster_data["console-url"] = (
-            f"{route_spec.port.targetPort}://{route_spec.host}"
-        )
-
     return cluster_data
-
-
-def set_cluster_auth(cluster_data):
-    auth_path = os.path.join(cluster_data["install-dir"], "auth")
-    Path(auth_path).mkdir(parents=True, exist_ok=True)
-
-    cluster_object = cluster_data["cluster-object"]
-    with open(os.path.join(auth_path, "kubeconfig"), "w") as fd:
-        fd.write(yaml.dump(cluster_object.kubeconfig))
-
-    with open(os.path.join(auth_path, "kubeadmin-password"), "w") as fd:
-        fd.write(cluster_object.kubeadmin_password)
-
-
-def collect_must_gather(must_gather_output_dir, cluster_data):
-    try:
-        name = cluster_data["name"]
-        platform = cluster_data["platform"]
-        target_dir = os.path.join(must_gather_output_dir, "must-gather", platform, name)
-    except Exception as ex:
-        click.secho(
-            f"Failed to get data from {cluster_data}; must-gather could not be executed"
-            f" on: {ex}",
-            fg=ERROR_LOG_COLOR,
-        )
-        return
-
-    try:
-        kubeconfig_path = get_kubeconfig_path(cluster_data=cluster_data)
-        if not os.path.exists(kubeconfig_path):
-            click.secho(
-                f"kubeconfig for cluster {name} does not exist; cannot run"
-                " must-gather.",
-                fg=ERROR_LOG_COLOR,
-            )
-            return
-
-        click.echo(f"Prepare must-gather target extracted directory {target_dir}.")
-        Path(target_dir).mkdir(parents=True, exist_ok=True)
-
-        click.echo(f"Collect must-gather for cluster {name} running on {platform}")
-        run_must_gather(
-            target_base_dir=target_dir,
-            kubeconfig=kubeconfig_path,
-        )
-
-    except Exception as ex:
-        click.secho(
-            f"Failed to run must-gather for cluster {name} on"
-            f" {platform} platform\n{ex}",
-            fg=ERROR_LOG_COLOR,
-        )
-
-        click.echo(f"Delete must-gather target directory {target_dir}.")
-        shutil.rmtree(target_dir)
 
 
 def get_kubeconfig_path(cluster_data):
@@ -181,15 +81,11 @@ def get_kubeconfig_path(cluster_data):
 
 
 @contextlib.contextmanager
-def get_kubeadmin_token(cluster_data):
-    with open(
-        os.path.join(cluster_data["install-dir"], "auth", "kubeadmin-password")
-    ) as fd:
+def get_kubeadmin_token(cluster_dir, api_url):
+    with open(os.path.join(cluster_dir, "auth", "kubeadmin-password")) as fd:
         kubeadmin_password = fd.read()
     run_command(
-        shlex.split(
-            f"oc login {cluster_data['api-url']} -u kubeadmin -p {kubeadmin_password}"
-        ),
+        shlex.split(f"oc login {api_url} -u kubeadmin -p {kubeadmin_password}"),
         hide_log_command=True,
     )
     yield run_command(
