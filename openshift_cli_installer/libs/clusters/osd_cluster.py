@@ -20,8 +20,8 @@ class OsdCluster(OcmCluster):
             self.gcp_service_account = self.get_service_account_dict_from_file()
 
         if self.create:
-            self.replicas = self.ocp_cluster.get("replicas")
-            self.compute_machine_type = self.ocp_cluster.get("compute-machine-type")
+            self.replicas = self.cluster.get("replicas")
+            self.compute_machine_type = self.cluster.get("compute-machine-type")
             self.get_osd_versions()
             self.all_available_versions.update(
                 filter_versions(

@@ -38,7 +38,7 @@ class AwsIpiCluster(OCPCluster):
         self.dump_cluster_data_to_file()
 
     def _prepare_aws_ipi_cluster(self):
-        self.base_domain = self.ocp_cluster["base_domain"]
+        self.base_domain = self.cluster["base_domain"]
         self.aws_base_available_versions = get_aws_versions()
         self.all_available_versions.update(
             filter_versions(

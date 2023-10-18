@@ -1,4 +1,3 @@
-# import copy
 # import os
 # import shutil
 # from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -8,9 +7,6 @@
 # import yaml
 # from clouds.aws.session_clients import s3_client
 #
-#
-#
-# from openshift_cli_installer.utils.cli_utils import prepare_clusters
 # from openshift_cli_installer.utils.const import (
 #     AWS_OSD_STR,
 #     AWS_STR,
@@ -140,6 +136,8 @@
 #                         _root=root, _cluster_filepath=os.path.join(root, _file)
 #                     )
 #                     clusters_dict[data["platform"]].append(data)
+#
+#     return clusters_dict
 #
 #     _clusters_dict = copy.copy(clusters_dict)
 #     for cluster_type, clusters_list in clusters_dict.items():

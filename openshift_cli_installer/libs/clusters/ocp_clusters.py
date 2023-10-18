@@ -1,4 +1,5 @@
 import functools
+import shutil
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 import click
@@ -36,32 +37,37 @@ class OCPClusters(UserInput):
         self.hypershift_clusters = []
         self.gcp_osd_clusters = []
 
+        self.s3_target_dirs = []
+
         for _cluster in self.clusters:
-            _cluster_platform = _cluster["platform"]
-            if _cluster_platform == AWS_STR:
-                self.aws_ipi_clusters.append(
-                    AwsIpiCluster(ocp_cluster=_cluster, **kwargs)
-                )
-
-            if _cluster_platform == AWS_OSD_STR:
-                self.aws_osd_clusters.append(OsdCluster(ocp_cluster=_cluster, **kwargs))
-
-            if _cluster_platform == ROSA_STR:
-                self.rosa_clusters.append(RosaCluster(ocp_cluster=_cluster, **kwargs))
-
-            if _cluster_platform == HYPERSHIFT_STR:
-                self.hypershift_clusters.append(
-                    RosaCluster(ocp_cluster=_cluster, **kwargs)
-                )
-
-            if _cluster_platform == GCP_OSD_STR:
-                self.gcp_osd_clusters.append(OsdCluster(ocp_cluster=_cluster, **kwargs))
+            self.add(ocp_cluster=_cluster, **kwargs)
 
         if self.create:
             self.check_ocm_managed_existing_clusters()
             self.is_region_support_hypershift()
             self.is_region_support_aws()
             self.is_region_support_gcp()
+
+    def add(self, ocp_cluster, **kwargs):
+        _cluster_platform = ocp_cluster["platform"]
+        if _cluster_platform == AWS_STR:
+            self.aws_ipi_clusters.append(
+                AwsIpiCluster(ocp_cluster=ocp_cluster, **kwargs)
+            )
+
+        if _cluster_platform == AWS_OSD_STR:
+            self.aws_osd_clusters.append(OsdCluster(ocp_cluster=ocp_cluster, **kwargs))
+
+        if _cluster_platform == ROSA_STR:
+            self.rosa_clusters.append(RosaCluster(ocp_cluster=ocp_cluster, **kwargs))
+
+        if _cluster_platform == HYPERSHIFT_STR:
+            self.hypershift_clusters.append(
+                RosaCluster(ocp_cluster=ocp_cluster, **kwargs)
+            )
+
+        if _cluster_platform == GCP_OSD_STR:
+            self.gcp_osd_clusters.append(OsdCluster(ocp_cluster=ocp_cluster, **kwargs))
 
     @property
     def list_clusters(self):
@@ -204,3 +210,7 @@ class OCPClusters(UserInput):
                 processed_clusters.append(result.result())
 
         return processed_clusters
+
+    def delete_s3_target_dirs(self):
+        for _dir in self.s3_target_dirs:
+            shutil.rmtree(path=_dir, ignore_errors=True)

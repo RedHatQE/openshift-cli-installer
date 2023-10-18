@@ -3,6 +3,7 @@ import os
 import time
 
 import click
+import yaml
 from simple_logger.logger import get_logger
 
 from openshift_cli_installer.libs.clusters.ocp_clusters import OCPClusters
@@ -190,24 +191,34 @@ def main(**kwargs):
         UserInput(**kwargs)
         return
 
-    # if (
-    #     user_input.destroy_clusters_from_s3_config_files
-    #     or user_input.destroy_all_clusters
-    # ):
-    #     return destroy_clusters(
-    #         s3_bucket_name=user_input.s3_bucket_name,
-    #         s3_bucket_path=user_input.s3_bucket_path,
-    #         clusters_install_data_directory=user_input.clusters_install_data_directory,
-    #         registry_config_file=user_input.registry_config_file,
-    #         clusters_dir_paths=user_input.destroy_clusters_from_s3_config_files,
-    #         destroy_all_clusters=user_input.destroy_all_clusters,
-    #         ocm_token=user_input.ocm_token,
-    #         parallel=user_input.parallel,
-    #     )
+    if (
+        kwargs["destroy_clusters_from_s3_config_files"]
+        or kwargs["destroy_all_clusters"]
+    ):
+        clusters_data_list = []
+        for root, dirs, files in os.walk(kwargs["clusters_install_data_directory"]):
+            for _file in files:
+                if _file == CLUSTER_DATA_YAML_FILENAME:
+                    with open(os.path.join(root, _file)) as fd:
+                        _data = yaml.safe_load(fd)
 
-    # General prepare for all clusters
-    clusters = OCPClusters(**kwargs)
-    clusters.run_create_or_destroy_clusters()
+                    clusters_data_list.append(_data)
+
+        clusters_kwargs = {"action": DESTROY_STR}
+        clusters_list = []
+
+        for cluster in clusters_data_list:
+            _cluster = cluster.pop("cluster")
+            clusters_list.append(cluster)
+            clusters_kwargs.update(cluster)
+            clusters_kwargs.setdefault("clusters", []).append(_cluster)
+
+        clusters = OCPClusters(**clusters_kwargs)
+        clusters.run_create_or_destroy_clusters()
+
+    else:
+        clusters = OCPClusters(**kwargs)
+        clusters.run_create_or_destroy_clusters()
 
 
 if __name__ == "__main__":
@@ -216,5 +227,7 @@ if __name__ == "__main__":
         main()
     finally:
         _logger = get_logger(name="openshift-cli-installer")
-        elapsed_time = datetime.timedelta(seconds=time.time() - start_time)
-        _logger.info(f"Total execution time: {elapsed_time}")
+        _logger.info(
+            "Total execution time:"
+            f" {datetime.timedelta(seconds=time.time() - start_time)}"
+        )

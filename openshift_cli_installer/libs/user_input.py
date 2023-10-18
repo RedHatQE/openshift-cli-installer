@@ -118,6 +118,9 @@ class UserInput(BasicClass):
                 )
                 raise click.Abort()
 
+        elif self.destroy_all_clusters:
+            return
+
         else:
             if not self.action:
                 self.logger.error(

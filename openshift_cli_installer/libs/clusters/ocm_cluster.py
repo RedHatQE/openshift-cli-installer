@@ -20,9 +20,9 @@ class OcmCluster(OCPCluster):
         self.expiration_time = None
         self.osd_base_available_versions_dict = {}
         self.rosa_base_available_versions_dict = {}
-        self.channel_group = self.ocp_cluster.get("channel-group", "stable")
-        self.multi_az = self.ocp_cluster.get("multi-az", False)
-        self.ocm_env = self.ocp_cluster.get("ocm-env", STAGE_STR)
+        self.channel_group = self.cluster.get("channel-group", "stable")
+        self.multi_az = self.cluster.get("multi-az", False)
+        self.ocm_env = self.cluster.get("ocm-env", STAGE_STR)
 
         self.prepare_cluster_data()
         self.cluster_object = Cluster(
@@ -33,7 +33,7 @@ class OcmCluster(OCPCluster):
         self.dump_cluster_data_to_file()
 
     def _set_expiration_time(self):
-        expiration_time = self.ocp_cluster.get("expiration-time")
+        expiration_time = self.cluster.get("expiration-time")
         if expiration_time:
             _expiration_time = tts(ts=expiration_time)
             self.expiration_time = (

@@ -41,10 +41,10 @@ class RosaCluster(OcmCluster):
             self.subnet_ids = None
             self.hosted_cp = "true"
             self.tags = "dns:external"
-            self.machine_cidr = self.ocp_cluster.get("cidr", "10.0.0.0/16")
-            self.cidr = self.ocp_cluster.get("cidr")
-            self.private_subnets = self.ocp_cluster.get("private_subnets")
-            self.public_subnets = self.ocp_cluster.get("public_subnets")
+            self.machine_cidr = self.cluster.get("cidr", "10.0.0.0/16")
+            self.cidr = self.cluster.get("cidr")
+            self.private_subnets = self.cluster.get("private_subnets")
+            self.public_subnets = self.cluster.get("public_subnets")
             self.terraform_init()
 
         self.dump_cluster_data_to_file()

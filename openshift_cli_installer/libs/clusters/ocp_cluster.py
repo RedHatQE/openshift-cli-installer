@@ -1,5 +1,4 @@
 import base64
-import copy
 import os
 import shlex
 import shutil
@@ -51,12 +50,12 @@ class OCPCluster(UserInput):
         self.logger = get_logger(
             f"{self.__class__.__module__}-{self.__class__.__name__}"
         )
-        self.ocp_cluster = ocp_cluster
-        self.name = self.ocp_cluster["name"]
+        self.cluster = ocp_cluster
+        self.name = self.cluster["name"]
         self.shortuuid = shortuuid.uuid()
-        self.platform = self.ocp_cluster["platform"]
+        self.platform = self.cluster["platform"]
         self.log_prefix = f"[Cluster - {self.name} | Platform - {self.platform}]"
-        self.timeout = tts(ts=self.ocp_cluster.get("timeout", TIMEOUT_60MIN))
+        self.timeout = tts(ts=self.cluster.get("timeout", TIMEOUT_60MIN))
 
         self.ocm_env = None
         self.ocm_client = None
@@ -70,18 +69,21 @@ class OCPCluster(UserInput):
         self.timeout_watch = None
         self.all_available_versions = {}
 
-        self.region = self.ocp_cluster["region"]
-        self.acm = self.ocp_cluster.get("acm") is True
-        self.acm_observability = self.ocp_cluster.get("acm-observability") is True
-        self.acm_observability_storage_type = self.ocp_cluster.get(
-            "acm-observability-storage-type"
-        )
-        self.acm_observability_s3_region = self.ocp_cluster.get(
-            "acm-observability-s3-region", self.region
-        )
-        self.acm_clusters = self.ocp_cluster.get("acm-clusters")
-        self.version = self.ocp_cluster["version"]
-        self.stream = get_cluster_stream(cluster_data=self.ocp_cluster)
+        self.region = self.cluster["region"]
+        self.acm = self.cluster.get("acm") is True
+        if self.acm:
+            self.acm_clusters = self.cluster.get("acm-clusters")
+
+        self.acm_observability = self.cluster.get("acm-observability") is True
+        if self.acm_observability:
+            self.acm_observability_storage_type = self.cluster.get(
+                "acm-observability-storage-type"
+            )
+            self.acm_observability_s3_region = self.cluster.get(
+                "acm-observability-s3-region", self.region
+            )
+        self.version = self.cluster["version"]
+        self.stream = get_cluster_stream(cluster_data=self.cluster)
         self.cluster_dir = os.path.join(
             self.clusters_install_data_directory, self.platform, self.name
         )
@@ -169,13 +171,55 @@ class OCPCluster(UserInput):
         )
 
     def dump_cluster_data_to_file(self):
-        _cluster_data = copy.copy(self.to_dict)
-        _cluster_data.pop("ocm_client", "")
-        _cluster_data.pop("timeout_watch", "")
-        _cluster_data.pop("ocp_client", "")
-        _cluster_data.pop("cluster_object", "")
-        _cluster_data.pop("logger", "")
-        _cluster_data.pop("clusters", "")
+        _cluster_data = {}
+        keys_to_pop = (
+            "ocm_client",
+            "ocp_client",
+            "cluster_object",
+            "logger",
+            "clusters",
+            "user_kwargs",
+            "log_prefix",
+            "create",
+            "action",
+            "clusters_yaml_config_file",
+            "all_available_versions",
+            "gcp_service_account",
+            "osd_base_available_versions_dict",
+            "rosa_base_available_versions_dict",
+            "replicas",
+            "version",
+            "timeout",
+            "platform",
+            "region",
+            "stream",
+            "name",
+            "ocm_env",
+            "terraform",
+            "timeout_watch",
+            "aws_base_available_versions",
+            "base_domain",
+            "channel_group",
+            "acm_observability",
+            "acm_observability_s3_region",
+            "acm_observability_storage_type",
+            "expiration_time",
+            "compute_machine_type",
+            "acm_clusters",
+            "acm",
+            "public_subnets",
+            "private_subnets",
+            "tags",
+            "machine_cidr",
+            "cidr",
+            "hosted_cp",
+        )
+        for _key, _val in self.to_dict.items():
+            if _key in keys_to_pop or not _val:
+                continue
+
+            _cluster_data[_key] = _val
+
         with open(
             os.path.join(self.cluster_dir, CLUSTER_DATA_YAML_FILENAME), "w"
         ) as fd:
