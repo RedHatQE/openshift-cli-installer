@@ -237,7 +237,7 @@ if __name__ == "__main__":
         import sys
         import traceback
 
-        ipdb = __import__("ipdb")
+        ipdb = __import__("ipdb")  # Bypass debug-statements pre-commit hook
 
         if "--pdb" in sys.argv:
             extype, value, tb = sys.exc_info()
