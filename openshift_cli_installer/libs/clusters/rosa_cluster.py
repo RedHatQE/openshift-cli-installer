@@ -45,11 +45,11 @@ class RosaCluster(OcmCluster):
             self.cidr = self.cluster.get("cidr")
             self.private_subnets = self.cluster.get("private_subnets")
             self.public_subnets = self.cluster.get("public_subnets")
-            self.terraform_init()
 
         self.dump_cluster_data_to_file()
 
     def terraform_init(self):
+        self.logger.info(f"{self.log_prefix}: Init Terraform")
         # az_id example: us-east-2 -> ["use2-az1", "use2-az2"]
         az_id_prefix = "".join(re.match(r"(.*)-(\w).*-(\d)", self.region).groups())
         cluster_parameters = {
@@ -59,8 +59,10 @@ class RosaCluster(OcmCluster):
         }
         if self.cidr:
             cluster_parameters["cidr"] = self.cidr
+
         if self.private_subnets:
             cluster_parameters["private_subnets"] = self.private_subnets
+
         if self.public_subnets:
             cluster_parameters["public_subnets"] = self.public_subnets
 
@@ -97,6 +99,7 @@ class RosaCluster(OcmCluster):
 
     def destroy_hypershift_vpc(self):
         self.logger.info(f"{self.log_prefix}: Destroy hypershift VPCs")
+        self.terraform_init()
         rc, _, err = self.terraform.destroy(
             force=IsNotFlagged,
             auto_approve=True,
@@ -110,10 +113,11 @@ class RosaCluster(OcmCluster):
             raise click.Abort()
 
     def prepare_hypershift_vpc(self):
+        self.logger.info(f"{self.log_prefix}: Preparing hypershift VPCs")
+        self.terraform_init()
         shutil.copy(
             os.path.join(get_manifests_path(), "setup-vpc.tf"), self.cluster_dir
         )
-        self.logger.info(f"{self.log_prefix}: Preparing hypershift VPCs")
         self.terraform.plan(dir_or_plan="hypershift.plan")
         rc, _, err = self.terraform.apply(
             capture_output=True, skip_plan=True, auto_approve=True

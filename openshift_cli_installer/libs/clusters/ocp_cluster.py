@@ -34,7 +34,6 @@ from openshift_cli_installer.utils.cluster_versions import (
 )
 from openshift_cli_installer.utils.clusters import get_kubeadmin_token
 from openshift_cli_installer.utils.const import (
-    AWS_BASED_PLATFORMS,
     CLUSTER_DATA_YAML_FILENAME,
     PRODUCTION_STR,
     S3_STR,
@@ -54,7 +53,8 @@ class OCPCluster(UserInput):
         self.name = self.cluster["name"]
         self.shortuuid = shortuuid.uuid()
         self.platform = self.cluster["platform"]
-        self.log_prefix = f"[Cluster - {self.name} | Platform - {self.platform}]"
+        self.region = self.cluster["region"]
+        self.log_prefix = f"[C:{self.name}|P:{self.platform}|R:{self.region}]"
         self.timeout = tts(ts=self.cluster.get("timeout", TIMEOUT_60MIN))
 
         self.ocm_env = None
@@ -69,7 +69,6 @@ class OCPCluster(UserInput):
         self.timeout_watch = None
         self.all_available_versions = {}
 
-        self.region = self.cluster["region"]
         self.acm = self.cluster.get("acm") is True
         if self.acm:
             self.acm_clusters = self.cluster.get("acm-clusters")
@@ -220,9 +219,13 @@ class OCPCluster(UserInput):
 
             _cluster_data[_key] = _val
 
-        with open(
-            os.path.join(self.cluster_dir, CLUSTER_DATA_YAML_FILENAME), "w"
-        ) as fd:
+        _cluster_data_yaml_file = os.path.join(
+            self.cluster_dir, CLUSTER_DATA_YAML_FILENAME
+        )
+        self.logger.info(
+            f"{self.log_prefix}: Writing cluster data to {_cluster_data_yaml_file}"
+        )
+        with open(_cluster_data_yaml_file, "w") as fd:
             fd.write(yaml.dump(_cluster_data))
 
     def collect_must_gather(self):
@@ -347,13 +350,9 @@ class OCPCluster(UserInput):
 
         self.logger.success(f"{self.log_prefix}: ACM installed successfully")
 
-        if self.acm_observability:
-            self.enable_observability()
-
     def enable_observability(self):
         thanos_secret_data = None
         _s3_client = None
-
         bucket_name = f"{self.name}-observability-{self.shortuuid}"
 
         if self.acm_observability_storage_type == S3_STR:
@@ -432,7 +431,7 @@ class OCPCluster(UserInput):
                 f"{self.log_prefix}: Failed to enable observability. error: {ex}"
             )
 
-            if self.platform in AWS_BASED_PLATFORMS:
+            if self.acm_observability_storage_type == S3_STR:
                 for _bucket in _s3_client.list_buckets()["Buckets"]:
                     if _bucket["Name"] == bucket_name:
                         _s3_client.delete_bucket(Bucket=bucket_name)

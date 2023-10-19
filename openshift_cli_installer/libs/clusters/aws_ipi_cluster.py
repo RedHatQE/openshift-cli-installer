@@ -7,15 +7,17 @@ from ocp_utilities.utils import run_command
 from simple_logger.logger import get_logger
 
 from openshift_cli_installer.libs.clusters.ocp_cluster import OCPCluster
-from openshift_cli_installer.libs.unmanaged_clusters.aws_ipi_clusters import (
-    generate_unified_pull_secret,
+from openshift_cli_installer.utils.cluster_versions import (
+    filter_versions,
     get_aws_versions,
+)
+from openshift_cli_installer.utils.const import PRODUCTION_STR
+from openshift_cli_installer.utils.general import (
+    generate_unified_pull_secret,
     get_install_config_j2_template,
     get_local_ssh_key,
+    zip_and_upload_to_s3,
 )
-from openshift_cli_installer.utils.cluster_versions import filter_versions
-from openshift_cli_installer.utils.const import PRODUCTION_STR
-from openshift_cli_installer.utils.general import zip_and_upload_to_s3
 
 
 class AwsIpiCluster(OCPCluster):

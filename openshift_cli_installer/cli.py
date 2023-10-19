@@ -3,17 +3,17 @@ import os
 import time
 
 import click
-import yaml
 from simple_logger.logger import get_logger
 
 from openshift_cli_installer.libs.clusters.ocp_clusters import OCPClusters
 from openshift_cli_installer.libs.user_input import UserInput
 from openshift_cli_installer.utils.click_dict_type import DictParamType
-from openshift_cli_installer.utils.const import (
-    CLUSTER_DATA_YAML_FILENAME,
-    CREATE_STR,
-    DESTROY_STR,
+from openshift_cli_installer.utils.clusters import (
+    clusters_from_directories,
+    get_destroy_clusters_kwargs,
+    prepare_clusters_directory_from_s3_bucket,
 )
+from openshift_cli_installer.utils.const import CREATE_STR, DESTROY_STR
 
 
 @click.command("installer")
@@ -128,28 +128,30 @@ For example:
     multiple=True,
 )
 @click.option(
-    "--destroy-all-clusters",
+    "--destroy-clusters-from-s3-bucket",
     help="""
 \b
-Destroy all clusters under `--clusters-install-data-directory` and/or
-saved in S3 bucket (`--s3-bucket-path` `--s3-bucket-name`).
-S3 objects will be deleted upon successful deletion.
+Destroy clusters S3 bucket, --s3-bucket-name is required and optional --s3-bucket-path.
     """,
+    show_default=True,
     is_flag=True,
+)
+@click.option(
+    "--destroy-clusters-from-s3-bucket-query",
+    help="""
+\b
+Option to pass query to --destroy-clusters-from-s3-bucket, match only files that have it.
+    """,
     show_default=True,
 )
 @click.option(
-    "--destroy-clusters-from-s3-config-files",
-    help=f"""
+    "--destroy-clusters-from-install-data-directory",
+    help="""
 \b
-Destroy clusters from a list of paths to `{CLUSTER_DATA_YAML_FILENAME}` files.
-The yaml file must include `s3-object-name` with s3 objet name.
-`--s3-bucket-name` and optionally `--s3-bucket-path` must be provided.
-S3 objects will be deleted upon successful deletion.
-For example:
-    '/tmp/cluster1/,/tmp/cluster2/'
+Destroy clusters from cluster data files located at --clusters-install-data-directory
     """,
     show_default=True,
+    is_flag=True,
 )
 @click.option(
     "--clusters-yaml-config-file",
@@ -191,30 +193,29 @@ def main(**kwargs):
         UserInput(**kwargs)
         return
 
-    if (
-        kwargs["destroy_clusters_from_s3_config_files"]
-        or kwargs["destroy_all_clusters"]
-    ):
+    cluster_install_data_directory = kwargs["clusters_install_data_directory"]
+    destroy_clusters_from_s3_bucket = kwargs["destroy_clusters_from_s3_bucket"]
+    destroy_clusters_from_install_data_directory = kwargs[
+        "destroy_clusters_from_install_data_directory"
+    ]
+    if destroy_clusters_from_s3_bucket or destroy_clusters_from_install_data_directory:
         clusters_data_list = []
-        for root, dirs, files in os.walk(kwargs["clusters_install_data_directory"]):
-            for _file in files:
-                if _file == CLUSTER_DATA_YAML_FILENAME:
-                    with open(os.path.join(root, _file)) as fd:
-                        _data = yaml.safe_load(fd)
+        if destroy_clusters_from_s3_bucket:
+            clusters_data_list.extend(
+                prepare_clusters_directory_from_s3_bucket(**kwargs)
+            )
 
-                    clusters_data_list.append(_data)
+        if destroy_clusters_from_install_data_directory:
+            clusters_data_list.extend(
+                clusters_from_directories(directories=[cluster_install_data_directory])
+            )
 
-        clusters_kwargs = {"action": DESTROY_STR}
-        clusters_list = []
-
-        for cluster in clusters_data_list:
-            _cluster = cluster.pop("cluster")
-            clusters_list.append(cluster)
-            clusters_kwargs.update(cluster)
-            clusters_kwargs.setdefault("clusters", []).append(_cluster)
-
+        clusters_kwargs = get_destroy_clusters_kwargs(
+            clusters_data_list=clusters_data_list
+        )
         clusters = OCPClusters(**clusters_kwargs)
         clusters.run_create_or_destroy_clusters()
+        # TODO: Remove S3 buckets?
 
     else:
         clusters = OCPClusters(**kwargs)

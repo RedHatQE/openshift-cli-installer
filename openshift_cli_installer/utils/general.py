@@ -1,3 +1,4 @@
+import json
 import os
 import re
 import shutil
@@ -6,8 +7,12 @@ from importlib.util import find_spec
 from time import sleep
 
 import click
+import yaml
 from clouds.aws.session_clients import s3_client
+from jinja2 import DebugUndefined, Environment, FileSystemLoader, meta
 from simple_logger.logger import get_logger
+
+from openshift_cli_installer.utils.const import ERROR_LOG_COLOR
 
 LOGGER = get_logger(name=__name__)
 
@@ -142,3 +147,42 @@ def delete_cluster_s3_buckets(cluster_data):
             _s3_client.delete_object(Bucket=_bucket, Key=_object["Key"])
 
         _s3_client.delete_bucket(Bucket=_bucket)
+
+
+def get_install_config_j2_template(cluster_dict):
+    env = Environment(
+        loader=FileSystemLoader(get_manifests_path()),
+        trim_blocks=True,
+        lstrip_blocks=True,
+        undefined=DebugUndefined,
+    )
+
+    template = env.get_template(name="install-config-template.j2")
+    rendered = template.render(cluster_dict)
+    undefined_variables = meta.find_undeclared_variables(env.parse(rendered))
+    if undefined_variables:
+        click.secho(
+            f"The following variables are undefined: {undefined_variables}",
+            fg=ERROR_LOG_COLOR,
+        )
+        raise click.Abort()
+
+    return yaml.safe_load(rendered)
+
+
+def generate_unified_pull_secret(registry_config_file, docker_config_file):
+    registry_config = get_pull_secret_data(registry_config_file=registry_config_file)
+    docker_config = get_pull_secret_data(registry_config_file=docker_config_file)
+    docker_config["auths"].update(registry_config["auths"])
+
+    return json.dumps(docker_config)
+
+
+def get_pull_secret_data(registry_config_file):
+    with open(registry_config_file) as fd:
+        return json.load(fd)
+
+
+def get_local_ssh_key(ssh_key_file):
+    with open(ssh_key_file) as fd:
+        return fd.read().strip()

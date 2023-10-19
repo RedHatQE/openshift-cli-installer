@@ -24,17 +24,7 @@ from openshift_cli_installer.utils.const import (
 )
 
 
-class BasicClass:
-    instance = None
-
-    def __new__(cls, *args, **kwargs):
-        if not cls.instance:
-            cls.instance = super(BasicClass, cls).__new__(cls)
-
-        return cls.instance
-
-
-class UserInput(BasicClass):
+class UserInput:
     def __init__(self, **kwargs):
         self.logger = get_logger(name=self.__class__.__module__)
         self.logger.info("Initializing User Input")
@@ -70,7 +60,12 @@ class UserInput(BasicClass):
         )
         self.s3_bucket_name = self.user_kwargs.get("s3_bucket_name")
         self.s3_bucket_path = self.user_kwargs.get("s3_bucket_path")
-        self.destroy_all_clusters = self.user_kwargs.get("destroy_all_clusters")
+        self.destroy_clusters_from_s3_bucket = self.user_kwargs.get(
+            "destroy_clusters_from_s3_bucket"
+        )
+        self.destroy_clusters_from_install_data_directory = self.user_kwargs.get(
+            "destroy_clusters_from_install_data_directory"
+        )
         self.registry_config_file = self.user_kwargs.get("registry_config_file")
         self.ssh_key_file = self.user_kwargs.get("ssh_key_file")
         self.docker_config_file = self.user_kwargs.get("docker_config_file")
@@ -110,15 +105,15 @@ class UserInput(BasicClass):
     def verify_user_input(self):
         self.abort_no_ocm_token()
 
-        if self.destroy_clusters_from_s3_config_files:
+        if self.destroy_clusters_from_s3_bucket:
             if not self.s3_bucket_name:
                 self.logger.error(
                     "`--s3-bucket-name` must be provided when running with"
-                    " `--destroy-clusters-from-s3-config-files`",
+                    " `--destroy-clusters-from-s3-bucket`",
                 )
                 raise click.Abort()
 
-        elif self.destroy_all_clusters:
+        elif self.destroy_clusters_from_install_data_directory:
             return
 
         else:
@@ -332,8 +327,8 @@ class UserInput(BasicClass):
                 )
             raise click.Abort()
 
+    @staticmethod
     def check_missing_observability_storage_data(
-        self,
         cluster,
         storage_type,
     ):

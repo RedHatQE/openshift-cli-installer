@@ -1,12 +1,10 @@
-import functools
 import shutil
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 import click
 import rosa.cli
 from clouds.aws.aws_utils import set_and_verify_aws_credentials
-from google.cloud import compute_v1
-from google.oauth2 import service_account
+from clouds.gcp.utils import get_gcp_regions
 from simple_logger.logger import get_logger
 
 from openshift_cli_installer.libs.clusters.aws_ipi_cluster import AwsIpiCluster
@@ -80,12 +78,10 @@ class OCPClusters(UserInput):
         )
 
     @property
-    @functools.cache
     def aws_managed_clusters(self):
         return self.rosa_clusters + self.hypershift_clusters + self.aws_osd_clusters
 
     @property
-    @functools.cache
     def ocm_managed_clusters(self):
         return self.aws_managed_clusters + self.gcp_osd_clusters
 
@@ -153,21 +149,12 @@ class OCPClusters(UserInput):
             for _region in _regions_to_verify:
                 set_and_verify_aws_credentials(region_name=_region)
 
-    def _get_gcp_regions(self):
-        credentials = service_account.Credentials.from_service_account_file(
-            self.gcp_service_account_file
-        )
-        return [
-            region.name
-            for region in compute_v1.RegionsClient(credentials=credentials)
-            .list(project=credentials.project_id)
-            .items
-        ]
-
     def is_region_support_gcp(self):
         if self.gcp_osd_clusters:
             self.logger.info("Check if regions are GCP-supported.")
-            supported_regions = self._get_gcp_regions()
+            supported_regions = get_gcp_regions(
+                gcp_service_account_file=self.gcp_service_account_file
+            )
             unsupported_regions = []
             for _cluster in self.gcp_osd_clusters:
                 cluster_region = _cluster.region
@@ -186,7 +173,6 @@ class OCPClusters(UserInput):
     def run_create_or_destroy_clusters(self):
         futures = []
         action_str = "create_cluster" if self.create else "destroy_cluster"
-        processed_clusters = []
 
         with ThreadPoolExecutor() as executor:
             for cluster in self.list_clusters:
@@ -198,18 +184,28 @@ class OCPClusters(UserInput):
                 if self.parallel:
                     futures.append(executor.submit(action_func))
                 else:
-                    processed_clusters.append(action_func())
+                    action_func()
 
         if futures:
-            for result in as_completed(futures):
-                if result.exception():
-                    self.logger.error(
-                        f"Failed to {self.action} cluster: {result.exception()}\n",
-                    )
-                    raise click.Abort()
-                processed_clusters.append(result.result())
+            self.process_create_destroy_clusters_threads_results(futures=futures)
 
-        return processed_clusters
+    def process_create_destroy_clusters_threads_results(self, futures):
+        create_clusters_error = []
+        for result in as_completed(futures):
+            if result.exception():
+                error = f"Failed to {self.action} cluster: {result.exception()}"
+                if self.create:
+                    create_clusters_error.append(error)
+                else:
+                    self.logger.error(error)
+                    raise click.Abort()
+
+        # If one cluster failed to create we want to destroy all clusters
+        if create_clusters_error:
+            self.create = False
+            self.run_create_or_destroy_clusters()
+            self.logger.error("\n".join(create_clusters_error))
+            raise click.Abort()
 
     def delete_s3_target_dirs(self):
         for _dir in self.s3_target_dirs:

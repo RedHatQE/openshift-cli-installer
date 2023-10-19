@@ -1,7 +1,10 @@
+import functools
 import re
+import shlex
 
 import click
 import semver
+from ocp_utilities.utils import run_command
 
 from openshift_cli_installer.utils.const import (
     AWS_OSD_STR,
@@ -168,3 +171,18 @@ def get_cluster_stream(cluster_data):
         if _platform == AWS_STR
         else cluster_data["channel-group"]
     )
+
+
+@functools.cache
+def get_aws_versions():
+    versions_dict = {}
+    for source_repo in (
+        "quay.io/openshift-release-dev/ocp-release",
+        "registry.ci.openshift.org/ocp/release",
+    ):
+        versions_dict[source_repo] = run_command(
+            command=shlex.split(f"regctl tag ls {source_repo}"),
+            check=False,
+        )[1].splitlines()
+
+    return versions_dict
