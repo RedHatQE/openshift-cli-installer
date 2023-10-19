@@ -185,10 +185,17 @@ must-gather will try to collect data when cluster installation fails and cluster
     is_flag=True,
     show_default=True,
 )
+@click.option(
+    "--pdb",
+    help="Drop to `ipdb` shell on exception",
+    is_flag=True,
+    show_default=True,
+)
 def main(**kwargs):
     """
     Create/Destroy Openshift cluster/s
     """
+    kwargs.pop("pdb", None)
     if kwargs["dry_run"]:
         UserInput(**kwargs)
         return
@@ -226,6 +233,16 @@ if __name__ == "__main__":
     start_time = time.time()
     try:
         main()
+    except Exception:
+        import sys
+        import traceback
+
+        ipdb = __import__("ipdb")
+
+        if "--pdb" in sys.argv:
+            extype, value, tb = sys.exc_info()
+            traceback.print_exc()
+            ipdb.post_mortem(tb)
     finally:
         _logger = get_logger(name="openshift-cli-installer")
         _logger.info(

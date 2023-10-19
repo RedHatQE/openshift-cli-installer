@@ -52,10 +52,10 @@ pyaml-env = "^1.2.1"
 google-cloud-compute = "^1.14.1"
 redhat-qe-cloud-tools = "^1.0.17"
 python-simple-logger = "^1.0.7"
+ipdb = "^0.13.13"
 
 
 [tool.poetry.group.dev.dependencies]
-ipdb = "^0.13.13"
 ipython = "*"
 
 [tool.poetry-dynamic-versioning]
