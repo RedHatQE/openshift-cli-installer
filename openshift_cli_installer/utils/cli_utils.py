@@ -1,10 +1,7 @@
-import ast
 import contextlib
 import os
 
 from simple_logger.logger import get_logger
-
-from openshift_cli_installer.utils.const import USER_INPUT_CLUSTER_BOOLEAN_KEYS
 
 LOGGER = get_logger(name=__name__)
 
@@ -22,35 +19,6 @@ def get_managed_acm_clusters_from_user_input(cluster):
 
     # Filter all `None` objects from the list
     return [_cluster for _cluster in managed_acm_clusters if _cluster]
-
-
-def get_clusters_from_user_input(**kwargs):
-    # From CLI, we get `cluster`, from YAML file we get `clusters`
-    clusters = kwargs.get("cluster", [])
-    if not clusters:
-        clusters = kwargs.get("clusters", [])
-
-    for _cluster in clusters:
-        (
-            aws_access_key_id,
-            aws_secret_access_key,
-        ) = get_aws_credentials_for_acm_observability(
-            cluster=_cluster,
-            aws_access_key_id=kwargs.get("aws_access_key_id"),
-            aws_secret_access_key=kwargs.get("aws_secret_access_key"),
-        )
-        _cluster["aws-access-key-id"] = aws_access_key_id
-        _cluster["aws-secret-access-key"] = aws_secret_access_key
-
-        for key in USER_INPUT_CLUSTER_BOOLEAN_KEYS:
-            cluster_key_value = _cluster.get(key)
-            if cluster_key_value and isinstance(cluster_key_value, str):
-                try:
-                    _cluster[key] = ast.literal_eval(cluster_key_value)
-                except ValueError:
-                    continue
-
-    return clusters
 
 
 def get_cluster_data_by_name_from_clusters(name, clusters):

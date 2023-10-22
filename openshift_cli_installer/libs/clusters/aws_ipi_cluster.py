@@ -152,8 +152,6 @@ class AwsIpiCluster(OCPCluster):
                 if self.acm_observability:
                     self.enable_observability()
 
-                if self.acm_clusters:
-                    self.attach_clusters_to_acm_hub()
         except Exception as ex:
             _rollback_on_error(_ex=ex)
 

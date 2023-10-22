@@ -206,6 +206,16 @@ class OCPClusters(UserInput):
             self.run_create_or_destroy_clusters()
             raise click.Abort()
 
+    def attach_clusters_to_acm_cluster_hub(self):
+        for cluster in self.list_clusters:
+            if cluster.acm_clusters:
+                cluster.attach_clusters_to_acm_hub(clusters=self)
+
     def delete_s3_target_dirs(self):
         for _dir in self.s3_target_dirs:
             shutil.rmtree(path=_dir, ignore_errors=True)
+
+    def get_cluster_by_name(self, name):
+        for _cluster in self.list_clusters:
+            if _cluster.name == name:
+                return _cluster

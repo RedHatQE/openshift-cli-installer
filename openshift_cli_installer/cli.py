@@ -226,6 +226,7 @@ def main(**kwargs):
     else:
         clusters = OCPClusters(**kwargs)
         clusters.run_create_or_destroy_clusters()
+        clusters.attach_clusters_to_acm_cluster_hub()
 
 
 if __name__ == "__main__":

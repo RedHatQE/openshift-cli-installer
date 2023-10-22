@@ -26,7 +26,6 @@ from simple_logger.logger import get_logger
 from openshift_cli_installer.libs.user_input import UserInput
 from openshift_cli_installer.utils.cli_utils import (
     change_home_environment_on_openshift_ci,
-    get_cluster_data_by_name_from_clusters,
 )
 from openshift_cli_installer.utils.cluster_versions import (
     get_cluster_stream,
@@ -212,6 +211,7 @@ class OCPCluster(UserInput):
             "machine_cidr",
             "cidr",
             "hosted_cp",
+            "_already_processed",
         )
         for _key, _val in self.to_dict.items():
             if _key in keys_to_pop or not _val:
@@ -438,20 +438,18 @@ class OCPCluster(UserInput):
 
             raise click.Abort()
 
-    def attach_clusters_to_acm_hub(self):
+    def attach_clusters_to_acm_hub(self, clusters):
         futures = []
-        processed_clusters = []
         with ThreadPoolExecutor() as executor:
             for _managed_acm_cluster in self.acm_clusters:
-                _managed_acm_cluster_data = get_cluster_data_by_name_from_clusters(
-                    name=_managed_acm_cluster, clusters=self.acm_clusters
+                _managed_acm_cluster_object = clusters.get_cluster_by_name(
+                    name=_managed_acm_cluster
                 )
-                _managed_cluster_name = _managed_acm_cluster_data["name"]
-                _managed_cluster_platform = _managed_acm_cluster_data["platform"]
+                _managed_cluster_name = _managed_acm_cluster_object.name
                 managed_acm_cluster_kubeconfig = (
                     self.get_cluster_kubeconfig_from_install_dir(
                         cluster_name=_managed_cluster_name,
-                        cluster_platform=_managed_cluster_platform,
+                        cluster_platform=_managed_acm_cluster_object.platform,
                     )
                 )
                 action_kwargs = {
@@ -469,9 +467,7 @@ class OCPCluster(UserInput):
                         executor.submit(self.attach_cluster_to_acm, **action_kwargs)
                     )
                 else:
-                    processed_clusters.append(
-                        self.attach_cluster_to_acm(**action_kwargs)
-                    )
+                    self.attach_cluster_to_acm(**action_kwargs)
 
             if futures:
                 for result in as_completed(futures):

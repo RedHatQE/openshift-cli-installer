@@ -126,23 +126,6 @@ def tts(ts):
         return int(ts)
 
 
-def delete_cluster_s3_buckets(cluster_data):
-    cluster_name = cluster_data["name"]
-    LOGGER.info(f"Deleting S3 bucket for cluster {cluster_name}")
-    buckets_to_delete = []
-    _s3_client = s3_client()
-    for _bucket in _s3_client.list_buckets()["Buckets"]:
-        if _bucket["Name"].startswith(cluster_name):
-            buckets_to_delete.append(_bucket["Name"])
-
-    for _bucket in buckets_to_delete:
-        LOGGER.info(f"{cluster_name}: Deleting S3 bucket {_bucket}")
-        for _object in _s3_client.list_objects(Bucket=_bucket).get("Contents", []):
-            _s3_client.delete_object(Bucket=_bucket, Key=_object["Key"])
-
-        _s3_client.delete_bucket(Bucket=_bucket)
-
-
 def get_install_config_j2_template(cluster_dict):
     env = Environment(
         loader=FileSystemLoader(get_manifests_path()),

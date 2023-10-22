@@ -232,9 +232,6 @@ class RosaCluster(OcmCluster):
                 if self.acm_observability:
                     self.enable_observability()
 
-                if self.acm_clusters:
-                    self.attach_clusters_to_acm_hub()
-
         except Exception as ex:
             self.logger.error(
                 f"{self.log_prefix}: Failed to run cluster create\n{ex}",

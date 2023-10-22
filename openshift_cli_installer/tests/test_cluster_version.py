@@ -8,7 +8,9 @@ from openshift_cli_installer.tests.all_rosa_versions import (
     BASE_AVAILABLE_ROSA_VERSIONS_DICT,
 )
 from openshift_cli_installer.tests.utils import update_aws_clusters_versions
-from openshift_cli_installer.utils.clusters import update_rosa_osd_clusters_versions
+from openshift_cli_installer.utils.cluster_versions import (
+    update_rosa_osd_clusters_versions,
+)
 
 
 @pytest.mark.parametrize(
