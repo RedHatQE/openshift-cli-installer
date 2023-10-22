@@ -81,12 +81,6 @@ def zip_and_upload_to_s3(
     return _base_name
 
 
-def bucket_object_name(cluster_data, s3_bucket_path=None):
-    return (
-        f"{f'{s3_bucket_path}/' if s3_bucket_path else ''}{cluster_data['name']}-{cluster_data['shortuuid']}.zip"
-    )
-
-
 def get_manifests_path():
     manifests_path = os.path.join("openshift_cli_installer", "manifests")
     if not os.path.isdir(manifests_path):

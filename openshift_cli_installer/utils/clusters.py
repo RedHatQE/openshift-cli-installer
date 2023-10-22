@@ -79,10 +79,6 @@ def update_rosa_osd_clusters_versions(clusters, _test=False, _test_versions_dict
     )
 
 
-def get_kubeconfig_path(cluster_data):
-    return os.path.join(cluster_data["auth-dir"], "kubeconfig")
-
-
 @contextlib.contextmanager
 def get_kubeadmin_token(cluster_dir, api_url):
     with open(os.path.join(cluster_dir, "auth", "kubeadmin-password")) as fd:

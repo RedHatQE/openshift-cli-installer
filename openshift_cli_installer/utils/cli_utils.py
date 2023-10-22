@@ -1,93 +1,12 @@
 import ast
 import contextlib
 import os
-from pathlib import Path
 
-import click
-from ocm_python_wrapper.cluster import Cluster
 from simple_logger.logger import get_logger
 
-from openshift_cli_installer.utils.clusters import get_ocm_client
-from openshift_cli_installer.utils.const import (
-    AWS_STR,
-    ERROR_LOG_COLOR,
-    OCM_MANAGED_PLATFORMS,
-    PRODUCTION_STR,
-    STAGE_STR,
-    SUCCESS_LOG_COLOR,
-    SUPPORTED_PLATFORMS,
-    TIMEOUT_60MIN,
-    USER_INPUT_CLUSTER_BOOLEAN_KEYS,
-)
-from openshift_cli_installer.utils.general import tts
+from openshift_cli_installer.utils.const import USER_INPUT_CLUSTER_BOOLEAN_KEYS
 
 LOGGER = get_logger(name=__name__)
-
-
-def get_clusters_by_type(clusters):
-    clusters_dict = {}
-    for platform in SUPPORTED_PLATFORMS:
-        clusters_dict[platform] = [
-            _cluster for _cluster in clusters if _cluster["platform"] == platform
-        ]
-
-    return clusters_dict
-
-
-def generate_cluster_dirs_path(clusters, base_directory):
-    for _cluster in clusters:
-        cluster_dir = os.path.join(
-            base_directory, _cluster["platform"], _cluster["name"]
-        )
-        _cluster["install-dir"] = cluster_dir
-        auth_path = os.path.join(cluster_dir, "auth")
-        _cluster["auth-dir"] = auth_path
-        Path(auth_path).mkdir(parents=True, exist_ok=True)
-    return clusters
-
-
-def prepare_clusters(clusters, ocm_token):
-    supported_envs = (PRODUCTION_STR, STAGE_STR)
-    for _cluster in clusters:
-        name = _cluster["name"]
-        platform = _cluster["platform"]
-        _cluster["timeout"] = tts(ts=_cluster.get("timeout", TIMEOUT_60MIN))
-
-        if platform == AWS_STR:
-            ocm_env = PRODUCTION_STR
-        else:
-            ocm_env = _cluster.get("ocm-env", STAGE_STR)
-        _cluster["ocm-env"] = ocm_env
-
-        if ocm_env not in supported_envs:
-            click.secho(
-                f"{name} got unsupported OCM env - {ocm_env}, supported"
-                f" envs: {supported_envs}"
-            )
-            raise click.Abort()
-
-        ocm_client = get_ocm_client(ocm_token=ocm_token, ocm_env=ocm_env)
-        _cluster["ocm-client"] = ocm_client
-        if platform in OCM_MANAGED_PLATFORMS:
-            _cluster["cluster-object"] = Cluster(
-                client=ocm_client,
-                name=name,
-            )
-
-    return clusters
-
-
-def click_echo(name, platform, section, msg, success=None, error=None):
-    if success:
-        fg = SUCCESS_LOG_COLOR
-    elif error:
-        fg = ERROR_LOG_COLOR
-    else:
-        fg = "white"
-
-    click.secho(
-        f"[Cluster: {name} - Platform: {platform} - Section: {section}]: {msg}", fg=fg
-    )
 
 
 def get_managed_acm_clusters_from_user_input(cluster):
