@@ -214,3 +214,13 @@ class OCPClusters(UserInput):
         for _cluster in self.list_clusters:
             if _cluster.name == name:
                 return _cluster
+
+    def install_acm_on_clusters(self):
+        for _cluster in self.list_clusters:
+            if _cluster.acm:
+                _cluster.install_acm()
+
+    def enable_observability_on_acm_clusters(self):
+        for _cluster in self.list_clusters:
+            if _cluster.acm and _cluster.acm_observability:
+                _cluster.enable_observability()

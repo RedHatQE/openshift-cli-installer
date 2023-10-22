@@ -227,14 +227,18 @@ def main(**kwargs):
     else:
         clusters = OCPClusters(**kwargs)
         clusters.run_create_or_destroy_clusters()
+        clusters.install_acm_on_clusters()
+        clusters.enable_observability_on_acm_clusters()
         clusters.attach_clusters_to_acm_cluster_hub()
 
 
 if __name__ == "__main__":
     start_time = time.time()
+    should_raise = False
+    _logger = get_logger(name="main-openshift-cli-installer")
     try:
         main()
-    except Exception:
+    except Exception as ex:
         import sys
         import traceback
 
@@ -244,9 +248,13 @@ if __name__ == "__main__":
             extype, value, tb = sys.exc_info()
             traceback.print_exc()
             ipdb.post_mortem(tb)
+        else:
+            _logger.error(ex)
+            should_raise = True
     finally:
-        _logger = get_logger(name="openshift-cli-installer")
         _logger.info(
             "Total execution time:"
             f" {datetime.timedelta(seconds=time.time() - start_time)}"
         )
+        if should_raise:
+            raise click.Abort()

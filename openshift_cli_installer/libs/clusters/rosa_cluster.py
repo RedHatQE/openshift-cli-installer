@@ -227,10 +227,6 @@ class RosaCluster(OcmCluster):
             self.add_cluster_info_to_cluster_object()
             self.logger.success(f"{self.log_prefix}: Cluster created successfully")
             self.save_kubeadmin_token_to_clusters_install_data()
-            if self.acm:
-                self.install_acm()
-                if self.acm_observability:
-                    self.enable_observability()
 
         except Exception as ex:
             self.logger.error(

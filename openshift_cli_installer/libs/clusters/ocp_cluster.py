@@ -74,17 +74,15 @@ class OCPCluster(UserInput):
         self.all_available_versions = {}
 
         self.acm = self.cluster.get("acm") is True
-        if self.acm:
-            self.acm_clusters = self.cluster.get("acm-clusters")
-
+        self.acm_clusters = self.cluster.get("acm-clusters")
         self.acm_observability = self.cluster.get("acm-observability") is True
-        if self.acm_observability:
-            self.acm_observability_storage_type = self.cluster.get(
-                "acm-observability-storage-type"
-            )
-            self.acm_observability_s3_region = self.cluster.get(
-                "acm-observability-s3-region", self.region
-            )
+        self.acm_observability_storage_type = self.cluster.get(
+            "acm-observability-storage-type"
+        )
+        self.acm_observability_s3_region = self.cluster.get(
+            "acm-observability-s3-region", self.region
+        )
+
         self.version = self.cluster["version"]
         self.stream = get_cluster_stream(cluster_data=self.cluster)
         self.cluster_dir = os.path.join(
@@ -490,6 +488,9 @@ class OCPCluster(UserInput):
         acm_cluster_kubeconfig,
         managed_acm_cluster_kubeconfig,
     ):
+        if not self.ocp_client:
+            self.ocp_client = get_client(config_file=acm_cluster_kubeconfig)
+
         self.logger.info(
             f"{self.log_prefix}: Attach {managed_acm_cluster_name} to ACM hub"
         )
@@ -513,8 +514,8 @@ class OCPCluster(UserInput):
             timeout=self.timeout_watch.remaining_time(),
         )
         self.logger.success(
-            f"{self.log_prefix}: successfully attached {managed_acm_cluster_name} to"
-            " ACM hub"
+            f"{self.log_prefix}: attached {managed_acm_cluster_name} to cluster"
+            f" {self.name}"
         )
 
     def get_cluster_kubeconfig_from_install_dir(self, cluster_name, cluster_platform):
