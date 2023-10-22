@@ -30,6 +30,7 @@ class AwsIpiCluster(OCPCluster):
         self.openshift_install_binary_path = None
         self.aws_base_available_versions = None
         self.ocm_env = PRODUCTION_STR
+        self.log_level = self.cluster.get("log_level", "error")
 
         self.prepare_cluster_data()
         self._prepare_aws_ipi_cluster()
@@ -105,7 +106,7 @@ class AwsIpiCluster(OCPCluster):
         res, out, err = run_command(
             command=shlex.split(
                 f"{self.openshift_install_binary_path} {self.action} cluster --dir"
-                f" {self.cluster_dir}"
+                f" {self.cluster_dir} --log-level {self.log_level}"
             ),
             capture_output=False,
             check=False,
