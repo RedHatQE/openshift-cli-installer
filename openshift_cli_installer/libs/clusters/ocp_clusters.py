@@ -1,4 +1,3 @@
-import shutil
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 import click
@@ -38,7 +37,7 @@ class OCPClusters(UserInput):
         self.s3_target_dirs = []
 
         for _cluster in self.clusters:
-            self.add(ocp_cluster=_cluster, **kwargs)
+            self.add_to_cluster_lists(ocp_cluster=_cluster, **kwargs)
 
         if self.create:
             self.check_ocm_managed_existing_clusters()
@@ -46,7 +45,7 @@ class OCPClusters(UserInput):
             self.is_region_support_aws()
             self.is_region_support_gcp()
 
-    def add(self, ocp_cluster, **kwargs):
+    def add_to_cluster_lists(self, ocp_cluster, **kwargs):
         _cluster_platform = ocp_cluster["platform"]
         if _cluster_platform == AWS_STR:
             self.aws_ipi_clusters.append(
@@ -211,11 +210,7 @@ class OCPClusters(UserInput):
             if cluster.acm_clusters:
                 cluster.attach_clusters_to_acm_hub(clusters=self)
 
-    def delete_s3_target_dirs(self):
-        for _dir in self.s3_target_dirs:
-            shutil.rmtree(path=_dir, ignore_errors=True)
-
-    def get_cluster_by_name(self, name):
+    def get_cluster_object_by_name(self, name):
         for _cluster in self.list_clusters:
             if _cluster.name == name:
                 return _cluster

@@ -131,7 +131,8 @@ For example:
     "--destroy-clusters-from-s3-bucket",
     help="""
 \b
-Destroy clusters S3 bucket, --s3-bucket-name is required and optional --s3-bucket-path.
+Destroy clusters from S3 bucket, --s3-bucket-name is required and optional --s3-bucket-path.
+.
     """,
     show_default=True,
     is_flag=True,

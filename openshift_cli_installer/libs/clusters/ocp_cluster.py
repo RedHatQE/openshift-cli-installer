@@ -66,6 +66,11 @@ class OCPCluster(UserInput):
         self.base_domain = None
         self.kubeadmin_token = None
         self.timeout_watch = None
+        self.cluster_object = None
+        self.cluster_id = None
+        self.console_url = None
+        self.api_url = None
+        self.ocp_client = None
         self.all_available_versions = {}
 
         self.acm = self.cluster.get("acm") is True
@@ -442,7 +447,7 @@ class OCPCluster(UserInput):
         futures = []
         with ThreadPoolExecutor() as executor:
             for _managed_acm_cluster in self.acm_clusters:
-                _managed_acm_cluster_object = clusters.get_cluster_by_name(
+                _managed_acm_cluster_object = clusters.get_cluster_object_by_name(
                     name=_managed_acm_cluster
                 )
                 _managed_cluster_name = _managed_acm_cluster_object.name
@@ -500,7 +505,7 @@ class OCPCluster(UserInput):
         )
 
         managed_cluster = ManagedCluster(
-            client=self.ocm_client, name=managed_acm_cluster_name
+            client=self.ocp_client, name=managed_acm_cluster_name
         )
         managed_cluster.wait_for_condition(
             condition="ManagedClusterImportSucceeded",

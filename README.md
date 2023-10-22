@@ -90,6 +90,33 @@ Attach clusters to ACM cluster hub:
   * To attach cluster to this ACM hub pass `--cluster ... acm-clusters=mycluser1,mycluster2`
     * `mycluser1,mycluster2` needs to be sent with `--cluster ...` for the script to create them.
 
+### Destroy clusters
+## Destroy clusters from clusters data directory
+
+To destroy all clusters locate in `--clusters-install-data-directory` run:
+
+```bash
+podman run quay.io/redhat_msi/openshift-cli-installer \
+  --destroy-clusters-from-install-data-directory \
+  --clusters-install-data-directory=/openshift-cli-installer/clusters-install-data
+```
+## Destroy clusters from S3 bucket
+To destroy all clusters from uploaded zip files in S3 bucket run:
+
+```bash
+podman run quay.io/redhat_msi/openshift-cli-installer--destroy-clusters-from-s3-bucket \
+  --s3-bucket-name=openshift-cli-installer \
+  --s3-bucket-path=install-folders
+```
+
+To filter cluster pass `--destroy-clusters-from-s3-bucket-query` query:
+```bash
+podman run quay.io/redhat_msi/openshift-cli-installer--destroy-clusters-from-s3-bucket \
+  --s3-bucket-name=openshift-cli-installer \
+  --s3-bucket-path=install-folders \
+  --destroy-clusters-from-s3-bucket-query="mycluster"
+```
+
 ### Usages
 
 ```

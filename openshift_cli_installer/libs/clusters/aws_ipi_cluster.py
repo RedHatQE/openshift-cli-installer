@@ -29,10 +29,6 @@ class AwsIpiCluster(OCPCluster):
 
         self.openshift_install_binary_path = None
         self.aws_base_available_versions = None
-        self.ocp_client = None
-        self.cluster_id = None
-        self.api_url = None
-        self.console_url = None
         self.ocm_env = PRODUCTION_STR
 
         self.prepare_cluster_data()
