@@ -318,7 +318,7 @@ class OCPCluster(UserInput):
 
         for _bucket in buckets_to_delete:
             self.logger.info(f"{self.log_prefix}: Deleting S3 bucket {_bucket}")
-            for _object in _s3_client.list_objects(Bucket=_bucket)["Contents"]:
+            for _object in _s3_client.list_objects(Bucket=_bucket).get("Contents", []):
                 _s3_client.delete_object(Bucket=_bucket, Key=_object["Key"])
 
             _s3_client.delete_bucket(Bucket=_bucket)

@@ -185,9 +185,9 @@ def prepare_clusters_directory_from_s3_bucket(**kwargs):
 def get_all_zip_files_from_s3_bucket(
     client, s3_bucket_name, s3_bucket_path=None, query=None
 ):
-    for _object in client.list_objects(Bucket=s3_bucket_name, Prefix=s3_bucket_path)[
-        "Contents"
-    ]:
+    for _object in client.list_objects(
+        Bucket=s3_bucket_name, Prefix=s3_bucket_path
+    ).get("Contents", []):
         _object_key = _object["Key"]
         if _object_key.endswith(".zip"):
             if query is None or query in _object_key:

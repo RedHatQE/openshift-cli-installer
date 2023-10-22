@@ -137,7 +137,7 @@ def delete_cluster_s3_buckets(cluster_data):
 
     for _bucket in buckets_to_delete:
         LOGGER.info(f"{cluster_name}: Deleting S3 bucket {_bucket}")
-        for _object in _s3_client.list_objects(Bucket=_bucket)["Contents"]:
+        for _object in _s3_client.list_objects(Bucket=_bucket).get("Contents", []):
             _s3_client.delete_object(Bucket=_bucket, Key=_object["Key"])
 
         _s3_client.delete_bucket(Bucket=_bucket)
