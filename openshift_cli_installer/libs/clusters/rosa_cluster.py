@@ -180,6 +180,8 @@ class RosaCluster(OcmCluster):
             "region",
             "_already_processed",
             "must_gather_output_dir",
+            "acm_observability_s3_region",
+            "acm_observability_storage_type",
         )
         ignore_prefix = ("acm-observability",)
         command = f"create cluster --sts --cluster-name={self.name} "
