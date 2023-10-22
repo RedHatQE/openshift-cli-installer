@@ -194,12 +194,9 @@ class OCPClusters(UserInput):
         for result in as_completed(futures):
             _exception = result.exception()
             if _exception:
-                error = f"Failed to {self.action} cluster: {_exception}"
                 if self.create:
-                    self.logger.error(error)
                     create_clusters_error = True
                 else:
-                    self.logger.error(error)
                     raise click.Abort()
 
         # If one cluster failed to create we want to destroy all clusters

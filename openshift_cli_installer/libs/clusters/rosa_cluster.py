@@ -251,14 +251,13 @@ class RosaCluster(OcmCluster):
             self.destroy_cluster()
             raise click.Abort()
 
-        finally:
-            if self.s3_bucket_name:
-                zip_and_upload_to_s3(
-                    uuid=self.shortuuid,
-                    install_dir=self.cluster_dir,
-                    s3_bucket_name=self.s3_bucket_name,
-                    s3_bucket_path=self.s3_bucket_path,
-                )
+        if self.s3_bucket_name:
+            zip_and_upload_to_s3(
+                uuid=self.shortuuid,
+                install_dir=self.cluster_dir,
+                s3_bucket_name=self.s3_bucket_name,
+                s3_bucket_path=self.s3_bucket_path,
+            )
 
     def destroy_cluster(self):
         self.timeout_watch = self.start_time_watcher()

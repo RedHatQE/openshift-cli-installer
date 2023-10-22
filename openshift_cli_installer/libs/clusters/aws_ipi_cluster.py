@@ -126,10 +126,24 @@ class AwsIpiCluster(OCPCluster):
         return res, out, err
 
     def create_cluster(self):
+        def _rollback_on_error(_ex=None):
+            self.logger.error(
+                f"{self.log_prefix}: Failed to create cluster: {_ex or 'No exception'}"
+            )
+            if self.must_gather_output_dir:
+                self.collect_must_gather()
+
+            self.logger.warning(f"{self.log_prefix}: Cleaning cluster leftovers.")
+            self.destroy_cluster()
+            raise click.Abort()
+
         self.timeout_watch = self.start_time_watcher()
         res, _, _ = self.run_installer_command(raise_on_failure=False)
 
-        if res:
+        if not res:
+            _rollback_on_error()
+
+        try:
             self.add_cluster_info_to_cluster_object()
             self.logger.success(f"{self.log_prefix}: Cluster created successfully")
             self.save_kubeadmin_token_to_clusters_install_data()
@@ -140,6 +154,8 @@ class AwsIpiCluster(OCPCluster):
 
                 if self.acm_clusters:
                     self.attach_clusters_to_acm_hub()
+        except Exception as ex:
+            _rollback_on_error(_ex=ex)
 
         if self.s3_bucket_name:
             zip_and_upload_to_s3(
@@ -148,15 +164,6 @@ class AwsIpiCluster(OCPCluster):
                 s3_bucket_path=self.s3_bucket_path,
                 uuid=self.shortuuid,
             )
-
-        if not res:
-            if self.must_gather_output_dir:
-                self.collect_must_gather()
-
-            self.logger.warning(f"{self.log_prefix}: Cleaning cluster leftovers.")
-            self.destroy_cluster()
-
-            raise click.Abort()
 
     def destroy_cluster(self):
         self.timeout_watch = self.start_time_watcher()
