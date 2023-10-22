@@ -232,14 +232,9 @@ class RosaCluster(OcmCluster):
             self.logger.error(
                 f"{self.log_prefix}: Failed to run cluster create\n{ex}",
             )
-            try:
-                self.set_cluster_auth()
-                if self.must_gather_output_dir:
-                    self.collect_must_gather()
-            except Exception as ex:
-                self.logger.error(
-                    f"{self.log_prefix}: Failed to collect must gather\n{ex}",
-                )
+            self.set_cluster_auth()
+            if self.must_gather_output_dir:
+                self.collect_must_gather()
 
             self.destroy_cluster()
             raise click.Abort()

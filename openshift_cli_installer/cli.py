@@ -227,9 +227,11 @@ def main(**kwargs):
     else:
         clusters = OCPClusters(**kwargs)
         clusters.run_create_or_destroy_clusters()
-        clusters.install_acm_on_clusters()
-        clusters.enable_observability_on_acm_clusters()
-        clusters.attach_clusters_to_acm_cluster_hub()
+
+        if kwargs["action"] == CREATE_STR:
+            clusters.install_acm_on_clusters()
+            clusters.enable_observability_on_acm_clusters()
+            clusters.attach_clusters_to_acm_cluster_hub()
 
 
 if __name__ == "__main__":
@@ -257,4 +259,4 @@ if __name__ == "__main__":
             f" {datetime.timedelta(seconds=time.time() - start_time)}"
         )
         if should_raise:
-            raise click.Abort()
+            sys.exit(1)
