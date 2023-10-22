@@ -27,7 +27,10 @@ def get_kubeadmin_token(cluster_dir, api_url):
     with open(os.path.join(cluster_dir, "auth", "kubeadmin-password")) as fd:
         kubeadmin_password = fd.read()
     run_command(
-        shlex.split(f"oc login {api_url} -u kubeadmin -p {kubeadmin_password}"),
+        shlex.split(
+            f"oc login --insecure-skip-tls-verify=true {api_url} -u kubeadmin -p"
+            f" {kubeadmin_password}"
+        ),
         hide_log_command=True,
     )
     yield run_command(
