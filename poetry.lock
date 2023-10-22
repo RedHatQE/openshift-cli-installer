@@ -1201,12 +1201,12 @@ files = [
 
 [[package]]
 name = "redhat-qe-cloud-tools"
-version = "1.0.17"
+version = "1.0.18"
 description = "Python utilities to manage cloud services, such as AWS."
 optional = false
 python-versions = ">=3.8,<4.0"
 files = [
-    {file = "redhat_qe_cloud_tools-1.0.17.tar.gz", hash = "sha256:749d97c0ba196fb639e7e8ced003e64a92643e29188244cc30e56257338d7e42"},
+    {file = "redhat_qe_cloud_tools-1.0.18.tar.gz", hash = "sha256:bd17e7a640904b19f445e4c0f080074d04d575cd62a7fc5767c6fd2532a5ba11"},
 ]
 
 [package.dependencies]
@@ -1214,6 +1214,7 @@ boto3 = ">=1.28.1,<2.0.0"
 click = ">=8.1.4,<9.0.0"
 colorlog = ">=6.7.0,<7.0.0"
 configparser = ">=6.0.0,<7.0.0"
+google-cloud-compute = ">=1.14.1,<2.0.0"
 openshift-python-utilities = ">=5.0.0,<6.0.0"
 python-simple-logger = ">=1.0.5,<2.0.0"
 
