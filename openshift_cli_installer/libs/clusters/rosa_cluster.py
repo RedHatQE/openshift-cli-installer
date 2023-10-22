@@ -178,6 +178,8 @@ class RosaCluster(OcmCluster):
             "stream",
             "docker_config_file",
             "region",
+            "_already_processed",
+            "must_gather_output_dir",
         )
         ignore_prefix = ("acm-observability",)
         command = f"create cluster --sts --cluster-name={self.name} "

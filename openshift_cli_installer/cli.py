@@ -222,7 +222,6 @@ def main(**kwargs):
         )
         clusters = OCPClusters(**clusters_kwargs)
         clusters.run_create_or_destroy_clusters()
-        # TODO: Remove S3 buckets?
 
     else:
         clusters = OCPClusters(**kwargs)

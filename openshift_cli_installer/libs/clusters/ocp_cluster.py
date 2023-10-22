@@ -473,15 +473,15 @@ class OCPCluster(UserInput):
                         self.attach_cluster_to_acm(**action_kwargs)
                     )
 
-        if futures:
-            for result in as_completed(futures):
-                _exception = result.exception()
-                if _exception:
-                    self.logger.error(
-                        f"{self.log_prefix}: Failed to attach"
-                        f" {_managed_cluster_name} to ACM hub Error: {_exception}"
-                    )
-                    raise click.Abort()
+            if futures:
+                for result in as_completed(futures):
+                    _exception = result.exception()
+                    if _exception:
+                        self.logger.error(
+                            f"{self.log_prefix}: Failed to attach"
+                            f" {_managed_cluster_name} to ACM hub Error: {_exception}"
+                        )
+                        raise click.Abort()
 
     def attach_cluster_to_acm(
         self,

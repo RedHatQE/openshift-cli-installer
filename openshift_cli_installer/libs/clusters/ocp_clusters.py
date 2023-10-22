@@ -186,16 +186,18 @@ class OCPClusters(UserInput):
                 else:
                     action_func()
 
-        if futures:
-            self.process_create_destroy_clusters_threads_results(futures=futures)
+            if futures:
+                self.process_create_destroy_clusters_threads_results(futures=futures)
 
     def process_create_destroy_clusters_threads_results(self, futures):
-        create_clusters_error = []
+        create_clusters_error = False
         for result in as_completed(futures):
-            if result.exception():
-                error = f"Failed to {self.action} cluster: {result.exception()}"
+            _exception = result.exception()
+            if _exception:
+                error = f"Failed to {self.action} cluster: {_exception}"
                 if self.create:
-                    create_clusters_error.append(error)
+                    self.logger.error(error)
+                    create_clusters_error = True
                 else:
                     self.logger.error(error)
                     raise click.Abort()
@@ -203,8 +205,8 @@ class OCPClusters(UserInput):
         # If one cluster failed to create we want to destroy all clusters
         if create_clusters_error:
             self.create = False
+            self.logger.error("One cluster failed to create, destroying all clusters")
             self.run_create_or_destroy_clusters()
-            self.logger.error("\n".join(create_clusters_error))
             raise click.Abort()
 
     def delete_s3_target_dirs(self):

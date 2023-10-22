@@ -159,11 +159,11 @@ def prepare_clusters_directory_from_s3_bucket(**kwargs):
             )
             target_files_paths.append(target_file_path)
 
-    if download_futures:
-        for _ in as_completed(download_futures):
-            """
-            Place holder to make sure all futures are completed.
-            """
+        if download_futures:
+            for _ in as_completed(download_futures):
+                """
+                Place holder to make sure all futures are completed.
+                """
 
     for zip_file_path in target_files_paths:
         with ThreadPoolExecutor() as extract_executor:
@@ -177,11 +177,11 @@ def prepare_clusters_directory_from_s3_bucket(**kwargs):
                 )
             )
 
-    if extract_futures:
-        for _ in as_completed(extract_futures):
-            """
-            Place holder to make sure all futures are completed.
-            """
+        if extract_futures:
+            for _ in as_completed(extract_futures):
+                """
+                Place holder to make sure all futures are completed.
+                """
 
     return base_extract_target_dir
 

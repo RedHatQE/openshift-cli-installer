@@ -27,7 +27,6 @@ from openshift_cli_installer.utils.const import (
 class UserInput:
     def __init__(self, **kwargs):
         self.logger = get_logger(name=self.__class__.__module__)
-        self.logger.info("Initializing User Input")
         self.user_kwargs = kwargs
         self.clusters_yaml_config_file = self.user_kwargs.get(
             "clusters_yaml_config_file"
@@ -72,6 +71,17 @@ class UserInput:
         self.gcp_service_account_file = self.user_kwargs.get("gcp_service_account_file")
         self.must_gather_output_dir = self.user_kwargs.get("must_gather_output_dir")
         self.create = self.action == CREATE_STR
+
+        # We need to make sure that we don't process the same input twice
+        self._already_processed = "__openshift_cli_installer_user_input_processed__"
+        if globals().get(self._already_processed):
+            self.logger.info("User Input already processed")
+            return
+
+        if not self.dry_run:
+            globals()[self._already_processed] = True
+
+        self.logger.info("Initializing User Input")
         self.verify_user_input()
 
     def get_clusters_from_user_input(self):
