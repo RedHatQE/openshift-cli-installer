@@ -98,8 +98,8 @@ class RosaCluster(OcmCluster):
         )
 
     def destroy_hypershift_vpc(self):
-        self.logger.info(f"{self.log_prefix}: Destroy hypershift VPCs")
         self.terraform_init()
+        self.logger.info(f"{self.log_prefix}: Destroy hypershift VPCs")
         rc, _, err = self.terraform.destroy(
             force=IsNotFlagged,
             auto_approve=True,
@@ -113,8 +113,8 @@ class RosaCluster(OcmCluster):
             raise click.Abort()
 
     def prepare_hypershift_vpc(self):
-        self.logger.info(f"{self.log_prefix}: Preparing hypershift VPCs")
         self.terraform_init()
+        self.logger.info(f"{self.log_prefix}: Preparing hypershift VPCs")
         shutil.copy(
             os.path.join(get_manifests_path(), "setup-vpc.tf"), self.cluster_dir
         )

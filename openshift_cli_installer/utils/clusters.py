@@ -1,4 +1,5 @@
 import contextlib
+import copy
 import os
 import shlex
 import shutil
@@ -63,25 +64,15 @@ def clusters_from_directories(directories):
 
 
 def get_destroy_clusters_kwargs(clusters_data_list, **kwargs):
-    clusters_kwargs = {
-        "action": DESTROY_STR,
-        "ocm_token": kwargs.get("ocm_token"),
-        "docker_config_file": kwargs.get("docker_config_file"),
-        "ssh_key_file": kwargs.get("ssh_key_file"),
-        "registry_config_file": kwargs.get("registry_config_file"),
-        "aws_secret_access_key": kwargs.get("aws_secret_access_key"),
-        "aws_access_key_id": kwargs.get("aws_access_key_id"),
-        "aws_account_id": kwargs.get("aws_account_id"),
-        "clusters_install_data_directory": kwargs.get(
-            "clusters_install_data_directory"
-        ),
-    }
+    kwargs["action"] = DESTROY_STR
+
     for cluster in clusters_data_list:
         _cluster = cluster.pop("cluster", {})
         _cluster.pop("expiration-time", None)
-        clusters_kwargs.setdefault("clusters", []).append(_cluster)
+        if _cluster:
+            kwargs.setdefault("clusters", []).append(_cluster)
 
-    return clusters_kwargs
+    return kwargs
 
 
 def prepare_clusters_directory_from_s3_bucket(**kwargs):
@@ -158,22 +149,42 @@ def get_all_zip_files_from_s3_bucket(
 
 
 def destroy_clusters_from_s3_bucket_or_local_directory(**kwargs):
-    cluster_install_data_directory = kwargs["clusters_install_data_directory"]
-    destroy_clusters_from_s3_bucket = kwargs["destroy_clusters_from_s3_bucket"]
+    s3_clusters_data_list = []
+    data_directory_clusters_data_list = []
+    s3_from_clusters_data_directory = kwargs[
+        "destroy_clusters_from_install_data_directory_using_s3_bucket"
+    ]
     destroy_clusters_from_install_data_directory = kwargs[
         "destroy_clusters_from_install_data_directory"
     ]
-    clusters_data_list = []
-    if destroy_clusters_from_s3_bucket:
-        clusters_data_list.extend(prepare_clusters_directory_from_s3_bucket(**kwargs))
-
-    if destroy_clusters_from_install_data_directory:
-        clusters_data_list.extend(
-            clusters_from_directories(directories=[cluster_install_data_directory])
+    if kwargs["destroy_clusters_from_s3_bucket"]:
+        s3_clusters_data_list.extend(
+            prepare_clusters_directory_from_s3_bucket(**kwargs)
         )
 
+    if destroy_clusters_from_install_data_directory or s3_from_clusters_data_directory:
+        clusters_from_directory = clusters_from_directories(
+            directories=[kwargs["clusters_install_data_directory"]]
+        )
+        if destroy_clusters_from_install_data_directory:
+            data_directory_clusters_data_list.extend(clusters_from_directory)
+
+        elif s3_from_clusters_data_directory:
+            copy_kwargs = copy.deepcopy(kwargs)
+            for _cluster in clusters_from_directory:
+                _s3_object_name = _cluster.get("s3_object_name")
+                _s3_bucket_name = _cluster.get("s3_bucket_name")
+                if _s3_object_name and _s3_bucket_name:
+                    copy_kwargs["s3_bucket_name"] = _s3_bucket_name
+                    copy_kwargs["s3_bucket_path"] = _cluster.get("s3_bucket_path")
+                    copy_kwargs["query"] = os.path.split(_s3_object_name)[-1]
+                    s3_clusters_data_list.extend(
+                        prepare_clusters_directory_from_s3_bucket(**copy_kwargs)
+                    )
+
     clusters_kwargs = get_destroy_clusters_kwargs(
-        clusters_data_list=clusters_data_list, **kwargs
+        clusters_data_list=s3_clusters_data_list + data_directory_clusters_data_list,
+        **kwargs,
     )
     if not clusters_kwargs.get("clusters"):
         LOGGER.error("No clusters to destroy")

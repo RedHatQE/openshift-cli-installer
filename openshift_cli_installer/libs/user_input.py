@@ -65,6 +65,11 @@ class UserInput:
         self.destroy_clusters_from_install_data_directory = self.user_kwargs.get(
             "destroy_clusters_from_install_data_directory"
         )
+        self.destroy_clusters_from_install_data_directory_using_s3_bucket = (
+            self.user_kwargs.get(
+                "destroy_clusters_from_install_data_directory_using_s3_bucket"
+            )
+        )
         self.registry_config_file = self.user_kwargs.get("registry_config_file")
         self.ssh_key_file = self.user_kwargs.get("ssh_key_file")
         self.docker_config_file = self.user_kwargs.get("docker_config_file")
@@ -123,8 +128,16 @@ class UserInput:
                 )
                 raise click.Abort()
 
-        elif self.destroy_clusters_from_install_data_directory:
-            return
+        elif (
+            self.destroy_clusters_from_install_data_directory
+            and self.destroy_clusters_from_install_data_directory_using_s3_bucket
+        ):
+            self.logger.error(
+                "`--destroy-clusters-from-install-data-directory-using-s3-bucket` is"
+                " not supported when running with"
+                " `--destroy-clusters-from-install-data-directory`",
+            )
+            raise click.Abort()
 
         else:
             if not self.action:

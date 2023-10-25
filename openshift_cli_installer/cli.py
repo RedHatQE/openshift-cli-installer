@@ -158,6 +158,16 @@ Destroy clusters from cluster data files located at --clusters-install-data-dire
     is_flag=True,
 )
 @click.option(
+    "--destroy-clusters-from-install-data-directory-using-s3-bucket",
+    help="""
+\b
+Destroy clusters from cluster data files located at --clusters-install-data-directory
+Get the S3 object from cluster_data.yaml, download, extract it and call destroy cluster
+    """,
+    show_default=True,
+    is_flag=True,
+)
+@click.option(
     "--clusters-yaml-config-file",
     help="""
     \b
@@ -207,6 +217,7 @@ def main(**kwargs):
     if (
         kwargs["destroy_clusters_from_s3_bucket"]
         or kwargs["destroy_clusters_from_install_data_directory"]
+        or kwargs["destroy_clusters_from_install_data_directory_using_s3_bucket"]
     ):
         clusters_kwargs = destroy_clusters_from_s3_bucket_or_local_directory(**kwargs)
 
