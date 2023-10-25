@@ -85,13 +85,18 @@ class OCPCluster(UserInput):
 
         self.version = self.cluster["version"]
         self.stream = get_cluster_stream(cluster_data=self.cluster)
-        self.cluster_dir = os.path.join(
-            self.clusters_install_data_directory, self.platform, self.name
-        )
+
+        self.cluster_dir = self.cluster.get("cluster_dir")
+        if not self.cluster_dir:
+            self.cluster_dir = os.path.join(
+                self.clusters_install_data_directory, self.platform, self.name
+            )
+            self.cluster["cluster_dir"] = self.cluster_dir
+
         self.auth_path = os.path.join(self.cluster_dir, "auth")
         self.kubeconfig_path = os.path.join(self.auth_path, "kubeconfig")
-
         Path(self.auth_path).mkdir(parents=True, exist_ok=True)
+
         self._add_s3_bucket_data()
 
         self.dump_cluster_data_to_file()
@@ -172,6 +177,9 @@ class OCPCluster(UserInput):
         )
 
     def dump_cluster_data_to_file(self):
+        if not self.create:
+            return
+
         _cluster_data = {}
         keys_to_pop = (
             "ocm_client",
@@ -215,6 +223,7 @@ class OCPCluster(UserInput):
             "cidr",
             "hosted_cp",
             "_already_processed",
+            "cluster_dir",
         )
         for _key, _val in self.to_dict.items():
             if _key in keys_to_pop or not _val:

@@ -66,11 +66,9 @@ def clusters_from_directories(directories):
 def get_destroy_clusters_kwargs(clusters_data_list, **kwargs):
     kwargs["action"] = DESTROY_STR
 
-    for cluster in clusters_data_list:
-        _cluster = cluster.pop("cluster", {})
-        _cluster.pop("expiration-time", None)
-        if _cluster:
-            kwargs.setdefault("clusters", []).append(_cluster)
+    for cluster_data_from_yaml in clusters_data_list:
+        cluster_data_from_yaml["cluster"].pop("expiration-time", None)
+        kwargs.setdefault("clusters", []).append(cluster_data_from_yaml["cluster"])
 
     return kwargs
 
@@ -151,6 +149,7 @@ def get_all_zip_files_from_s3_bucket(
 def destroy_clusters_from_s3_bucket_or_local_directory(**kwargs):
     s3_clusters_data_list = []
     data_directory_clusters_data_list = []
+
     s3_from_clusters_data_directory = kwargs[
         "destroy_clusters_from_install_data_directory_using_s3_bucket"
     ]
