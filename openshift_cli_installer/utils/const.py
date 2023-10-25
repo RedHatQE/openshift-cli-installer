@@ -1,6 +1,11 @@
 # General
+import os
+
 CLUSTER_DATA_YAML_FILENAME = "cluster_data.yaml"
 USER_INPUT_CLUSTER_BOOLEAN_KEYS = "acm"
+DESTROY_CLUSTERS_FROM_S3_BASE_DATA_DIRECTORY = os.path.join(
+    "/", "tmp", "openshift-cli-installer", "s3-extracted"
+)
 
 # Cluster types
 AWS_STR = "aws"

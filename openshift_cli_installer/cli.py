@@ -1,5 +1,6 @@
 import datetime
 import os
+import shutil
 import time
 
 import click
@@ -9,11 +10,13 @@ from openshift_cli_installer.libs.clusters.ocp_clusters import OCPClusters
 from openshift_cli_installer.libs.user_input import UserInput
 from openshift_cli_installer.utils.click_dict_type import DictParamType
 from openshift_cli_installer.utils.clusters import (
-    clusters_from_directories,
-    get_destroy_clusters_kwargs,
-    prepare_clusters_directory_from_s3_bucket,
+    destroy_clusters_from_s3_bucket_or_local_directory,
 )
-from openshift_cli_installer.utils.const import CREATE_STR, DESTROY_STR
+from openshift_cli_installer.utils.const import (
+    CREATE_STR,
+    DESTROY_CLUSTERS_FROM_S3_BASE_DATA_DIRECTORY,
+    DESTROY_STR,
+)
 
 
 @click.command("installer")
@@ -201,28 +204,19 @@ def main(**kwargs):
         UserInput(**kwargs)
         return
 
-    cluster_install_data_directory = kwargs["clusters_install_data_directory"]
-    destroy_clusters_from_s3_bucket = kwargs["destroy_clusters_from_s3_bucket"]
-    destroy_clusters_from_install_data_directory = kwargs[
-        "destroy_clusters_from_install_data_directory"
-    ]
-    if destroy_clusters_from_s3_bucket or destroy_clusters_from_install_data_directory:
-        clusters_data_list = []
-        if destroy_clusters_from_s3_bucket:
-            clusters_data_list.extend(
-                prepare_clusters_directory_from_s3_bucket(**kwargs)
-            )
+    if (
+        kwargs["destroy_clusters_from_s3_bucket"]
+        or kwargs["destroy_clusters_from_install_data_directory"]
+    ):
+        clusters_kwargs = destroy_clusters_from_s3_bucket_or_local_directory(**kwargs)
 
-        if destroy_clusters_from_install_data_directory:
-            clusters_data_list.extend(
-                clusters_from_directories(directories=[cluster_install_data_directory])
+        try:
+            clusters = OCPClusters(**clusters_kwargs)
+            clusters.run_create_or_destroy_clusters()
+        finally:
+            shutil.rmtree(
+                DESTROY_CLUSTERS_FROM_S3_BASE_DATA_DIRECTORY, ignore_errors=True
             )
-
-        clusters_kwargs = get_destroy_clusters_kwargs(
-            clusters_data_list=clusters_data_list
-        )
-        clusters = OCPClusters(**clusters_kwargs)
-        clusters.run_create_or_destroy_clusters()
 
     else:
         clusters = OCPClusters(**kwargs)

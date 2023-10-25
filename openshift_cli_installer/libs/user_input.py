@@ -189,10 +189,13 @@ class UserInput:
                 raise click.Abort()
 
     def assert_unique_cluster_names(self):
-        cluster_names = [cluster["name"] for cluster in self.clusters]
-        if len(cluster_names) != len(set(cluster_names)):
-            self.logger.error(f"Cluster names must be unique: clusters {cluster_names}")
-            raise click.Abort()
+        if self.create:
+            cluster_names = [cluster["name"] for cluster in self.clusters]
+            if len(cluster_names) != len(set(cluster_names)):
+                self.logger.error(
+                    f"Cluster names must be unique: clusters {cluster_names}"
+                )
+                raise click.Abort()
 
     def assert_managed_acm_clusters_user_input(self):
         if self.create:
@@ -246,7 +249,7 @@ class UserInput:
     def assert_public_ssh_key_file_exists(self):
         if not self.ssh_key_file or not os.path.exists(self.ssh_key_file):
             self.logger.error(
-                "SSH file is required for AWS or ACM cluster installations."
+                "SSH file is required for AWS cluster installations."
                 f" {self.ssh_key_file} file does not exist.",
             )
             raise click.Abort()
@@ -256,7 +259,7 @@ class UserInput:
             self.registry_config_file
         ):
             self.logger.error(
-                "Registry config file is required for AWS or ACM cluster installations."
+                "Registry config file is required for AWS cluster installations."
                 f" {self.registry_config_file} file does not exist.",
             )
             raise click.Abort()
@@ -266,7 +269,7 @@ class UserInput:
             self.assert_aws_credentials_exist()
             if not self.aws_account_id:
                 self.logger.error(
-                    "--aws-account_id required for AWS OSD installations.",
+                    "--aws-account-id required for AWS OSD installations.",
                 )
                 raise click.Abort()
 
