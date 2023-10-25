@@ -238,8 +238,10 @@ class UserInput:
                 )
                 raise click.Abort()
 
-            self.assert_public_ssh_key_file_exists()
             self.assert_registry_config_file_exists()
+
+            if self.create:
+                self.assert_public_ssh_key_file_exists()
 
     def assert_aws_ipi_installer_log_level_user_input(self):
         supported_log_levels = ["debug", "info", "warn", "error"]
@@ -280,7 +282,7 @@ class UserInput:
     def assert_aws_osd_user_input(self):
         if any([_cluster["platform"] == AWS_OSD_STR for _cluster in self.clusters]):
             self.assert_aws_credentials_exist()
-            if not self.aws_account_id:
+            if not self.aws_account_id and self.create:
                 self.logger.error(
                     "--aws-account-id required for AWS OSD installations.",
                 )

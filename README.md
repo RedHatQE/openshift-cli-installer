@@ -95,13 +95,10 @@ Attach clusters to ACM cluster hub:
 `--destroy-clusters-from-install-data-directory`, `--destroy-clusters-from-s3-bucket` and `--destroy-clusters-from-install-data-directory-using-s3-bucket` must have:
 
 ```bash
---ocm-token=$OCM_TOKEN \
-  --ssh-key-file=${HOME}/.ssh/id_rsa.pub \
+  --ocm-token=$OCM_TOKEN \
   --registry-config-file=${HOME}/docker-secrets.json \
   --aws-access-key-id=${AWS_ACCESS_KEY_ID} \
-  --aws-secret-access-key=${AWS_SECRET_ACCESS_KEY} \
-  --aws-account-id=${AWS_ACCOUNT_ID} \
-  --clusters-install-data-directory=/tmp/clusters-destroy
+  --aws-secret-access-key=${AWS_SECRET_ACCESS_KEY}
 ```
 
 ## Destroy clusters from clusters data directory
