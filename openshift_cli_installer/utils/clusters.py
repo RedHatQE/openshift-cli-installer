@@ -86,7 +86,8 @@ def prepare_clusters_directory_from_s3_bucket(**kwargs):
         client=_s3_client,
         s3_bucket_name=s3_bucket_name,
         s3_bucket_path=s3_bucket_path,
-        query=kwargs["destroy_clusters_from_s3_bucket_query"],
+        query=kwargs.get("query")
+        or kwargs.get("destroy_clusters_from_s3_bucket_query"),
     ):
         extract_target_dir = os.path.join(
             DESTROY_CLUSTERS_FROM_S3_BASE_DATA_DIRECTORY,
@@ -98,11 +99,12 @@ def prepare_clusters_directory_from_s3_bucket(**kwargs):
         with ThreadPoolExecutor() as download_executor:
             download_futures.append(
                 download_executor.submit(
-                    _s3_client.download_file(
-                        Bucket=kwargs["s3_bucket_name"],
-                        Key=cluster_zip_path,
-                        Filename=target_file_path,
-                    )
+                    _s3_client.download_file,
+                    **{
+                        "Bucket": kwargs["s3_bucket_name"],
+                        "Key": cluster_zip_path,
+                        "Filename": target_file_path,
+                    },
                 )
             )
             target_files_paths.append(target_file_path)
@@ -117,11 +119,12 @@ def prepare_clusters_directory_from_s3_bucket(**kwargs):
         with ThreadPoolExecutor() as extract_executor:
             extract_futures.append(
                 extract_executor.submit(
-                    shutil.unpack_archive(
-                        filename=zip_file_path,
-                        extract_dir=os.path.split(zip_file_path)[0],
-                        format="zip",
-                    )
+                    shutil.unpack_archive,
+                    **{
+                        "filename": zip_file_path,
+                        "extract_dir": os.path.split(zip_file_path)[0],
+                        "format": "zip",
+                    },
                 )
             )
 
