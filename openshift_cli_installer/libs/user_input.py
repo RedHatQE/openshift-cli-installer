@@ -139,6 +139,12 @@ class UserInput:
             )
             raise click.Abort()
 
+        elif (
+            self.destroy_clusters_from_install_data_directory
+            or self.destroy_clusters_from_install_data_directory_using_s3_bucket
+        ):
+            return
+
         else:
             if not self.action:
                 self.logger.error(

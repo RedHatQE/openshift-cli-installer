@@ -1,5 +1,4 @@
 import contextlib
-import copy
 import os
 import shlex
 import shutil
@@ -75,9 +74,9 @@ def get_destroy_clusters_kwargs(clusters_data_list, **kwargs):
     return kwargs
 
 
-def prepare_clusters_directory_from_s3_bucket(**kwargs):
-    s3_bucket_name = kwargs["s3_bucket_name"]
-    s3_bucket_path = kwargs["s3_bucket_path"]
+def prepare_clusters_directory_from_s3_bucket(
+    s3_bucket_name, s3_bucket_path=None, query=None
+):
     download_futures = []
     extract_futures = []
     target_files_paths = []
@@ -86,8 +85,7 @@ def prepare_clusters_directory_from_s3_bucket(**kwargs):
         client=_s3_client,
         s3_bucket_name=s3_bucket_name,
         s3_bucket_path=s3_bucket_path,
-        query=kwargs.get("query")
-        or kwargs.get("destroy_clusters_from_s3_bucket_query"),
+        query=query,
     ):
         extract_target_dir = os.path.join(
             DESTROY_CLUSTERS_FROM_S3_BASE_DATA_DIRECTORY,
@@ -95,13 +93,13 @@ def prepare_clusters_directory_from_s3_bucket(**kwargs):
         )
         Path(extract_target_dir).mkdir(parents=True, exist_ok=True)
         target_file_path = os.path.join(extract_target_dir, cluster_zip_file)
-        cluster_zip_path = os.path.join(kwargs["s3_bucket_path"], cluster_zip_file)
+        cluster_zip_path = os.path.join(s3_bucket_path, cluster_zip_file)
         with ThreadPoolExecutor() as download_executor:
             download_futures.append(
                 download_executor.submit(
                     _s3_client.download_file,
                     **{
-                        "Bucket": kwargs["s3_bucket_name"],
+                        "Bucket": s3_bucket_name,
                         "Key": cluster_zip_path,
                         "Filename": target_file_path,
                     },
@@ -134,10 +132,6 @@ def prepare_clusters_directory_from_s3_bucket(**kwargs):
                 Place holder to make sure all futures are completed.
                 """
 
-    return clusters_from_directories(
-        directories=[DESTROY_CLUSTERS_FROM_S3_BASE_DATA_DIRECTORY]
-    )
-
 
 def get_all_zip_files_from_s3_bucket(
     client, s3_bucket_name, s3_bucket_path=None, query=None
@@ -162,8 +156,10 @@ def destroy_clusters_from_s3_bucket_or_local_directory(**kwargs):
         "destroy_clusters_from_install_data_directory"
     ]
     if kwargs["destroy_clusters_from_s3_bucket"]:
-        s3_clusters_data_list.extend(
-            prepare_clusters_directory_from_s3_bucket(**kwargs)
+        prepare_clusters_directory_from_s3_bucket(
+            s3_bucket_name=kwargs["s3_bucket_name"],
+            s3_bucket_path=kwargs["s3_bucket_path"],
+            query=kwargs["destroy_clusters_from_s3_bucket_query"],
         )
 
     if destroy_clusters_from_install_data_directory or s3_from_clusters_data_directory:
@@ -174,17 +170,20 @@ def destroy_clusters_from_s3_bucket_or_local_directory(**kwargs):
             data_directory_clusters_data_list.extend(clusters_from_directory)
 
         elif s3_from_clusters_data_directory:
-            copy_kwargs = copy.deepcopy(kwargs)
             for _cluster in clusters_from_directory:
-                _s3_object_name = _cluster.get("s3_object_name")
-                _s3_bucket_name = _cluster.get("s3_bucket_name")
-                if _s3_object_name and _s3_bucket_name:
-                    copy_kwargs["s3_bucket_name"] = _s3_bucket_name
-                    copy_kwargs["s3_bucket_path"] = _cluster.get("s3_bucket_path")
-                    copy_kwargs["query"] = os.path.split(_s3_object_name)[-1]
-                    s3_clusters_data_list.extend(
-                        prepare_clusters_directory_from_s3_bucket(**copy_kwargs)
-                    )
+                prepare_clusters_directory_from_s3_bucket(
+                    s3_bucket_name=_cluster.get("s3_bucket_name"),
+                    s3_bucket_path=_cluster.get("s3_bucket_path"),
+                    query=os.path.split(
+                        _cluster.get("s3_object_name"),
+                    )[-1],
+                )
+
+    s3_clusters_data_list.extend(
+        clusters_from_directories(
+            directories=[DESTROY_CLUSTERS_FROM_S3_BASE_DATA_DIRECTORY]
+        )
+    )
 
     clusters_kwargs = get_destroy_clusters_kwargs(
         clusters_data_list=s3_clusters_data_list + data_directory_clusters_data_list,

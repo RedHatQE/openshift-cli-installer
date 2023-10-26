@@ -210,8 +210,9 @@ def main(**kwargs):
     Create/Destroy Openshift cluster/s
     """
     kwargs.pop("pdb", None)
+    UserInput(**kwargs)
+
     if kwargs["dry_run"]:
-        UserInput(**kwargs)
         return
 
     if (
