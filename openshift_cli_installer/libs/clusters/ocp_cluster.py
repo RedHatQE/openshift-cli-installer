@@ -51,6 +51,8 @@ class OCPCluster(UserInput):
         )
         self.cluster = ocp_cluster
         self.name = self.cluster["name"]
+        self.cluster["display_name"] = self.name
+        self.cluster["cluster_id"] = None
         self.shortuuid = shortuuid.uuid()
         self.platform = self.cluster["platform"]
         self.region = self.cluster["region"]
@@ -68,7 +70,6 @@ class OCPCluster(UserInput):
         self.kubeadmin_token = None
         self.timeout_watch = None
         self.cluster_object = None
-        self.cluster_id = None
         self.console_url = None
         self.api_url = None
         self.ocp_client = None
@@ -295,11 +296,12 @@ class OCPCluster(UserInput):
         """
         if self.cluster_object:
             self.ocp_client = self.cluster_object.ocp_client
-            self.cluster_id = self.cluster_object.cluster_id
+            self.cluster["cluster_id"] = self.cluster_object.cluster_id
 
         else:
             self.ocp_client = get_client(config_file=self.kubeconfig_path)
-            self.cluster_id = ClusterVersion(
+            # Unmanaged clusters name is set to cluster id
+            self.cluster["cluster_id"] = self.cluster["display_name"] = ClusterVersion(
                 client=self.ocp_client, name="version"
             ).instance.spec.clusterID
 
