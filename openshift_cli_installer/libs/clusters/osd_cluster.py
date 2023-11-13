@@ -61,17 +61,15 @@ class OsdCluster(OcmCluster):
                 "platform": self.platform.replace("-osd", ""),
             }
             if self.platform == AWS_OSD_STR:
-                provision_osd_kwargs.update(
-                    {
-                        "aws_access_key_id": self.aws_access_key_id,
-                        "aws_account_id": self.aws_account_id,
-                        "aws_secret_access_key": self.aws_secret_access_key,
-                    }
-                )
+                provision_osd_kwargs.update({
+                    "aws_access_key_id": self.aws_access_key_id,
+                    "aws_account_id": self.aws_account_id,
+                    "aws_secret_access_key": self.aws_secret_access_key,
+                })
             elif self.platform == GCP_OSD_STR:
-                provision_osd_kwargs.update(
-                    {"gcp_service_account": self.gcp_service_account}
-                )
+                provision_osd_kwargs.update({
+                    "gcp_service_account": self.gcp_service_account
+                })
 
             self.cluster_object.provision_osd(**provision_osd_kwargs)
             self.add_cluster_info_to_cluster_object()

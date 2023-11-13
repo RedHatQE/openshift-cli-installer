@@ -107,9 +107,9 @@ def filter_versions(wanted_version, base_versions_dict, platform, stream):
             "\n".join(versions),
         )
         if match:
-            versions_dict[stream][version_key]["versions"] = set(
-                [_match[0] for _match in match]
-            )
+            versions_dict[stream][version_key]["versions"] = set([
+                _match[0] for _match in match
+            ])
 
         all_semver_versions = set()
         for available_version in versions_dict[stream][version_key].get("versions", []):
