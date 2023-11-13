@@ -141,9 +141,7 @@ class OCPCluster(UserInput):
         ).client
 
     def _add_s3_bucket_data(self):
-        self.s3_object_name = (
-            f"{f'{self.s3_bucket_path}/' if self.s3_bucket_path else ''}{self.name}-{self.shortuuid}.zip"
-        )
+        self.s3_object_name = f"{f'{self.s3_bucket_path}/' if self.s3_bucket_path else ''}{self.name}-{self.shortuuid}.zip"
 
     def set_cluster_install_version(self):
         version_key = get_split_version(version=self.version)
