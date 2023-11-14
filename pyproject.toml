@@ -1,5 +1,4 @@
 [tool.ruff]
-# Enable preview features.
 preview = true
 line-length = 120
 fix = true
