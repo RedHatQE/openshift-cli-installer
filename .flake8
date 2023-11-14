@@ -1,0 +1,20 @@
+[flake8]
+select=FCN,M511
+
+fcn_exclude_functions =
+    LOGGER,
+    os,
+    shutil,
+    find_undeclared_variables,
+    render,
+    group,
+    re,
+    yaml,
+    write,
+    json,
+    ast,
+    dump,
+    self,
+
+enable-extensions =
+    FCN,
