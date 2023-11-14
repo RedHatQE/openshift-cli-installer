@@ -28,15 +28,11 @@ class UserInput:
     def __init__(self, **kwargs):
         self.logger = get_logger(name=self.__class__.__module__)
         self.user_kwargs = kwargs
-        self.clusters_yaml_config_file = self.user_kwargs.get(
-            "clusters_yaml_config_file"
-        )
+        self.clusters_yaml_config_file = self.user_kwargs.get("clusters_yaml_config_file")
         if self.clusters_yaml_config_file:
             # Update CLI user input from YAML file if exists
             # Since CLI user input has some defaults, YAML file will override them
-            self.user_kwargs.update(
-                parse_config(path=self.clusters_yaml_config_file, default_value="")
-            )
+            self.user_kwargs.update(parse_config(path=self.clusters_yaml_config_file, default_value=""))
 
         self.dry_run = self.user_kwargs.get("dry_run")
         self.action = self.user_kwargs.get("action")
@@ -45,30 +41,19 @@ class UserInput:
         self.aws_account_id = self.user_kwargs.get("aws_account_id")
         self.clusters = self.get_clusters_from_user_input()
         self.ocm_token = self.user_kwargs.get("ocm_token")
-        self.parallel = (
-            False
-            if self.clusters and len(self.clusters) == 1
-            else self.user_kwargs.get("parallel")
-        )
+        self.parallel = False if self.clusters and len(self.clusters) == 1 else self.user_kwargs.get("parallel")
         self.clusters_install_data_directory = self.user_kwargs.get(
-            "clusters_install_data_directory",
-            "/openshift-cli-installer/clusters-install-data",
+            "clusters_install_data_directory", "/openshift-cli-installer/clusters-install-data"
         )
-        self.destroy_clusters_from_s3_config_files = self.user_kwargs.get(
-            "destroy_clusters_from_s3_config_files"
-        )
+        self.destroy_clusters_from_s3_config_files = self.user_kwargs.get("destroy_clusters_from_s3_config_files")
         self.s3_bucket_name = self.user_kwargs.get("s3_bucket_name")
         self.s3_bucket_path = self.user_kwargs.get("s3_bucket_path")
-        self.destroy_clusters_from_s3_bucket = self.user_kwargs.get(
-            "destroy_clusters_from_s3_bucket"
-        )
+        self.destroy_clusters_from_s3_bucket = self.user_kwargs.get("destroy_clusters_from_s3_bucket")
         self.destroy_clusters_from_install_data_directory = self.user_kwargs.get(
             "destroy_clusters_from_install_data_directory"
         )
-        self.destroy_clusters_from_install_data_directory_using_s3_bucket = (
-            self.user_kwargs.get(
-                "destroy_clusters_from_install_data_directory_using_s3_bucket"
-            )
+        self.destroy_clusters_from_install_data_directory_using_s3_bucket = self.user_kwargs.get(
+            "destroy_clusters_from_install_data_directory_using_s3_bucket"
         )
         self.registry_config_file = self.user_kwargs.get("registry_config_file")
         self.ssh_key_file = self.user_kwargs.get("ssh_key_file")
@@ -96,10 +81,7 @@ class UserInput:
             clusters = self.user_kwargs.get("clusters", [])
 
         for _cluster in clusters:
-            (
-                aws_access_key_id,
-                aws_secret_access_key,
-            ) = get_aws_credentials_for_acm_observability(
+            (aws_access_key_id, aws_secret_access_key) = get_aws_credentials_for_acm_observability(
                 cluster=_cluster,
                 aws_access_key_id=self.aws_access_key_id,
                 aws_secret_access_key=self.aws_secret_access_key,
@@ -123,8 +105,7 @@ class UserInput:
         if self.destroy_clusters_from_s3_bucket:
             if not self.s3_bucket_name:
                 self.logger.error(
-                    "`--s3-bucket-name` must be provided when running with"
-                    " `--destroy-clusters-from-s3-bucket`",
+                    "`--s3-bucket-name` must be provided when running with" " `--destroy-clusters-from-s3-bucket`"
                 )
                 raise click.Abort()
 
@@ -135,7 +116,7 @@ class UserInput:
             self.logger.error(
                 "`--destroy-clusters-from-install-data-directory-using-s3-bucket` is"
                 " not supported when running with"
-                " `--destroy-clusters-from-install-data-directory`",
+                " `--destroy-clusters-from-install-data-directory`"
             )
             raise click.Abort()
 
@@ -147,18 +128,12 @@ class UserInput:
 
         else:
             if not self.action:
-                self.logger.error(
-                    "'action' must be provided, supported actions:"
-                    " `{SUPPORTED_ACTIONS}`"
-                )
+                self.logger.error("'action' must be provided, supported actions:" " `{SUPPORTED_ACTIONS}`")
 
                 raise click.Abort()
 
             if self.action not in SUPPORTED_ACTIONS:
-                self.logger.error(
-                    f"'{self.action}' is not supported, supported actions:"
-                    f" `{SUPPORTED_ACTIONS}`"
-                )
+                self.logger.error(f"'{self.action}' is not supported, supported actions:" f" `{SUPPORTED_ACTIONS}`")
 
                 raise click.Abort()
 
@@ -188,15 +163,10 @@ class UserInput:
         for _cluster in self.clusters:
             _platform = _cluster.get("platform")
             if not _platform:
-                missing_platforms.append(
-                    f"Cluster {_cluster['name']} is missing platform"
-                )
+                missing_platforms.append(f"Cluster {_cluster['name']} is missing platform")
 
             elif _platform not in SUPPORTED_PLATFORMS:
-                unsupported_platforms.append(
-                    f"Cluster {_cluster['name']} platform '{_platform}' is not"
-                    " supported."
-                )
+                unsupported_platforms.append(f"Cluster {_cluster['name']} platform '{_platform}' is not" " supported.")
 
         if unsupported_platforms or missing_platforms:
             if unsupported_platforms:
@@ -211,33 +181,24 @@ class UserInput:
         if self.create:
             cluster_names = [cluster["name"] for cluster in self.clusters]
             if len(cluster_names) != len(set(cluster_names)):
-                self.logger.error(
-                    f"Cluster names must be unique: clusters {cluster_names}"
-                )
+                self.logger.error(f"Cluster names must be unique: clusters {cluster_names}")
                 raise click.Abort()
 
     def assert_managed_acm_clusters_user_input(self):
         if self.create:
             for cluster in self.clusters:
-                managed_acm_clusters = get_managed_acm_clusters_from_user_input(
-                    cluster=cluster
-                )
+                managed_acm_clusters = get_managed_acm_clusters_from_user_input(cluster=cluster)
                 for managed_acm_cluster in managed_acm_clusters:
                     managed_acm_cluster_data = get_cluster_data_by_name_from_clusters(
                         name=managed_acm_cluster, clusters=self.clusters
                     )
                     if not managed_acm_cluster_data:
-                        self.logger.error(
-                            f"Managed ACM clusters: Cluster {managed_acm_cluster} not"
-                            " found"
-                        )
+                        self.logger.error(f"Managed ACM clusters: Cluster {managed_acm_cluster} not" " found")
                         raise click.Abort()
 
     def assert_aws_ipi_user_input(self):
         if any([_cluster["platform"] == AWS_STR for _cluster in self.clusters]):
-            if not self.docker_config_file or not os.path.exists(
-                self.docker_config_file
-            ):
+            if not self.docker_config_file or not os.path.exists(self.docker_config_file):
                 self.logger.error(
                     "Docker config file is required for AWS installations."
                     f" {self.docker_config_file} file does not exist."
@@ -256,9 +217,7 @@ class UserInput:
             if _cluster["platform"] == AWS_STR:
                 log_level = _cluster.get("log_level", "error")
                 if log_level not in supported_log_levels:
-                    unsupported_log_levels.append(
-                        f"LogLevel {log_level} for cluster {_cluster['name']}"
-                    )
+                    unsupported_log_levels.append(f"LogLevel {log_level} for cluster {_cluster['name']}")
 
         if unsupported_log_levels:
             self.logger.error(
@@ -270,18 +229,15 @@ class UserInput:
     def assert_public_ssh_key_file_exists(self):
         if not self.ssh_key_file or not os.path.exists(self.ssh_key_file):
             self.logger.error(
-                "SSH file is required for AWS cluster installations."
-                f" {self.ssh_key_file} file does not exist.",
+                "SSH file is required for AWS cluster installations." f" {self.ssh_key_file} file does not exist."
             )
             raise click.Abort()
 
     def assert_registry_config_file_exists(self):
-        if not self.registry_config_file or not os.path.exists(
-            self.registry_config_file
-        ):
+        if not self.registry_config_file or not os.path.exists(self.registry_config_file):
             self.logger.error(
                 "Registry config file is required for AWS cluster installations."
-                f" {self.registry_config_file} file does not exist.",
+                f" {self.registry_config_file} file does not exist."
             )
             raise click.Abort()
 
@@ -289,30 +245,23 @@ class UserInput:
         if any([_cluster["platform"] == AWS_OSD_STR for _cluster in self.clusters]):
             self.assert_aws_credentials_exist()
             if not self.aws_account_id and self.create:
-                self.logger.error(
-                    "--aws-account-id required for AWS OSD installations.",
-                )
+                self.logger.error("--aws-account-id required for AWS OSD installations.")
                 raise click.Abort()
 
     def assert_aws_credentials_exist(self):
         if not (self.aws_secret_access_key and self.aws_access_key_id):
             self.logger.error(
-                "--aws-secret-access-key and aws-access-key-id"
-                " required for AWS OSD OR ACM cluster installations.",
+                "--aws-secret-access-key and aws-access-key-id" " required for AWS OSD OR ACM cluster installations."
             )
             raise click.Abort()
 
     def assert_acm_clusters_user_input(self):
-        acm_clusters = [
-            _cluster for _cluster in self.clusters if _cluster.get("acm") is True
-        ]
+        acm_clusters = [_cluster for _cluster in self.clusters if _cluster.get("acm") is True]
         if acm_clusters and self.create:
             for _cluster in acm_clusters:
                 cluster_platform = _cluster["platform"]
                 if cluster_platform == HYPERSHIFT_STR:
-                    self.logger.error(
-                        f"ACM not supported for {cluster_platform} clusters"
-                    )
+                    self.logger.error(f"ACM not supported for {cluster_platform} clusters")
                     raise click.Abort()
 
     def assert_gcp_osd_user_input(self):
@@ -321,10 +270,7 @@ class UserInput:
             and any([cluster["platform"] == GCP_OSD_STR for cluster in self.clusters])
             and not self.gcp_service_account_file
         ):
-            self.logger.error(
-                "`--gcp-service-account-file` option must be provided for"
-                f" {GCP_OSD_STR} clusters",
-            )
+            self.logger.error("`--gcp-service-account-file` option must be provided for" f" {GCP_OSD_STR} clusters")
             raise click.Abort()
 
     def assert_boolean_values(self):
@@ -333,13 +279,10 @@ class UserInput:
                 non_bool_keys = [
                     cluster_data_key
                     for cluster_data_key, cluster_data_value in cluster.items()
-                    if cluster_data_key in USER_INPUT_CLUSTER_BOOLEAN_KEYS
-                    and not isinstance(cluster_data_value, bool)
+                    if cluster_data_key in USER_INPUT_CLUSTER_BOOLEAN_KEYS and not isinstance(cluster_data_value, bool)
                 ]
                 if non_bool_keys:
-                    self.logger.error(
-                        f"The following keys must be booleans: {non_bool_keys}"
-                    )
+                    self.logger.error(f"The following keys must be booleans: {non_bool_keys}")
                     raise click.Abort()
 
     def assert_cluster_platform_support_observability(self):
@@ -356,10 +299,7 @@ class UserInput:
                 not_supported_clusters.append(base_error_str)
             else:
                 missing_storage_data.extend(
-                    self.check_missing_observability_storage_data(
-                        cluster=cluster,
-                        storage_type=storage_type,
-                    )
+                    self.check_missing_observability_storage_data(cluster=cluster, storage_type=storage_type)
                 )
 
         if not_supported_clusters or missing_storage_data:
@@ -374,27 +314,18 @@ class UserInput:
             if missing_storage_data:
                 _storage_clusters = "\n".join(missing_storage_data)
                 self.logger.error(
-                    "The following clusters are missing storage data for"
-                    f" observability:\n{_storage_clusters}\n"
+                    "The following clusters are missing storage data for" f" observability:\n{_storage_clusters}\n"
                 )
             raise click.Abort()
 
     @staticmethod
-    def check_missing_observability_storage_data(
-        cluster,
-        storage_type,
-    ):
+    def check_missing_observability_storage_data(cluster, storage_type):
         missing_storage_data = []
         base_error_str = f"cluster: {cluster['name']} - storage type: {storage_type}"
         if storage_type == S3_STR:
             if not cluster.get("aws-access-key-id"):
-                missing_storage_data.append(
-                    f"{base_error_str} is missing `acm-observability-s3-access-key-id`"
-                )
+                missing_storage_data.append(f"{base_error_str} is missing `acm-observability-s3-access-key-id`")
             if not cluster.get("aws-secret-access-key"):
-                missing_storage_data.append(
-                    f"{base_error_str} is missing"
-                    " `acm-observability-s3-secret-access-key`"
-                )
+                missing_storage_data.append(f"{base_error_str} is missing" " `acm-observability-s3-secret-access-key`")
 
         return missing_storage_data

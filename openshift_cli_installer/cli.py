@@ -9,30 +9,15 @@ from simple_logger.logger import get_logger
 from openshift_cli_installer.libs.clusters.ocp_clusters import OCPClusters
 from openshift_cli_installer.libs.user_input import UserInput
 from openshift_cli_installer.utils.click_dict_type import DictParamType
-from openshift_cli_installer.utils.clusters import (
-    destroy_clusters_from_s3_bucket_or_local_directory,
-)
-from openshift_cli_installer.utils.const import (
-    CREATE_STR,
-    DESTROY_CLUSTERS_FROM_S3_BASE_DATA_DIRECTORY,
-    DESTROY_STR,
-)
+from openshift_cli_installer.utils.clusters import destroy_clusters_from_s3_bucket_or_local_directory
+from openshift_cli_installer.utils.const import CREATE_STR, DESTROY_CLUSTERS_FROM_S3_BASE_DATA_DIRECTORY, DESTROY_STR
 
 
 @click.command("installer")
 @click.option(
-    "-a",
-    "--action",
-    type=click.Choice([CREATE_STR, DESTROY_STR]),
-    help="Action to perform Openshift cluster/s",
+    "-a", "--action", type=click.Choice([CREATE_STR, DESTROY_STR]), help="Action to perform Openshift cluster/s"
 )
-@click.option(
-    "-p",
-    "--parallel",
-    help="Run clusters install/uninstall in parallel",
-    is_flag=True,
-    show_default=True,
-)
+@click.option("-p", "--parallel", help="Run clusters install/uninstall in parallel", is_flag=True, show_default=True)
 @click.option(
     "--ssh-key-file",
     help="id_rsa.pub file path for AWS IPI or ACM clusters",
@@ -76,21 +61,9 @@ File must include token for `registry.ci.openshift.org`
 (Needed only for AWS IPI clusters)
     """,
 )
-@click.option(
-    "--s3-bucket-name",
-    help="S3 bucket name to store install folder backups",
-    show_default=True,
-)
-@click.option(
-    "--s3-bucket-path",
-    help="S3 bucket path to store the backups",
-    show_default=True,
-)
-@click.option(
-    "--ocm-token",
-    help="OCM token.",
-    default=os.environ.get("OCM_TOKEN"),
-)
+@click.option("--s3-bucket-name", help="S3 bucket name to store install folder backups", show_default=True)
+@click.option("--s3-bucket-path", help="S3 bucket path to store the backups", show_default=True)
+@click.option("--ocm-token", help="OCM token.", default=os.environ.get("OCM_TOKEN"))
 @click.option(
     "--aws-access-key-id",
     help="AWS access-key-id, needed for OSD AWS clusters.",
@@ -102,9 +75,7 @@ File must include token for `registry.ci.openshift.org`
     default=os.environ.get("AWS_SECRET_ACCESS_KEY"),
 )
 @click.option(
-    "--aws-account-id",
-    help="AWS account-id, needed for OSD AWS clusters.",
-    default=os.environ.get("AWS_ACCOUNT_ID"),
+    "--aws-account-id", help="AWS account-id, needed for OSD AWS clusters.", default=os.environ.get("AWS_ACCOUNT_ID")
 )
 @click.option(
     "-c",
@@ -193,18 +164,8 @@ must-gather will try to collect data when cluster installation fails and cluster
 """,
     type=click.Path(exists=True),
 )
-@click.option(
-    "--dry-run",
-    help="For testing, only verify user input",
-    is_flag=True,
-    show_default=True,
-)
-@click.option(
-    "--pdb",
-    help="Drop to `ipdb` shell on exception",
-    is_flag=True,
-    show_default=True,
-)
+@click.option("--dry-run", help="For testing, only verify user input", is_flag=True, show_default=True)
+@click.option("--pdb", help="Drop to `ipdb` shell on exception", is_flag=True, show_default=True)
 def main(**kwargs):
     """
     Create/Destroy Openshift cluster/s
@@ -226,9 +187,7 @@ def main(**kwargs):
             clusters = OCPClusters(**clusters_kwargs)
             clusters.run_create_or_destroy_clusters()
         finally:
-            shutil.rmtree(
-                DESTROY_CLUSTERS_FROM_S3_BASE_DATA_DIRECTORY, ignore_errors=True
-            )
+            shutil.rmtree(DESTROY_CLUSTERS_FROM_S3_BASE_DATA_DIRECTORY, ignore_errors=True)
 
     else:
         clusters = OCPClusters(**kwargs)
@@ -260,9 +219,6 @@ if __name__ == "__main__":
             _logger.error(ex)
             should_raise = True
     finally:
-        _logger.info(
-            "Total execution time:"
-            f" {datetime.timedelta(seconds=time.time() - start_time)}"
-        )
+        _logger.info("Total execution time:" f" {datetime.timedelta(seconds=time.time() - start_time)}")
         if should_raise:
             sys.exit(1)

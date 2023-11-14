@@ -7,10 +7,7 @@ from ocp_utilities.utils import run_command
 from simple_logger.logger import get_logger
 
 from openshift_cli_installer.libs.clusters.ocp_cluster import OCPCluster
-from openshift_cli_installer.utils.cluster_versions import (
-    filter_versions,
-    get_aws_versions,
-)
+from openshift_cli_installer.utils.cluster_versions import filter_versions, get_aws_versions
 from openshift_cli_installer.utils.const import PRODUCTION_STR
 from openshift_cli_installer.utils.general import (
     generate_unified_pull_secret,
@@ -23,9 +20,7 @@ from openshift_cli_installer.utils.general import (
 class AwsIpiCluster(OCPCluster):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.logger = get_logger(
-            f"{self.__class__.__module__}-{self.__class__.__name__}"
-        )
+        self.logger = get_logger(f"{self.__class__.__module__}-{self.__class__.__name__}")
 
         self.openshift_install_binary_path = None
         self.aws_base_available_versions = None
@@ -56,9 +51,7 @@ class AwsIpiCluster(OCPCluster):
     def _aws_download_installer(self):
         openshift_install_str = "openshift-install"
         binary_dir = os.path.join("/tmp", self.version_url)
-        self.openshift_install_binary_path = os.path.join(
-            binary_dir, openshift_install_str
-        )
+        self.openshift_install_binary_path = os.path.join(binary_dir, openshift_install_str)
         rc, _, err = run_command(
             command=shlex.split(
                 "oc adm release extract "
@@ -70,35 +63,30 @@ class AwsIpiCluster(OCPCluster):
         if not rc:
             self.logger.error(
                 f"{self.log_prefix}: Failed to get {openshift_install_str} for version"
-                f" {self.version_url}, error: {err}",
+                f" {self.version_url}, error: {err}"
             )
             raise click.Abort()
 
     def _create_install_config_file(self):
         self.pull_secret = generate_unified_pull_secret(
-            registry_config_file=self.registry_config_file,
-            docker_config_file=self.docker_config_file,
+            registry_config_file=self.registry_config_file, docker_config_file=self.docker_config_file
         )
         self.ssh_key = get_local_ssh_key(ssh_key_file=self.ssh_key_file)
-        cluster_install_config = get_install_config_j2_template(
-            cluster_dict=self.to_dict
-        )
+        cluster_install_config = get_install_config_j2_template(cluster_dict=self.to_dict)
 
         with open(os.path.join(self.cluster_dir, "install-config.yaml"), "w") as fd:
             fd.write(yaml.dump(cluster_install_config))
 
     def _set_install_version_url(self):
         version_url = [
-            url
-            for url, versions in self.aws_base_available_versions.items()
-            if self.install_version in versions
+            url for url, versions in self.aws_base_available_versions.items() if self.install_version in versions
         ]
         if version_url:
             self.version_url = f"{version_url[0]}:{self.install_version}"
         else:
             self.logger.error(
                 f"{self.log_prefix}: Cluster version url not found for"
-                f" {self.version} in {self.aws_base_available_versions.keys()}",
+                f" {self.version} in {self.aws_base_available_versions.keys()}"
             )
             raise click.Abort()
 
@@ -114,8 +102,7 @@ class AwsIpiCluster(OCPCluster):
 
         if not res:
             self.logger.error(
-                f"{self.log_prefix}: Failed to run cluster {self.action} \n\tERR:"
-                f" {err}\n\tOUT: {out}.",
+                f"{self.log_prefix}: Failed to run cluster {self.action} \n\tERR:" f" {err}\n\tOUT: {out}."
             )
             if raise_on_failure:
                 raise click.Abort()
@@ -124,9 +111,7 @@ class AwsIpiCluster(OCPCluster):
 
     def create_cluster(self):
         def _rollback_on_error(_ex=None):
-            self.logger.error(
-                f"{self.log_prefix}: Failed to create cluster: {_ex or 'No exception'}"
-            )
+            self.logger.error(f"{self.log_prefix}: Failed to create cluster: {_ex or 'No exception'}")
             if self.must_gather_output_dir:
                 self.collect_must_gather()
 

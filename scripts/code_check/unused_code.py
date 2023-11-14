@@ -42,9 +42,7 @@ def get_unused_functions():
             if "### unused_code: ignore ###" in func_docstring:
                 continue
 
-            _used = subprocess.check_output(
-                f"git grep -w '{func.name}' | wc -l", shell=True
-            )
+            _used = subprocess.check_output(f"git grep -w '{func.name}' | wc -l", shell=True)
             used = int(_used.strip())
             if used < 2:
                 _unused_functions.append(

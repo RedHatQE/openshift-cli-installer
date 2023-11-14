@@ -38,10 +38,7 @@ def set_clusters_versions(clusters, base_available_versions):
         platform = cluster_data["platform"]
         version_key = get_split_version(version=cluster_version)
         all_stream_versions = all_available_versions[stream][version_key]
-        err_msg = (
-            f"{cluster_name}: Cluster version {cluster_version} not found for stream"
-            f" {stream}"
-        )
+        err_msg = f"{cluster_name}: Cluster version {cluster_version} not found for stream" f" {stream}"
         if len(cluster_version.split(".")) == 3:
             for _ver in all_stream_versions["versions"]:
                 if cluster_version in _ver:
@@ -52,9 +49,7 @@ def set_clusters_versions(clusters, base_available_versions):
                 raise click.Abort()
         elif len(cluster_version.split(".")) < 2:
             click.secho(
-                f"{cluster_name}: Version must be at least x.y (4.3), got"
-                f" {cluster_version}",
-                fg=ERROR_LOG_COLOR,
+                f"{cluster_name}: Version must be at least x.y (4.3), got" f" {cluster_version}", fg=ERROR_LOG_COLOR
             )
             raise click.Abort()
         else:
@@ -66,9 +61,7 @@ def set_clusters_versions(clusters, base_available_versions):
 
         if platform == AWS_STR:
             version_url = [
-                url
-                for url, versions in base_available_versions.items()
-                if cluster_data["version"] in versions
+                url for url, versions in base_available_versions.items() if cluster_data["version"] in versions
             ]
             if version_url:
                 cluster_data["version_url"] = version_url[0]
@@ -92,24 +85,14 @@ def filter_versions(wanted_version, base_versions_dict, platform, stream):
     versions_dict[stream] = {version_key: {"versions": set(), "latest": ""}}
 
     for _source, versions in base_versions_dict.items():
-        if (
-            platform in (HYPERSHIFT_STR, ROSA_STR, AWS_OSD_STR, GCP_OSD_STR)
-            and stream != _source
-        ):
+        if platform in (HYPERSHIFT_STR, ROSA_STR, AWS_OSD_STR, GCP_OSD_STR) and stream != _source:
             continue
 
-        reg_stream = get_regex_str_for_version_match(
-            platform=platform, stream=stream, x86_64_str=x86_64_str
-        )
+        reg_stream = get_regex_str_for_version_match(platform=platform, stream=stream, x86_64_str=x86_64_str)
 
-        match = re.findall(
-            rf"({re.escape(wanted_version)}(.\d+)?(-)?(\d+.)?{reg_stream}.*)",
-            "\n".join(versions),
-        )
+        match = re.findall(rf"({re.escape(wanted_version)}(.\d+)?(-)?(\d+.)?{reg_stream}.*)", "\n".join(versions))
         if match:
-            versions_dict[stream][version_key]["versions"] = set(
-                [_match[0] for _match in match]
-            )
+            versions_dict[stream][version_key]["versions"] = set([_match[0] for _match in match])
 
         all_semver_versions = set()
         for available_version in versions_dict[stream][version_key].get("versions", []):
@@ -118,26 +101,17 @@ def filter_versions(wanted_version, base_versions_dict, platform, stream):
                 stripped = True
                 available_version = available_version.replace(x86_64_str, "")
             try:
-                all_semver_versions.add(
-                    (semver.Version.parse(available_version), stripped)
-                )
+                all_semver_versions.add((semver.Version.parse(available_version), stripped))
             except ValueError:
                 continue
 
         if all_semver_versions:
             max_version = str(max([ver[0] for ver in all_semver_versions]))
-            add_x86_64 = [
-                ver[1] for ver in all_semver_versions if str(ver[0]) == max_version
-            ][0]
-            versions_dict[stream][version_key][
-                "latest"
-            ] = f"{max_version}{x86_64_str if add_x86_64 else ''}"
+            add_x86_64 = [ver[1] for ver in all_semver_versions if str(ver[0]) == max_version][0]
+            versions_dict[stream][version_key]["latest"] = f"{max_version}{x86_64_str if add_x86_64 else ''}"
 
     if not versions_dict[stream][version_key]["versions"]:
-        click.secho(
-            f"Cluster version {wanted_version} not found for stream {stream}",
-            fg=ERROR_LOG_COLOR,
-        )
+        click.secho(f"Cluster version {wanted_version} not found for stream {stream}", fg=ERROR_LOG_COLOR)
         raise click.Abort()
     return versions_dict
 
@@ -168,24 +142,16 @@ def get_regex_str_for_version_match(platform, stream, x86_64_str):
 
 def get_cluster_stream(cluster_data):
     _platform = cluster_data["platform"]
-    return (
-        cluster_data["stream"]
-        if _platform == AWS_STR
-        else cluster_data["channel-group"]
-    )
+    return cluster_data["stream"] if _platform == AWS_STR else cluster_data["channel-group"]
 
 
 @functools.cache
 def get_aws_versions():
     versions_dict = {}
-    for source_repo in (
-        "quay.io/openshift-release-dev/ocp-release",
-        "registry.ci.openshift.org/ocp/release",
-    ):
-        versions_dict[source_repo] = run_command(
-            command=shlex.split(f"regctl tag ls {source_repo}"),
-            check=False,
-        )[1].splitlines()
+    for source_repo in ("quay.io/openshift-release-dev/ocp-release", "registry.ci.openshift.org/ocp/release"):
+        versions_dict[source_repo] = run_command(command=shlex.split(f"regctl tag ls {source_repo}"), check=False)[
+            1
+        ].splitlines()
 
     return versions_dict
 
@@ -198,9 +164,7 @@ def update_rosa_osd_clusters_versions(clusters, _test=False, _test_versions_dict
         for cluster_data in clusters:
             if cluster_data["platform"] in (AWS_OSD_STR, GCP_OSD_STR):
                 base_available_versions_dict.update(
-                    Versions(client=cluster_data["ocm-client"]).get(
-                        channel_group=cluster_data["channel-group"]
-                    )
+                    Versions(client=cluster_data["ocm-client"]).get(channel_group=cluster_data["channel-group"])
                 )
 
             elif cluster_data["platform"] in (ROSA_STR, HYPERSHIFT_STR):
@@ -214,11 +178,6 @@ def update_rosa_osd_clusters_versions(clusters, _test=False, _test_versions_dict
                     ocm_client=cluster_data["ocm-client"],
                 )["out"]
                 _all_versions = [ver["raw_id"] for ver in base_available_versions]
-                base_available_versions_dict.setdefault(channel_group, []).extend(
-                    _all_versions
-                )
+                base_available_versions_dict.setdefault(channel_group, []).extend(_all_versions)
 
-    return set_clusters_versions(
-        clusters=clusters,
-        base_available_versions=base_available_versions_dict,
-    )
+    return set_clusters_versions(clusters=clusters, base_available_versions=base_available_versions_dict)

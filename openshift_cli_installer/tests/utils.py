@@ -1,9 +1,6 @@
 import json
 
-from openshift_cli_installer.utils.cluster_versions import (
-    get_aws_versions,
-    set_clusters_versions,
-)
+from openshift_cli_installer.utils.cluster_versions import get_aws_versions, set_clusters_versions
 
 
 def update_aws_clusters_versions(clusters, _test=False):
@@ -12,10 +9,7 @@ def update_aws_clusters_versions(clusters, _test=False):
 
     base_available_versions = get_all_versions(_test=_test)
 
-    return set_clusters_versions(
-        clusters=clusters,
-        base_available_versions=base_available_versions,
-    )
+    return set_clusters_versions(clusters=clusters, base_available_versions=base_available_versions)
 
 
 def get_all_versions(_test=None):

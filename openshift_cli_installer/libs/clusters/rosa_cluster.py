@@ -10,18 +10,13 @@ from simple_logger.logger import get_logger
 from openshift_cli_installer.libs.clusters.ocm_cluster import OcmCluster
 from openshift_cli_installer.utils.cluster_versions import filter_versions
 from openshift_cli_installer.utils.const import HYPERSHIFT_STR
-from openshift_cli_installer.utils.general import (
-    get_manifests_path,
-    zip_and_upload_to_s3,
-)
+from openshift_cli_installer.utils.general import get_manifests_path, zip_and_upload_to_s3
 
 
 class RosaCluster(OcmCluster):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.logger = get_logger(
-            f"{self.__class__.__module__}-{self.__class__.__name__}"
-        )
+        self.logger = get_logger(f"{self.__class__.__module__}-{self.__class__.__name__}")
 
         if self.create:
             self.get_rosa_versions()
@@ -66,9 +61,7 @@ class RosaCluster(OcmCluster):
         if self.public_subnets:
             cluster_parameters["public_subnets"] = self.public_subnets
 
-        self.terraform = Terraform(
-            working_dir=self.cluster_dir, variables=cluster_parameters
-        )
+        self.terraform = Terraform(working_dir=self.cluster_dir, variables=cluster_parameters)
         self.terraform.init()
 
     def create_oidc(self):
@@ -100,33 +93,19 @@ class RosaCluster(OcmCluster):
     def destroy_hypershift_vpc(self):
         self.terraform_init()
         self.logger.info(f"{self.log_prefix}: Destroy hypershift VPCs")
-        rc, _, err = self.terraform.destroy(
-            force=IsNotFlagged,
-            auto_approve=True,
-            capture_output=True,
-        )
+        rc, _, err = self.terraform.destroy(force=IsNotFlagged, auto_approve=True, capture_output=True)
         if rc != 0:
-            self.logger.error(
-                f"{self.log_prefix}: Failed to destroy hypershift VPCs with error:"
-                f" {err}"
-            )
+            self.logger.error(f"{self.log_prefix}: Failed to destroy hypershift VPCs with error:" f" {err}")
             raise click.Abort()
 
     def prepare_hypershift_vpc(self):
         self.terraform_init()
         self.logger.info(f"{self.log_prefix}: Preparing hypershift VPCs")
-        shutil.copy(
-            os.path.join(get_manifests_path(), "setup-vpc.tf"), self.cluster_dir
-        )
+        shutil.copy(os.path.join(get_manifests_path(), "setup-vpc.tf"), self.cluster_dir)
         self.terraform.plan(dir_or_plan="hypershift.plan")
-        rc, _, err = self.terraform.apply(
-            capture_output=True, skip_plan=True, auto_approve=True
-        )
+        rc, _, err = self.terraform.apply(capture_output=True, skip_plan=True, auto_approve=True)
         if rc != 0:
-            self.logger.error(
-                f"{self.log_prefix}: Create hypershift VPC failed with"
-                f" error: {err}, rolling back.",
-            )
+            self.logger.error(f"{self.log_prefix}: Create hypershift VPC failed with" f" error: {err}, rolling back.")
             self.delete_oidc()
             # Clean up already created resources from the plan
             self.destroy_hypershift_vpc()
@@ -187,11 +166,7 @@ class RosaCluster(OcmCluster):
         command = f"create cluster --sts --cluster-name={self.name} "
         command_kwargs = []
         for _key, _val in self.to_dict.items():
-            if (
-                _key in ignore_keys
-                or _key.startswith(ignore_prefix)
-                or not isinstance(_val, str)
-            ):
+            if _key in ignore_keys or _key.startswith(ignore_prefix) or not isinstance(_val, str):
                 continue
 
             if _key == "install_version":
@@ -216,24 +191,16 @@ class RosaCluster(OcmCluster):
         self.dump_cluster_data_to_file()
 
         try:
-            rosa.cli.execute(
-                command=self.build_rosa_command(),
-                ocm_client=self.ocm_client,
-                aws_region=self.region,
-            )
+            rosa.cli.execute(command=self.build_rosa_command(), ocm_client=self.ocm_client, aws_region=self.region)
 
-            self.cluster_object.wait_for_cluster_ready(
-                wait_timeout=self.timeout_watch.remaining_time()
-            )
+            self.cluster_object.wait_for_cluster_ready(wait_timeout=self.timeout_watch.remaining_time())
             self.set_cluster_auth()
             self.add_cluster_info_to_cluster_object()
             self.logger.success(f"{self.log_prefix}: Cluster created successfully")
             self.save_kubeadmin_token_to_clusters_install_data()
 
         except Exception as ex:
-            self.logger.error(
-                f"{self.log_prefix}: Failed to run cluster create\n{ex}",
-            )
+            self.logger.error(f"{self.log_prefix}: Failed to run cluster create\n{ex}")
             self.set_cluster_auth()
             if self.must_gather_output_dir:
                 self.collect_must_gather()
@@ -254,13 +221,9 @@ class RosaCluster(OcmCluster):
         should_raise = False
         try:
             res = rosa.cli.execute(
-                command=f"delete cluster --cluster={self.name}",
-                ocm_client=self.ocm_client,
-                aws_region=self.region,
+                command=f"delete cluster --cluster={self.name}", ocm_client=self.ocm_client, aws_region=self.region
             )
-            self.cluster_object.wait_for_cluster_deletion(
-                wait_timeout=self.timeout_watch.remaining_time()
-            )
+            self.cluster_object.wait_for_cluster_deletion(wait_timeout=self.timeout_watch.remaining_time())
             self.remove_leftovers(res=res)
 
         except Exception as ex:
@@ -271,9 +234,7 @@ class RosaCluster(OcmCluster):
             self.delete_oidc()
 
         if should_raise:
-            self.logger.error(
-                f"{self.log_prefix}: Failed to run cluster destroy\n{should_raise}"
-            )
+            self.logger.error(f"{self.log_prefix}: Failed to run cluster destroy\n{should_raise}")
             raise click.Abort()
 
         self.logger.success(f"{self.log_prefix}: Cluster destroyed successfully")
@@ -296,8 +257,4 @@ class RosaCluster(OcmCluster):
                     command = base_command.replace("-c ", "--cluster=")
                     command = command.replace("--prefix ", "--prefix=")
                     command = command.replace("--oidc-config-id ", "--oidc-config-id=")
-                    rosa.cli.execute(
-                        command=command,
-                        ocm_client=self.ocm_client,
-                        aws_region=self.region,
-                    )
+                    rosa.cli.execute(command=command, ocm_client=self.ocm_client, aws_region=self.region)

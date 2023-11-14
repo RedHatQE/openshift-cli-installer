@@ -55,28 +55,15 @@ def ignore_exceptions(logger=None, retry=None):
 
 
 @ignore_exceptions()
-def zip_and_upload_to_s3(
-    install_dir,
-    s3_bucket_name,
-    uuid,
-    s3_bucket_path=None,
-):
+def zip_and_upload_to_s3(install_dir, s3_bucket_name, uuid, s3_bucket_path=None):
     remove_terraform_folder_from_install_dir(install_dir=install_dir)
 
     _base_name = f"{install_dir}-{uuid}"
 
-    zip_file = shutil.make_archive(
-        base_name=_base_name,
-        format="zip",
-        root_dir=install_dir,
-    )
+    zip_file = shutil.make_archive(base_name=_base_name, format="zip", root_dir=install_dir)
     bucket_key = os.path.join(s3_bucket_path or "", os.path.split(zip_file)[-1])
     click.echo(f"Upload {zip_file} file to S3 {s3_bucket_name}, path {bucket_key}")
-    s3_client().upload_file(
-        Filename=zip_file,
-        Bucket=s3_bucket_name,
-        Key=bucket_key,
-    )
+    s3_client().upload_file(Filename=zip_file, Bucket=s3_bucket_name, Key=bucket_key)
 
     return _base_name
 
@@ -84,10 +71,7 @@ def zip_and_upload_to_s3(
 def get_manifests_path():
     manifests_path = os.path.join("openshift_cli_installer", "manifests")
     if not os.path.isdir(manifests_path):
-        manifests_path = os.path.join(
-            find_spec("openshift_cli_installer").submodule_search_locations[0],
-            "manifests",
-        )
+        manifests_path = os.path.join(find_spec("openshift_cli_installer").submodule_search_locations[0], "manifests")
     return manifests_path
 
 
@@ -128,20 +112,14 @@ def tts(ts):
 
 def get_install_config_j2_template(cluster_dict):
     env = Environment(
-        loader=FileSystemLoader(get_manifests_path()),
-        trim_blocks=True,
-        lstrip_blocks=True,
-        undefined=DebugUndefined,
+        loader=FileSystemLoader(get_manifests_path()), trim_blocks=True, lstrip_blocks=True, undefined=DebugUndefined
     )
 
     template = env.get_template(name="install-config-template.j2")
     rendered = template.render(cluster_dict)
     undefined_variables = meta.find_undeclared_variables(env.parse(rendered))
     if undefined_variables:
-        click.secho(
-            f"The following variables are undefined: {undefined_variables}",
-            fg=ERROR_LOG_COLOR,
-        )
+        click.secho(f"The following variables are undefined: {undefined_variables}", fg=ERROR_LOG_COLOR)
         raise click.Abort()
 
     return yaml.safe_load(rendered)

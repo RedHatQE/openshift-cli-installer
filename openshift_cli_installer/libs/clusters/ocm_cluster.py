@@ -13,9 +13,7 @@ from openshift_cli_installer.utils.general import tts
 class OcmCluster(OCPCluster):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.logger = get_logger(
-            f"{self.__class__.__module__}-{self.__class__.__name__}"
-        )
+        self.logger = get_logger(f"{self.__class__.__module__}-{self.__class__.__name__}")
 
         self.expiration_time = None
         self.osd_base_available_versions_dict = {}
@@ -25,10 +23,7 @@ class OcmCluster(OCPCluster):
         self.ocm_env = self.cluster.get("ocm-env", STAGE_STR)
 
         self.prepare_cluster_data()
-        self.cluster_object = Cluster(
-            client=self.ocm_client,
-            name=self.name,
-        )
+        self.cluster_object = Cluster(client=self.ocm_client, name=self.name)
         self._set_expiration_time()
         self.dump_cluster_data_to_file()
 
@@ -36,9 +31,7 @@ class OcmCluster(OCPCluster):
         expiration_time = self.cluster.get("expiration-time")
         if expiration_time:
             _expiration_time = tts(ts=expiration_time)
-            self.expiration_time = (
-                f"{(datetime.now() + timedelta(seconds=_expiration_time)).isoformat()}Z"
-            )
+            self.expiration_time = f"{(datetime.now() + timedelta(seconds=_expiration_time)).isoformat()}Z"
 
     def get_osd_versions(self):
         self.osd_base_available_versions_dict.update(
@@ -55,6 +48,4 @@ class OcmCluster(OCPCluster):
             ocm_client=self.ocm_client,
         )["out"]
         _all_versions = [ver["raw_id"] for ver in base_available_versions]
-        self.rosa_base_available_versions_dict.setdefault(
-            self.channel_group, []
-        ).extend(_all_versions)
+        self.rosa_base_available_versions_dict.setdefault(self.channel_group, []).extend(_all_versions)

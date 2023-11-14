@@ -1,16 +1,10 @@
 import click
 import pytest
 
-from openshift_cli_installer.tests.all_osd_versions import (
-    BASE_AVAILABLE_OSD_VERSIONS_DICT,
-)
-from openshift_cli_installer.tests.all_rosa_versions import (
-    BASE_AVAILABLE_ROSA_VERSIONS_DICT,
-)
+from openshift_cli_installer.tests.all_osd_versions import BASE_AVAILABLE_OSD_VERSIONS_DICT
+from openshift_cli_installer.tests.all_rosa_versions import BASE_AVAILABLE_ROSA_VERSIONS_DICT
 from openshift_cli_installer.tests.utils import update_aws_clusters_versions
-from openshift_cli_installer.utils.cluster_versions import (
-    update_rosa_osd_clusters_versions,
-)
+from openshift_cli_installer.utils.cluster_versions import update_rosa_osd_clusters_versions
 
 
 @pytest.mark.parametrize(
@@ -136,135 +130,35 @@ def test_aws_cluster_version(clusters, expected):
     "clusters, expected",
     [
         (
-            [
-                {
-                    "version": "4.13",
-                    "channel-group": "stable",
-                    "platform": "rosa",
-                }
-            ],
-            [
-                {
-                    "version": "4.13.6",
-                    "channel-group": "stable",
-                    "platform": "rosa",
-                }
-            ],
+            [{"version": "4.13", "channel-group": "stable", "platform": "rosa"}],
+            [{"version": "4.13.6", "channel-group": "stable", "platform": "rosa"}],
+        ),
+        (
+            [{"version": "4.13", "channel-group": "nightly", "platform": "rosa"}],
+            [{"version": "4.13.0-0.nightly-2023-08-15-023315", "channel-group": "nightly", "platform": "rosa"}],
+        ),
+        (
+            [{"version": "4.13", "channel-group": "candidate", "platform": "rosa"}],
+            [{"version": "4.13.9", "channel-group": "candidate", "platform": "rosa"}],
+        ),
+        (
+            [{"version": "4.13.6", "channel-group": "stable", "platform": "rosa"}],
+            [{"version": "4.13.6", "channel-group": "stable", "platform": "rosa"}],
         ),
         (
             [
-                {
-                    "version": "4.13",
-                    "channel-group": "nightly",
-                    "platform": "rosa",
-                }
+                {"version": "4.13", "channel-group": "stable", "platform": "rosa"},
+                {"version": "4.13", "channel-group": "nightly", "platform": "rosa"},
             ],
             [
-                {
-                    "version": "4.13.0-0.nightly-2023-08-15-023315",
-                    "channel-group": "nightly",
-                    "platform": "rosa",
-                }
+                {"version": "4.13.6", "channel-group": "stable", "platform": "rosa"},
+                {"version": "4.13.0-0.nightly-2023-08-15-023315", "channel-group": "nightly", "platform": "rosa"},
             ],
         ),
-        (
-            [
-                {
-                    "version": "4.13",
-                    "channel-group": "candidate",
-                    "platform": "rosa",
-                }
-            ],
-            [
-                {
-                    "version": "4.13.9",
-                    "channel-group": "candidate",
-                    "platform": "rosa",
-                }
-            ],
-        ),
-        (
-            [
-                {
-                    "version": "4.13.6",
-                    "channel-group": "stable",
-                    "platform": "rosa",
-                }
-            ],
-            [
-                {
-                    "version": "4.13.6",
-                    "channel-group": "stable",
-                    "platform": "rosa",
-                }
-            ],
-        ),
-        (
-            [
-                {
-                    "version": "4.13",
-                    "channel-group": "stable",
-                    "platform": "rosa",
-                },
-                {
-                    "version": "4.13",
-                    "channel-group": "nightly",
-                    "platform": "rosa",
-                },
-            ],
-            [
-                {
-                    "version": "4.13.6",
-                    "channel-group": "stable",
-                    "platform": "rosa",
-                },
-                {
-                    "version": "4.13.0-0.nightly-2023-08-15-023315",
-                    "channel-group": "nightly",
-                    "platform": "rosa",
-                },
-            ],
-        ),
-        (
-            [
-                {
-                    "version": "4",
-                    "channel-group": "stable",
-                    "platform": "rosa",
-                }
-            ],
-            "error",
-        ),
-        (
-            [
-                {
-                    "version": "100.5.1",
-                    "channel-group": "stable",
-                    "platform": "rosa",
-                }
-            ],
-            "error",
-        ),
-        (
-            [
-                {
-                    "version": "100.5",
-                    "channel-group": "stable",
-                    "platform": "rosa",
-                }
-            ],
-            "error",
-        ),
-        (
-            [
-                {
-                    "version": "4.13.40",
-                    "channel-group": "stable",
-                    "platform": "rosa",
-                }
-            ],
-            "error",
-        ),
+        ([{"version": "4", "channel-group": "stable", "platform": "rosa"}], "error"),
+        ([{"version": "100.5.1", "channel-group": "stable", "platform": "rosa"}], "error"),
+        ([{"version": "100.5", "channel-group": "stable", "platform": "rosa"}], "error"),
+        ([{"version": "4.13.40", "channel-group": "stable", "platform": "rosa"}], "error"),
     ],
     ids=[
         "rosa_4.13_stable",
@@ -281,9 +175,7 @@ def test_aws_cluster_version(clusters, expected):
 def test_rosa_cluster_version(clusters, expected):
     try:
         res = update_rosa_osd_clusters_versions(
-            clusters=clusters,
-            _test=True,
-            _test_versions_dict=BASE_AVAILABLE_ROSA_VERSIONS_DICT,
+            clusters=clusters, _test=True, _test_versions_dict=BASE_AVAILABLE_ROSA_VERSIONS_DICT
         )
         assert res == expected
     except click.Abort:
@@ -297,150 +189,38 @@ def test_rosa_cluster_version(clusters, expected):
     "clusters, expected",
     [
         (
-            [
-                {
-                    "version": "4.13",
-                    "channel-group": "stable",
-                    "platform": "aws-osd",
-                }
-            ],
-            [
-                {
-                    "version": "4.13.9",
-                    "channel-group": "stable",
-                    "platform": "aws-osd",
-                }
-            ],
+            [{"version": "4.13", "channel-group": "stable", "platform": "aws-osd"}],
+            [{"version": "4.13.9", "channel-group": "stable", "platform": "aws-osd"}],
+        ),
+        (
+            [{"version": "4.13", "channel-group": "nightly", "platform": "aws-osd"}],
+            [{"version": "4.13.0-0.nightly-2023-08-25-012257", "channel-group": "nightly", "platform": "aws-osd"}],
+        ),
+        (
+            [{"version": "4.13", "channel-group": "candidate", "platform": "aws-osd"}],
+            [{"version": "4.13.10", "channel-group": "candidate", "platform": "aws-osd"}],
+        ),
+        (
+            [{"version": "4.13.9", "channel-group": "stable", "platform": "aws-osd"}],
+            [{"version": "4.13.9", "channel-group": "stable", "platform": "aws-osd"}],
         ),
         (
             [
-                {
-                    "version": "4.13",
-                    "channel-group": "nightly",
-                    "platform": "aws-osd",
-                }
+                {"version": "4.13", "channel-group": "stable", "platform": "aws-osd"},
+                {"version": "4.13", "channel-group": "nightly", "platform": "aws-osd"},
             ],
             [
-                {
-                    "version": "4.13.0-0.nightly-2023-08-25-012257",
-                    "channel-group": "nightly",
-                    "platform": "aws-osd",
-                }
+                {"version": "4.13.9", "channel-group": "stable", "platform": "aws-osd"},
+                {"version": "4.13.0-0.nightly-2023-08-25-012257", "channel-group": "nightly", "platform": "aws-osd"},
             ],
         ),
+        ([{"version": "4", "channel-group": "stable", "platform": "aws-osd"}], "error"),
+        ([{"version": "100.5.1", "channel-group": "stable", "platform": "aws-osd"}], "error"),
+        ([{"version": "100.5", "channel-group": "stable", "platform": "aws-osd"}], "error"),
+        ([{"version": "4.13.40", "channel-group": "stable", "platform": "aws-osd"}], "error"),
         (
-            [
-                {
-                    "version": "4.13",
-                    "channel-group": "candidate",
-                    "platform": "aws-osd",
-                }
-            ],
-            [
-                {
-                    "version": "4.13.10",
-                    "channel-group": "candidate",
-                    "platform": "aws-osd",
-                }
-            ],
-        ),
-        (
-            [
-                {
-                    "version": "4.13.9",
-                    "channel-group": "stable",
-                    "platform": "aws-osd",
-                }
-            ],
-            [
-                {
-                    "version": "4.13.9",
-                    "channel-group": "stable",
-                    "platform": "aws-osd",
-                }
-            ],
-        ),
-        (
-            [
-                {
-                    "version": "4.13",
-                    "channel-group": "stable",
-                    "platform": "aws-osd",
-                },
-                {
-                    "version": "4.13",
-                    "channel-group": "nightly",
-                    "platform": "aws-osd",
-                },
-            ],
-            [
-                {
-                    "version": "4.13.9",
-                    "channel-group": "stable",
-                    "platform": "aws-osd",
-                },
-                {
-                    "version": "4.13.0-0.nightly-2023-08-25-012257",
-                    "channel-group": "nightly",
-                    "platform": "aws-osd",
-                },
-            ],
-        ),
-        (
-            [
-                {
-                    "version": "4",
-                    "channel-group": "stable",
-                    "platform": "aws-osd",
-                }
-            ],
-            "error",
-        ),
-        (
-            [
-                {
-                    "version": "100.5.1",
-                    "channel-group": "stable",
-                    "platform": "aws-osd",
-                }
-            ],
-            "error",
-        ),
-        (
-            [
-                {
-                    "version": "100.5",
-                    "channel-group": "stable",
-                    "platform": "aws-osd",
-                }
-            ],
-            "error",
-        ),
-        (
-            [
-                {
-                    "version": "4.13.40",
-                    "channel-group": "stable",
-                    "platform": "aws-osd",
-                }
-            ],
-            "error",
-        ),
-        (
-            [
-                {
-                    "version": "4.13",
-                    "channel-group": "stable",
-                    "platform": "gcp-osd",
-                }
-            ],
-            [
-                {
-                    "version": "4.13.9",
-                    "channel-group": "stable",
-                    "platform": "gcp-osd",
-                }
-            ],
+            [{"version": "4.13", "channel-group": "stable", "platform": "gcp-osd"}],
+            [{"version": "4.13.9", "channel-group": "stable", "platform": "gcp-osd"}],
         ),
     ],
     ids=[
@@ -459,9 +239,7 @@ def test_rosa_cluster_version(clusters, expected):
 def test_osd_cluster_version(clusters, expected):
     try:
         res = update_rosa_osd_clusters_versions(
-            clusters=clusters,
-            _test=True,
-            _test_versions_dict=BASE_AVAILABLE_OSD_VERSIONS_DICT,
+            clusters=clusters, _test=True, _test_versions_dict=BASE_AVAILABLE_OSD_VERSIONS_DICT
         )
         assert res == expected
     except click.Abort:
