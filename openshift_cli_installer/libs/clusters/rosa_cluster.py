@@ -95,7 +95,7 @@ class RosaCluster(OcmCluster):
         self.logger.info(f"{self.log_prefix}: Destroy hypershift VPCs")
         rc, _, err = self.terraform.destroy(force=IsNotFlagged, auto_approve=True, capture_output=True)
         if rc != 0:
-            self.logger.error(f"{self.log_prefix}: Failed to destroy hypershift VPCs with error:" f" {err}")
+            self.logger.error(f"{self.log_prefix}: Failed to destroy hypershift VPCs with error: {err}")
             raise click.Abort()
 
     def prepare_hypershift_vpc(self):
@@ -105,7 +105,7 @@ class RosaCluster(OcmCluster):
         self.terraform.plan(dir_or_plan="hypershift.plan")
         rc, _, err = self.terraform.apply(capture_output=True, skip_plan=True, auto_approve=True)
         if rc != 0:
-            self.logger.error(f"{self.log_prefix}: Create hypershift VPC failed with" f" error: {err}, rolling back.")
+            self.logger.error(f"{self.log_prefix}: Create hypershift VPC failed with error: {err}, rolling back.")
             self.delete_oidc()
             # Clean up already created resources from the plan
             self.destroy_hypershift_vpc()

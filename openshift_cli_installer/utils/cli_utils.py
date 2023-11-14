@@ -39,7 +39,7 @@ def change_home_environment_on_openshift_ci():
         yield
 
     if run_in_openshift_ci:
-        LOGGER.info(f"Changing {home_str} environment variable to previous value." f" {current_home}")
+        LOGGER.info(f"Changing {home_str} environment variable to previous value. {current_home}")
         os.environ[home_str] = current_home
 
 

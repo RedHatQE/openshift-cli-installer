@@ -101,9 +101,7 @@ class AwsIpiCluster(OCPCluster):
         )
 
         if not res:
-            self.logger.error(
-                f"{self.log_prefix}: Failed to run cluster {self.action} \n\tERR:" f" {err}\n\tOUT: {out}."
-            )
+            self.logger.error(f"{self.log_prefix}: Failed to run cluster {self.action} \n\tERR: {err}\n\tOUT: {out}.")
             if raise_on_failure:
                 raise click.Abort()
 

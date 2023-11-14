@@ -139,7 +139,7 @@ class OCPClusters(UserInput):
                     unsupported_regions.append(f"cluster: {_cluster.name}, region: {cluster_region}")
 
             if unsupported_regions:
-                self.logger.error("The following clusters regions are not supported in GCP:" f" {unsupported_regions}")
+                self.logger.error(f"The following clusters regions are not supported in GCP: {unsupported_regions}")
                 raise click.Abort()
 
     def run_create_or_destroy_clusters(self):
@@ -149,7 +149,7 @@ class OCPClusters(UserInput):
         with ThreadPoolExecutor() as executor:
             for cluster in self.list_clusters:
                 action_func = getattr(cluster, action_str)
-                click.echo(f"Executing {self.action} cluster {cluster.name} [parallel:" f" {self.parallel}]")
+                click.echo(f"Executing {self.action} cluster {cluster.name} [parallel: {self.parallel}]")
                 if self.parallel:
                     futures.append(executor.submit(action_func))
                 else:

@@ -102,14 +102,14 @@ class OCPCluster(UserInput):
             )
             return self.timeout_watch
 
-        self.logger.info(f"{self.log_prefix}: Start timeout watcher, time left:" f" {timedelta(seconds=self.timeout)}")
+        self.logger.info(f"{self.log_prefix}: Start timeout watcher, time left: {timedelta(seconds=self.timeout)}")
         return TimeoutWatch(timeout=self.timeout)
 
     def prepare_cluster_data(self):
         supported_envs = (PRODUCTION_STR, STAGE_STR)
         if self.ocm_env not in supported_envs:
             self.logger.error(
-                f"{self.log_prefix}: got unsupported OCM env - {self.ocm_env}," f" supported envs: {supported_envs}"
+                f"{self.log_prefix}: got unsupported OCM env - {self.ocm_env}, supported envs: {supported_envs}"
             )
             raise click.Abort()
 
@@ -131,7 +131,7 @@ class OCPCluster(UserInput):
     def set_cluster_install_version(self):
         version_key = get_split_version(version=self.version)
         all_stream_versions = self.all_available_versions[self.stream][version_key]
-        err_msg = f"{self.log_prefix}: Cluster version {self.version} not found for stream" f" {self.stream}"
+        err_msg = f"{self.log_prefix}: Cluster version {self.version} not found for stream {self.stream}"
         if len(self.version.split(".")) == 3:
             for _ver in all_stream_versions["versions"]:
                 if self.version in _ver:
@@ -142,7 +142,7 @@ class OCPCluster(UserInput):
                 raise click.Abort()
 
         elif len(self.version.split(".")) < 2:
-            self.logger.error(f"{self.log_prefix}: Version must be at least x.y (4.3), got" f" {self.version}")
+            self.logger.error(f"{self.log_prefix}: Version must be at least x.y (4.3), got {self.version}")
             raise click.Abort()
         else:
             try:
@@ -217,7 +217,7 @@ class OCPCluster(UserInput):
         try:
             target_dir = os.path.join(self.must_gather_output_dir, "must-gather", self.platform, self.name)
         except Exception as ex:
-            self.logger.error(f"{self.log_prefix}: Failed to get data; must-gather could not be" f" executed on: {ex}")
+            self.logger.error(f"{self.log_prefix}: Failed to get data; must-gather could not be executed on: {ex}")
             return
 
         try:
@@ -225,10 +225,10 @@ class OCPCluster(UserInput):
                 self.logger.error(f"{self.log_prefix}: kubeconfig does not exist; cannot run" " must-gather.")
                 return
 
-            self.logger.info(f"{self.log_prefix}: Prepare must-gather target extracted directory" f" {target_dir}.")
+            self.logger.info(f"{self.log_prefix}: Prepare must-gather target extracted directory {target_dir}.")
             Path(target_dir).mkdir(parents=True, exist_ok=True)
 
-            click.echo(f"Collect must-gather for cluster {self.name} running on" f" {self.platform}")
+            click.echo(f"Collect must-gather for cluster {self.name} running on {self.platform}")
             run_must_gather(target_base_dir=target_dir, kubeconfig=self.kubeconfig_path)
             self.logger.success(f"{self.log_prefix}: must-gather collected")
 
@@ -325,9 +325,7 @@ class OCPCluster(UserInput):
             """
             s3_secret_data_bytes = s3_secret_data.encode("ascii")
             thanos_secret_data = {"thanos.yaml": base64.b64encode(s3_secret_data_bytes).decode("utf-8")}
-            self.logger.info(
-                f"{self.log_prefix}: Create S3 bucket {bucket_name} in" f" {self.acm_observability_s3_region}"
-            )
+            self.logger.info(f"{self.log_prefix}: Create S3 bucket {bucket_name} in {self.acm_observability_s3_region}")
             _s3_client.create_bucket(
                 Bucket=bucket_name.lower(),
                 CreateBucketConfiguration={"LocationConstraint": self.acm_observability_s3_region},
@@ -431,12 +429,12 @@ class OCPCluster(UserInput):
             status=managed_cluster.Condition.Status.TRUE,
             timeout=self.timeout_watch.remaining_time(),
         )
-        self.logger.success(f"{self.log_prefix}: attached {managed_acm_cluster_name} to cluster" f" {self.name}")
+        self.logger.success(f"{self.log_prefix}: attached {managed_acm_cluster_name} to cluster {self.name}")
 
     def get_cluster_kubeconfig_from_install_dir(self, cluster_name, cluster_platform):
         cluster_install_dir = os.path.join(self.clusters_install_data_directory, cluster_platform, cluster_name)
         if not os.path.exists(cluster_install_dir):
-            self.logger.error(f"{self.log_prefix}: ACM managed cluster data dir not found in" f" {cluster_install_dir}")
+            self.logger.error(f"{self.log_prefix}: ACM managed cluster data dir not found in {cluster_install_dir}")
             raise click.Abort()
 
         return os.path.join(cluster_install_dir, "auth", "kubeconfig")
