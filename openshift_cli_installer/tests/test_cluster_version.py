@@ -17,7 +17,7 @@ from openshift_cli_installer.utils.cluster_versions import update_rosa_osd_clust
                     "version": "4.13.9-x86_64",
                     "stream": "stable",
                     "platform": "aws",
-                    "version_url": "quay.io/openshift-release-dev/ocp-release",
+                    "version-url": "quay.io/openshift-release-dev/ocp-release",
                 }
             ],
         ),
@@ -31,13 +31,13 @@ from openshift_cli_installer.utils.cluster_versions import update_rosa_osd_clust
                     "version": "4.13.9-x86_64",
                     "stream": "stable",
                     "platform": "aws",
-                    "version_url": "quay.io/openshift-release-dev/ocp-release",
+                    "version-url": "quay.io/openshift-release-dev/ocp-release",
                 },
                 {
                     "version": "4.13.0-0.nightly-2023-08-15-023315",
                     "stream": "nightly",
                     "platform": "aws",
-                    "version_url": "registry.ci.openshift.org/ocp/release",
+                    "version-url": "registry.ci.openshift.org/ocp/release",
                 },
             ],
         ),
@@ -48,7 +48,7 @@ from openshift_cli_installer.utils.cluster_versions import update_rosa_osd_clust
                     "version": "4.13.0-0.nightly-2023-08-15-023315",
                     "stream": "nightly",
                     "platform": "aws",
-                    "version_url": "registry.ci.openshift.org/ocp/release",
+                    "version-url": "registry.ci.openshift.org/ocp/release",
                 }
             ],
         ),
@@ -59,7 +59,7 @@ from openshift_cli_installer.utils.cluster_versions import update_rosa_osd_clust
                     "version": "4.13.0-ec.4-x86_64",
                     "stream": "ec",
                     "platform": "aws",
-                    "version_url": "quay.io/openshift-release-dev/ocp-release",
+                    "version-url": "quay.io/openshift-release-dev/ocp-release",
                 }
             ],
         ),
@@ -70,7 +70,7 @@ from openshift_cli_installer.utils.cluster_versions import update_rosa_osd_clust
                     "version": "4.13.0-rc.8-x86_64",
                     "stream": "rc",
                     "platform": "aws",
-                    "version_url": "quay.io/openshift-release-dev/ocp-release",
+                    "version-url": "quay.io/openshift-release-dev/ocp-release",
                 }
             ],
         ),
@@ -81,7 +81,7 @@ from openshift_cli_installer.utils.cluster_versions import update_rosa_osd_clust
                     "version": "4.13.0-0.ci-2023-08-14-170508",
                     "stream": "ci",
                     "platform": "aws",
-                    "version_url": "registry.ci.openshift.org/ocp/release",
+                    "version-url": "registry.ci.openshift.org/ocp/release",
                 }
             ],
         ),
@@ -92,7 +92,7 @@ from openshift_cli_installer.utils.cluster_versions import update_rosa_osd_clust
                     "version": "4.13.9-x86_64",
                     "stream": "stable",
                     "platform": "aws",
-                    "version_url": "quay.io/openshift-release-dev/ocp-release",
+                    "version-url": "quay.io/openshift-release-dev/ocp-release",
                 }
             ],
         ),

@@ -85,23 +85,23 @@ clusters:
   replicas: 2
   ocm-env: stage
   expiration-time: 4h
-  private_subnets:
+  private-subnets:
     - 10.0.1.0/24
     - 10.0.2.0/24
-  public_subnets:
+  public-subnets:
     - 10.0.101.0/24
     - 10.0.102.0/24
   cidr: 10.0.0.0/16
 
 # AWS IPI cluster
 - name: aws-ipi-c1
-  base_domain: aws.domain.example.com
+  base-domain: aws.domain.example.com
   platform: aws
   region: us-east-2
   version: "4.13"
   stream: stable
   timeout: 4h
-  worker_replicas: 2
-  worker_flavor: m5.4xlarge
-  worker_root_disk_size: 128
+  worker-replicas: 2
+  worker-flavor: m5.4xlarge
+  worker-root-disk-size: 128
   log_level: info # optional, default: "error", supported options are debug, info, warn, error

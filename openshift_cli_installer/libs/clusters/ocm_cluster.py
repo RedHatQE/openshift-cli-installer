@@ -15,37 +15,47 @@ class OcmCluster(OCPCluster):
         super().__init__(**kwargs)
         self.logger = get_logger(f"{self.__class__.__module__}-{self.__class__.__name__}")
 
-        self.expiration_time = None
-        self.osd_base_available_versions_dict = {}
-        self.rosa_base_available_versions_dict = {}
-        self.channel_group = self.cluster.get("channel-group", "stable")
-        self.multi_az = self.cluster.get("multi-az", False)
-        self.ocm_env = self.cluster.get("ocm-env", STAGE_STR)
+        destroy_from_s3_bucket_or_local_directory = kwargs.get("destroy_from_s3_bucket_or_local_directory")
+
+        if not destroy_from_s3_bucket_or_local_directory:
+            self.osd_base_available_versions_dict = {}
+            self.rosa_base_available_versions_dict = {}
+            self.cluster["channel-group"] = self.cluster_info["channel-group"] = self.cluster.get(
+                "channel-group", "stable"
+            )
+            self.cluster["multi-az"] = self.cluster_info["multi-az"] = self.cluster.get("multi-az", False)
+            self.cluster["ocm-env"] = self.cluster_info["ocm-env"] = self.cluster.get("ocm-env", STAGE_STR)
+
+            self._set_expiration_time()
+            self.dump_cluster_data_to_file()
 
         self.prepare_cluster_data()
-        self.cluster_object = Cluster(client=self.ocm_client, name=self.name)
-        self._set_expiration_time()
-        self.dump_cluster_data_to_file()
+        self.cluster_object = Cluster(
+            client=self.ocm_client,
+            name=self.cluster_info["name"],
+        )
 
     def _set_expiration_time(self):
         expiration_time = self.cluster.get("expiration-time")
         if expiration_time:
             _expiration_time = tts(ts=expiration_time)
-            self.expiration_time = f"{(datetime.now() + timedelta(seconds=_expiration_time)).isoformat()}Z"
+            self.cluster["expiration-time"] = self.cluster_info[
+                "expiration-time"
+            ] = f"{(datetime.now() + timedelta(seconds=_expiration_time)).isoformat()}Z"
 
     def get_osd_versions(self):
         self.osd_base_available_versions_dict.update(
-            Versions(client=self.ocm_client).get(channel_group=self.channel_group)
+            Versions(client=self.ocm_client).get(channel_group=self.cluster_info["channel-group"])
         )
 
     def get_rosa_versions(self):
         base_available_versions = rosa.cli.execute(
             command=(
-                f"list versions --channel-group={self.channel_group} "
-                f"{'--hosted-cp' if self.platform == HYPERSHIFT_STR else ''}"
+                f"list versions --channel-group={self.cluster_info['channel-group']} "
+                f"{'--hosted-cp' if self.cluster_info['platform'] == HYPERSHIFT_STR else ''}"
             ),
-            aws_region=self.region,
+            aws_region=self.cluster_info["region"],
             ocm_client=self.ocm_client,
         )["out"]
         _all_versions = [ver["raw_id"] for ver in base_available_versions]
-        self.rosa_base_available_versions_dict.setdefault(self.channel_group, []).extend(_all_versions)
+        self.rosa_base_available_versions_dict.setdefault(self.cluster_info["channel-group"], []).extend(_all_versions)
