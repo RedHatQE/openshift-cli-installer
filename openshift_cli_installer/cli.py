@@ -1,3 +1,4 @@
+import datetime
 import os
 import shutil
 import time
@@ -258,6 +259,6 @@ if __name__ == "__main__":
             _logger.error(ex)
             should_raise = True
     finally:
-        _logger.info("Total execution time: {datetime.timedelta(seconds=time.time() - start_time)}")
+        _logger.info(f"Total execution time: {datetime.timedelta(seconds=time.time() - start_time)}")
         if should_raise:
             sys.exit(1)
