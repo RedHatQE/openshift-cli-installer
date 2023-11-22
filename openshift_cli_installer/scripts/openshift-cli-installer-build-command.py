@@ -52,7 +52,7 @@ def main():
     if os_env.get("DESTROY_CLUSTERS_FROM_INSTALL_DATA_DIRECTORY_USING_S3_BUCKET"):
         cmd += f" --destroy-clusters-from-install-data-directory-using-s3-bucket={os_env['DESTROY_CLUSTERS_FROM_INSTALL_DATA_DIRECTORY_USING_S3_BUCKET']}"
 
-    return cmd
+    print(cmd)
 
 
 if __name__ == "__main__":
