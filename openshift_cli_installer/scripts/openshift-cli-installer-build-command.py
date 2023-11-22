@@ -17,7 +17,7 @@ def main():
     if os_env.get("CLUSTER3"):
         clusters += f" -c {os_env['CLUSTER3']}"
 
-    cmd += f" {clusters}"
+    cmd += f" '{clusters}'"
 
     if os_env.get("REGISTRY_CONFIG_FILE"):
         cmd += f" --registry-config-file={os_env['REGISTRY_CONFIG_FILE']}"
