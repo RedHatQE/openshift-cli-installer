@@ -11,13 +11,13 @@ def main():
         cmd += " --parallel"
 
     if os_env.get("CLUSTER1"):
-        clusters += f" -c {os_env['CLUSTER1']}"
+        clusters += f" -c '{os_env['CLUSTER1']}'"
     if os_env.get("CLUSTER2"):
-        clusters += f" -c {os_env['CLUSTER2']}"
+        clusters += f" -c '{os_env['CLUSTER2']}'"
     if os_env.get("CLUSTER3"):
-        clusters += f" -c {os_env['CLUSTER3']}"
+        clusters += f" -c '{os_env['CLUSTER3']}'"
 
-    cmd += f" '{clusters}'"
+    cmd += f" {clusters}"
 
     if os_env.get("REGISTRY_CONFIG_FILE"):
         cmd += f" --registry-config-file={os_env['REGISTRY_CONFIG_FILE']}"
