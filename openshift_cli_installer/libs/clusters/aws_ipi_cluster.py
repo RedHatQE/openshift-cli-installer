@@ -164,7 +164,6 @@ class AwsIpiCluster(OCPCluster):
         try:
             self.add_cluster_info_to_cluster_object()
             self.logger.success(f"{self.log_prefix}: Cluster created successfully")
-            self.save_kubeadmin_token_to_clusters_install_data()
 
         except Exception as ex:
             _rollback_on_error(_ex=ex)

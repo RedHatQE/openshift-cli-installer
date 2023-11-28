@@ -1,6 +1,4 @@
-import contextlib
 import os
-import shlex
 import shutil
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
@@ -9,7 +7,6 @@ import click
 import yaml
 from clouds.aws.session_clients import s3_client
 from ocm_python_wrapper.ocm_client import OCMPythonClient
-from ocp_utilities.utils import run_command
 from simple_logger.logger import get_logger
 
 from openshift_cli_installer.utils.const import (
@@ -28,21 +25,6 @@ def get_ocm_client(ocm_token, ocm_env):
         api_host=ocm_env,
         discard_unknown_keys=True,
     ).client
-
-
-@contextlib.contextmanager
-def get_kubeadmin_token(cluster_dir, api_url):
-    with open(os.path.join(cluster_dir, "auth", "kubeadmin-password")) as fd:
-        kubeadmin_password = fd.read()
-    run_command(
-        command=shlex.split(f"oc login --insecure-skip-tls-verify=true {api_url} -u kubeadmin -p {kubeadmin_password}"),
-        hide_log_command=True,
-    )
-    yield run_command(
-        command=shlex.split("oc whoami -t"),
-        hide_log_command=True,
-    )[1].strip()
-    run_command(command=shlex.split("oc logout"))
 
 
 def clusters_from_directories(directories):

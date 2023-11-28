@@ -744,12 +744,12 @@ urllib3 = ">=1.25.3"
 
 [[package]]
 name = "openshift-cluster-management-python-wrapper"
-version = "1.0.54"
+version = "1.0.56"
 description = "Wrapper around https://github.com/openshift/openshift-cluster-management-python-client"
 optional = false
 python-versions = ">=3.8,<4.0"
 files = [
-    {file = "openshift_cluster_management_python_wrapper-1.0.54.tar.gz", hash = "sha256:49d765512c5d00f59a80fe76c57c707d53ad9e3e8d8af876c301014f408871aa"},
+    {file = "openshift_cluster_management_python_wrapper-1.0.56.tar.gz", hash = "sha256:cb23539fc77b580e5b74f1b30898f609b6ebd4244d5a504d1d80bf74d04946e5"},
 ]
 
 [package.dependencies]
@@ -767,12 +767,12 @@ rosa-python-client = ">=1.0.28,<2.0.0"
 
 [[package]]
 name = "openshift-python-utilities"
-version = "5.0.8"
+version = "5.0.9"
 description = "A utilities repository for https://github.com/RedHatQE/openshift-python-wrapper"
 optional = false
 python-versions = ">=3.8,<4.0"
 files = [
-    {file = "openshift_python_utilities-5.0.8.tar.gz", hash = "sha256:7d5fc3ed5f77fb879b6bb6a438becbcca0d7795493de6e28a5eb4531b9fe87ef"},
+    {file = "openshift_python_utilities-5.0.9.tar.gz", hash = "sha256:a2507552fcef4c6a14979bfa07e5fcac4cba0a0ec1dd56aaae38da50298a2c73"},
 ]
 
 [package.dependencies]
@@ -1204,12 +1204,12 @@ files = [
 
 [[package]]
 name = "redhat-qe-cloud-tools"
-version = "1.0.18"
+version = "1.0.19"
 description = "Python utilities to manage cloud services, such as AWS."
 optional = false
 python-versions = ">=3.8,<4.0"
 files = [
-    {file = "redhat_qe_cloud_tools-1.0.18.tar.gz", hash = "sha256:bd17e7a640904b19f445e4c0f080074d04d575cd62a7fc5767c6fd2532a5ba11"},
+    {file = "redhat_qe_cloud_tools-1.0.19.tar.gz", hash = "sha256:701e4424008ee4333371181b26fe82dc4af13020ed43c6e942141ed29388063d"},
 ]
 
 [package.dependencies]
@@ -1262,12 +1262,12 @@ rsa = ["oauthlib[signedtoken] (>=3.0.0)"]
 
 [[package]]
 name = "rosa-python-client"
-version = "1.0.35"
+version = "1.0.39"
 description = "Wrapper for rosa cli"
 optional = false
 python-versions = ">=3.8,<4.0"
 files = [
-    {file = "rosa_python_client-1.0.35.tar.gz", hash = "sha256:7a418c5edd5c307280cb53e06b72e53970e882f3152e5d80cb4341c45240a100"},
+    {file = "rosa_python_client-1.0.39.tar.gz", hash = "sha256:e9cf96a70168e010de5f20ca03a0619ec1fe65f8b689bbf189185497c8a6a6ce"},
 ]
 
 [package.dependencies]
@@ -1408,18 +1408,18 @@ files = [
 
 [[package]]
 name = "traitlets"
-version = "5.13.0"
+version = "5.14.0"
 description = "Traitlets Python configuration system"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "traitlets-5.13.0-py3-none-any.whl", hash = "sha256:baf991e61542da48fe8aef8b779a9ea0aa38d8a54166ee250d5af5ecf4486619"},
-    {file = "traitlets-5.13.0.tar.gz", hash = "sha256:9b232b9430c8f57288c1024b34a8f0251ddcc47268927367a0dd3eeaca40deb5"},
+    {file = "traitlets-5.14.0-py3-none-any.whl", hash = "sha256:f14949d23829023013c47df20b4a76ccd1a85effb786dc060f34de7948361b33"},
+    {file = "traitlets-5.14.0.tar.gz", hash = "sha256:fcdaa8ac49c04dfa0ed3ee3384ef6dfdb5d6f3741502be247279407679296772"},
 ]
 
 [package.extras]
 docs = ["myst-parser", "pydata-sphinx-theme", "sphinx"]
-test = ["argcomplete (>=3.0.3)", "mypy (>=1.6.0)", "pre-commit", "pytest (>=7.0,<7.5)", "pytest-mock", "pytest-mypy-testing"]
+test = ["argcomplete (>=3.0.3)", "mypy (>=1.7.0)", "pre-commit", "pytest (>=7.0,<7.5)", "pytest-mock", "pytest-mypy-testing"]
 
 [[package]]
 name = "typing-extensions"
@@ -1489,4 +1489,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.8"
-content-hash = "4c3c96ef77519669c9b074986bad99766829a9ccd8283546f4078b4eaef859bb"
+content-hash = "1eb0c9d73a401a9ee483e417572ea15b6d0736c569d506edd7aea81b92e6ed2d"

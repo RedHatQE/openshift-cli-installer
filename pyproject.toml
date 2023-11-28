@@ -15,13 +15,13 @@ readme = "README.md"
 repository = "https://github.com/RedHatQE/openshift-cli-installer"
 authors = ["Meni Yakove <myakove@gmail.com>", "Ruth Netser <rnetser@gmail.com>"]
 license = "Apache-2.0"
-packages = [{include = "openshift_cli_installer"}]
-include = [{path = "manifests/*"}]
+packages = [{ include = "openshift_cli_installer" }]
+include = [{ path = "manifests/*" }]
 homepage = "https://github.com/RedHatQE/openshift-cli-installer"
 documentation = "https://github.com/RedHatQE/openshift-cli-installer/blob/main/README.md"
 classifiers = [
-    "Programming Language :: Python :: 3",
-    "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3",
+  "Operating System :: OS Independent",
 ]
 
 [tool.poetry.scripts]
@@ -32,16 +32,16 @@ python = "^3.8"
 jinja2 = "^3.1.2"
 shortuuid = "^1.0.11"
 click = "^8.1.4"
-rosa-python-client = "^1.0.16"
-openshift-cluster-management-python-wrapper = "^1.0.27"
-openshift-python-wrapper = "^4.14.1"
+rosa-python-client = "^1.0.36"
+openshift-cluster-management-python-wrapper = "^1.0.54"
+openshift-python-wrapper = "^4.15.1"
 python-terraform = "^0.10.1"
 semver = "^3.0.1"
 pytest = "^7.4.0"
 openshift-python-utilities = "^5.0.0"
 pyaml-env = "^1.2.1"
 google-cloud-compute = "^1.14.1"
-redhat-qe-cloud-tools = "^1.0.17"
+redhat-qe-cloud-tools = "^1.0.19"
 python-simple-logger = "^1.0.7"
 ipdb = "^0.13.13"
 ruff = "^0.1.5"

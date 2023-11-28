@@ -78,7 +78,6 @@ class OsdCluster(OcmCluster):
             self.set_cluster_auth()
 
             self.logger.success(f"{self.log_prefix}: Cluster created successfully")
-            self.save_kubeadmin_token_to_clusters_install_data()
 
         except Exception as ex:
             self.logger.error(

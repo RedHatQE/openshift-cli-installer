@@ -1,6 +1,3 @@
-import contextlib
-import os
-
 from simple_logger.logger import get_logger
 
 LOGGER = get_logger(name=__name__)
@@ -21,26 +18,6 @@ def get_cluster_data_by_name_from_clusters(name, clusters):
     for cluster in clusters:
         if cluster["name"] == name:
             return cluster
-
-
-@contextlib.contextmanager
-def change_home_environment_on_openshift_ci():
-    home_str = "HOME"
-    current_home = os.environ.get(home_str)
-    run_in_openshift_ci = os.environ.get("OPENSHIFT_CI") == "true"
-    # If running on openshift-ci we need to change $HOME to /tmp
-    if run_in_openshift_ci:
-        LOGGER.info("Running in openshift ci")
-        tmp_home_dir = "/tmp/"
-        LOGGER.info(f"Changing {home_str} environment variable to {tmp_home_dir}")
-        os.environ[home_str] = tmp_home_dir
-        yield
-    else:
-        yield
-
-    if run_in_openshift_ci:
-        LOGGER.info(f"Changing {home_str} environment variable to previous value. {current_home}")
-        os.environ[home_str] = current_home
 
 
 def get_aws_credentials_for_acm_observability(cluster, aws_access_key_id, aws_secret_access_key):

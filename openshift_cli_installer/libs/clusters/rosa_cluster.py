@@ -14,6 +14,7 @@ from openshift_cli_installer.utils.general import (
     get_manifests_path,
     zip_and_upload_to_s3,
 )
+from clouds.aws.session_clients import iam_client
 
 
 class RosaCluster(OcmCluster):
@@ -23,6 +24,7 @@ class RosaCluster(OcmCluster):
 
         if self.create:
             self.cluster_info["aws-account-id"] = self.aws_account_id
+            self.assert_hypershift_missing_roles()
             self.get_rosa_versions()
             self.all_available_versions.update(
                 filter_versions(
@@ -100,7 +102,7 @@ class RosaCluster(OcmCluster):
                 "create operator-roles --hosted-cp"
                 f" --prefix={self.cluster_info['name']} "
                 f"--oidc-config-id={self.cluster_info['oidc-config-id']} "
-                "--installer-role-arn "
+                "--installer-role-arn="
                 f"arn:aws:iam::{self.cluster_info['aws-account-id']}:role/ManagedOpenShift-HCP-ROSA-Installer-Role"
             ),
             aws_region=self.cluster_info["region"],
@@ -171,7 +173,12 @@ class RosaCluster(OcmCluster):
         name = self.cluster_info["name"]
         command = f"create cluster --sts --cluster-name={name} "
         if self.cluster_info["platform"] == HYPERSHIFT_STR:
-            command += f"--hosted-cp --operator-roles-prefix={name} "
+            command += (
+                f" --role-arn=arn:aws:iam::{self.cluster_info['aws-account-id']}:role/ManagedOpenShift-HCP-ROSA-Installer-Role "
+                f"--support-role-arn=arn:aws:iam::{self.cluster_info['aws-account-id']}:role/ManagedOpenShift-HCP-ROSA-Support-Role "
+                f" --worker-iam-role=arn:aws:iam::{self.cluster_info['aws-account-id']}:role/ManagedOpenShift-HCP-ROSA-Worker-Role "
+                f"--hosted-cp --operator-roles-prefix={name} "
+            )
 
         for _key, _val in self.cluster.items():
             if _key in ignore_keys or _key.startswith(ignore_prefix):
@@ -201,7 +208,6 @@ class RosaCluster(OcmCluster):
             self.set_cluster_auth()
             self.add_cluster_info_to_cluster_object()
             self.logger.success(f"{self.log_prefix}: Cluster created successfully")
-            self.save_kubeadmin_token_to_clusters_install_data()
 
         except Exception as ex:
             self.logger.error(
@@ -271,3 +277,15 @@ class RosaCluster(OcmCluster):
                         ocm_client=self.ocm_client,
                         aws_region=self.cluster_info["region"],
                     )
+
+    def assert_hypershift_missing_roles(self):
+        if self.cluster_info["platform"] == HYPERSHIFT_STR:
+            hcp_roles = {
+                "ManagedOpenShift-HCP-ROSA-Installer-Role",
+                "ManagedOpenShift-HCP-ROSA-Support-Role",
+                "ManagedOpenShift-HCP-ROSA-Worker-Role",
+            }
+
+            if missing_roles := hcp_roles - {role["RoleName"] for role in iam_client().list_roles()["Roles"]}:
+                self.logger.error(f"The following roles are missing for {HYPERSHIFT_STR} deployment: {missing_roles}")
+                raise click.Abort()

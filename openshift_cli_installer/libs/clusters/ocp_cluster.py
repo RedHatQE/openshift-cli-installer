@@ -26,14 +26,10 @@ from ocp_utilities.utils import run_command
 from simple_logger.logger import get_logger
 
 from openshift_cli_installer.libs.user_input import UserInput
-from openshift_cli_installer.utils.cli_utils import (
-    change_home_environment_on_openshift_ci,
-)
 from openshift_cli_installer.utils.cluster_versions import (
     get_cluster_stream,
     get_split_version,
 )
-from openshift_cli_installer.utils.clusters import get_kubeadmin_token
 from openshift_cli_installer.utils.const import (
     CLUSTER_DATA_YAML_FILENAME,
     PRODUCTION_STR,
@@ -296,17 +292,6 @@ class OCPCluster(UserInput):
                 _s3_client.delete_object(Bucket=_bucket, Key=_object["Key"])
 
             _s3_client.delete_bucket(Bucket=_bucket)
-
-    def save_kubeadmin_token_to_clusters_install_data(self):
-        # Do not run this function in parallel, get_kubeadmin_token() do `oc login`.
-        with change_home_environment_on_openshift_ci():
-            with get_kubeadmin_token(
-                cluster_dir=self.cluster_info["cluster-dir"],
-                api_url=self.cluster_info["api-url"],
-            ) as kubeadmin_token:
-                self.cluster_info["kubeadmin-token"] = kubeadmin_token
-
-        self.dump_cluster_data_to_file()
 
     def install_acm(self):
         self.logger.info(f"{self.log_prefix}: Installing ACM")
