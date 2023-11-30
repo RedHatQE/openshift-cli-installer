@@ -7,7 +7,7 @@ def main():
     os_env = os.environ
     cmd += f" --action={os_env['ACTION']}"
     cmd += f" --clusters-install-data-directory={os_env['CLUSTERS_INSTALL_DATA_DIRECTORY']}"
-    if os_env.get("PARALLEL"):
+    if os_env.get("PARALLEL") == "true":
         cmd += " --parallel"
 
     if os_env.get("CLUSTER1"):
