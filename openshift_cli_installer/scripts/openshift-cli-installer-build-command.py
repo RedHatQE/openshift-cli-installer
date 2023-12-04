@@ -7,6 +7,8 @@ def main():
     os_env = os.environ
     cmd += f" --action={os_env['ACTION']}"
     cmd += f" --clusters-install-data-directory={os_env['CLUSTERS_INSTALL_DATA_DIRECTORY']}"
+    if os_env.get("CLUSTERS_YAML_CONFIG_FILE"):
+        cmd += f" --clusters-yaml-config-file={os_env['CLUSTERS_YAML_CONFIG_FILE']}"
     if os_env.get("PARALLEL") == "true":
         cmd += " --parallel"
 
