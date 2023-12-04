@@ -66,7 +66,7 @@ class RosaCluster(OcmCluster):
             cluster_parameters["public_subnets"] = public_subnets
 
         self.terraform = Terraform(working_dir=self.cluster_info["cluster-dir"], variables=cluster_parameters)
-        self.terraform.init(dir_or_plan=self.cluster_info["cluster-dir"])
+        self.terraform.init()
 
     def create_oidc(self):
         self.logger.info(f"{self.log_prefix}: Create OIDC config")
@@ -137,7 +137,7 @@ class RosaCluster(OcmCluster):
             os.path.join(get_manifests_path(), "setup-vpc.tf"),
             self.cluster_info["cluster-dir"],
         )
-        self.terraform.plan(dir_or_plan="hypershift.plan")
+        self.terraform.plan(dir_or_plan=self.cluster_info["cluster-dir"])
         rc, _, err = self.terraform.apply(capture_output=True, skip_plan=True, auto_approve=True)
         if rc != 0:
             self.logger.error(
