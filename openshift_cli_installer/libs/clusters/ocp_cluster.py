@@ -51,20 +51,18 @@ class OCPCluster(UserInput):
             self.cluster_info = self.cluster["cluster_info"]
         else:
             self.cluster_info = copy.deepcopy(self.cluster)
-            self.cluster_info.update(
-                {
-                    "display-name": self.cluster_info["name"],
-                    "user-requested-version": self.cluster_info["version"],
-                    "shortuuid": shortuuid.uuid(),
-                    "aws-access-key-id": self.cluster.pop("aws-access-key-id", None),
-                    "aws-secret-access-key": self.cluster.pop("aws-secret-access-key", None),
-                    "acm": self.cluster.get("acm") is True,
-                    "acm-observability": self.cluster.get("acm-observability") is True,
-                    "acm-observability-s3-region": self.cluster.get(
-                        "acm-observability-s3-region", self.cluster_info["region"]
-                    ),
-                }
-            )
+            self.cluster_info.update({
+                "display-name": self.cluster_info["name"],
+                "user-requested-version": self.cluster_info["version"],
+                "shortuuid": shortuuid.uuid(),
+                "aws-access-key-id": self.cluster.pop("aws-access-key-id", None),
+                "aws-secret-access-key": self.cluster.pop("aws-secret-access-key", None),
+                "acm": self.cluster.get("acm") is True,
+                "acm-observability": self.cluster.get("acm-observability") is True,
+                "acm-observability-s3-region": self.cluster.get(
+                    "acm-observability-s3-region", self.cluster_info["region"]
+                ),
+            })
             self.all_available_versions = {}
 
             self.cluster_info["stream"] = get_cluster_stream(cluster_data=self.cluster)
