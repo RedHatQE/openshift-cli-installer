@@ -45,13 +45,13 @@ def main():
         cmd += f" --gcp-service-account-file={os_env['GCP_SERVICE_ACCOUNT_FILE']}"
     if os_env.get("MUST_GATHER_OUTPUT_DIR"):
         cmd += f" --must-gather-output-dir={os_env['MUST_GATHER_OUTPUT_DIR']}"
-    if os_env.get("DESTROY_CLUSTERS_FROM_S3_BUCKET"):
+    if os_env.get("DESTROY_CLUSTERS_FROM_S3_BUCKET") == "true":
         cmd += " --destroy-clusters-from-s3-bucket"
     if os_env.get("DESTROY_CLUSTERS_FROM_S3_BUCKET_QUERY"):
         cmd += f" --destroy-clusters-from-s3-bucket-query={os_env['DESTROY_CLUSTERS_FROM_S3_BUCKET_QUERY']}"
-    if os_env.get("DESTROY_CLUSTERS_FROM_INSTALL_DATA_DIRECTORY"):
+    if os_env.get("DESTROY_CLUSTERS_FROM_INSTALL_DATA_DIRECTORY") == "true":
         cmd += " --destroy-clusters-from-install-data-directory"
-    if os_env.get("DESTROY_CLUSTERS_FROM_INSTALL_DATA_DIRECTORY_USING_S3_BUCKET"):
+    if os_env.get("DESTROY_CLUSTERS_FROM_INSTALL_DATA_DIRECTORY_USING_S3_BUCKET") == "true":
         cmd += " --destroy-clusters-from-install-data-directory-using-s3-bucket"
 
     print(cmd)
