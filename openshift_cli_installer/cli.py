@@ -88,7 +88,7 @@ File must include token for `registry.ci.openshift.org`
 )
 @click.option(
     "--s3-bucket-path-uuid",
-    help="S3 bucket path UUID to append to the path",
+    help="S3 bucket path UUID to append to the S3 zip file name",
     show_default=True,
 )
 @click.option(
