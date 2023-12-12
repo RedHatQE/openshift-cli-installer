@@ -50,7 +50,7 @@ def main():
     if os_env.get("DESTROY_CLUSTERS_FROM_S3_BUCKET_QUERY"):
         cmd += f" --destroy-clusters-from-s3-bucket-query={os_env['DESTROY_CLUSTERS_FROM_S3_BUCKET_QUERY']}"
     if os_env.get("DESTROY_CLUSTERS_FROM_INSTALL_DATA_DIRECTORY"):
-        cmd += "--destroy-clusters-from-install-data-directory"
+        cmd += " --destroy-clusters-from-install-data-directory"
     if os_env.get("DESTROY_CLUSTERS_FROM_INSTALL_DATA_DIRECTORY_USING_S3_BUCKET"):
         cmd += " --destroy-clusters-from-install-data-directory-using-s3-bucket"
 
