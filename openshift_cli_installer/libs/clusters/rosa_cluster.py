@@ -225,7 +225,7 @@ class RosaCluster(OcmCluster):
 
         if self.s3_bucket_name:
             zip_and_upload_to_s3(
-                uuid=self.cluster_info["shortuuid"],
+                uuid=zip_and_upload_to_s3 or self.cluster_info["shortuuid"],
                 install_dir=self.cluster_info["cluster-dir"],
                 s3_bucket_name=self.s3_bucket_name,
                 s3_bucket_path=self.s3_bucket_path,

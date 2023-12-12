@@ -87,6 +87,11 @@ File must include token for `registry.ci.openshift.org`
     show_default=True,
 )
 @click.option(
+    "--s3-bucket-path-uuid",
+    help="S3 bucket path UUID to append to the path",
+    show_default=True,
+)
+@click.option(
     "--ocm-token",
     help="OCM token.",
     default=os.environ.get("OCM_TOKEN"),

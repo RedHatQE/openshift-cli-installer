@@ -49,6 +49,7 @@ class UserInput:
         self.destroy_clusters_from_s3_config_files = self.user_kwargs.get("destroy_clusters_from_s3_config_files")
         self.s3_bucket_name = self.user_kwargs.get("s3_bucket_name")
         self.s3_bucket_path = self.user_kwargs.get("s3_bucket_path")
+        self.s3_bucket_path_uuid = self.user_kwargs.get("s3_bucket_path_uuid")
         self.destroy_clusters_from_s3_bucket = self.user_kwargs.get("destroy_clusters_from_s3_bucket")
         self.destroy_clusters_from_install_data_directory = self.user_kwargs.get(
             "destroy_clusters_from_install_data_directory"

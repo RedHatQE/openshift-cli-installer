@@ -51,10 +51,12 @@ class OCPCluster(UserInput):
             self.cluster_info = self.cluster["cluster_info"]
         else:
             self.cluster_info = copy.deepcopy(self.cluster)
+
             self.cluster_info.update({
                 "display-name": self.cluster_info["name"],
                 "user-requested-version": self.cluster_info["version"],
                 "shortuuid": shortuuid.uuid(),
+                "s3-bucket-path-uuid": self.s3_bucket_path_uuid,
                 "aws-access-key-id": self.cluster.pop("aws-access-key-id", None),
                 "aws-secret-access-key": self.cluster.pop("aws-secret-access-key", None),
                 "acm": self.cluster.get("acm") is True,

@@ -173,7 +173,7 @@ class AwsIpiCluster(OCPCluster):
                 install_dir=self.cluster_info["cluster-dir"],
                 s3_bucket_name=self.s3_bucket_name,
                 s3_bucket_path=self.s3_bucket_path,
-                uuid=self.cluster_info["shortuuid"],
+                uuid=self.s3_bucket_path_uuid or self.cluster_info["shortuuid"],
             )
 
     def destroy_cluster(self):
