@@ -33,6 +33,8 @@ def main():
         cmd += f" --s3-bucket-name={os_env['S3_BUCKET_NAME']}"
     if os_env.get("S3_BUCKET_PATH"):
         cmd += f" --s3-bucket-path={os_env['S3_BUCKET_PATH']}"
+    if os_env.get("S3_BUCKET_PATH_UUID"):
+        cmd += f" --s3-bucket-path-uuid={os_env['S3_BUCKET_PATH_UUID']}"
     if os_env.get("AWS_ACCESS_KEY_ID"):
         cmd += f" --aws-access-key-id={os_env['AWS_ACCESS_KEY_ID']}"
     if os_env.get("AWS_SECRET_ACCESS_KEY"):
