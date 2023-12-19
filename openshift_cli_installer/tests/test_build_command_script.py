@@ -14,7 +14,7 @@ def user_options():
                 if deco.func.attr != "option":
                     continue
 
-                user_options.append([i.n for i in deco.args if i.n.startswith("--")][0])
+                user_options.append([_arg.n for _arg in deco.args if _arg.n.startswith("--")][0])
     return user_options
 
 
