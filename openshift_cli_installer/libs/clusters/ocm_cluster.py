@@ -39,9 +39,9 @@ class OcmCluster(OCPCluster):
         expiration_time = self.cluster.get("expiration-time")
         if expiration_time:
             _expiration_time = tts(ts=expiration_time)
-            self.cluster["expiration-time"] = self.cluster_info[
-                "expiration-time"
-            ] = f"{(datetime.now() + timedelta(seconds=_expiration_time)).isoformat()}Z"
+            self.cluster["expiration-time"] = self.cluster_info["expiration-time"] = (
+                f"{(datetime.now() + timedelta(seconds=_expiration_time)).isoformat()}Z"
+            )
 
     def get_osd_versions(self):
         self.osd_base_available_versions_dict.update(
