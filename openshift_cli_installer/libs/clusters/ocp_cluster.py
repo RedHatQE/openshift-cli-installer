@@ -255,9 +255,9 @@ class OCPCluster(UserInput):
         else:
             self.ocp_client = get_client(config_file=self.cluster_info["kubeconfig-path"])
             # Unmanaged clusters name is set to cluster id
-            self.cluster_info["cluster-id"] = self.cluster_info["display-name"] = (
-                ClusterVersion(client=self.ocp_client, name="version").instance.spec.clusterID
-            )
+            self.cluster_info["cluster-id"] = self.cluster_info["display-name"] = ClusterVersion(
+                client=self.ocp_client, name="version"
+            ).instance.spec.clusterID
 
         self.cluster_info["api-url"] = self.ocp_client.configuration.host
         console_route = Route(name="console", namespace="openshift-console", client=self.ocp_client)
