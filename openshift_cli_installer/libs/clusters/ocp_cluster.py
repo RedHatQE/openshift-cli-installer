@@ -19,7 +19,7 @@ from ocp_resources.multi_cluster_observability import MultiClusterObservability
 from ocp_resources.namespace import Namespace
 from ocp_resources.route import Route
 from ocp_resources.secret import Secret
-from ocp_resources.utils import TimeoutWatch
+from timeout_sampler import TimeoutWatch
 from ocp_utilities.infra import get_client
 from ocp_utilities.must_gather import run_must_gather
 from ocp_utilities.utils import run_command
