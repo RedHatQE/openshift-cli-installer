@@ -764,12 +764,12 @@ rosa-python-client = ">=1.0.28,<2.0.0"
 
 [[package]]
 name = "openshift-python-utilities"
-version = "5.0.10"
+version = "5.0.12"
 description = "A utilities repository for https://github.com/RedHatQE/openshift-python-wrapper"
 optional = false
 python-versions = ">=3.8,<4.0"
 files = [
-    {file = "openshift_python_utilities-5.0.10.tar.gz", hash = "sha256:affe0d0f81a5f38c380f6d7e9771a087c32f9e1a9c26dcc030ba7b693c40e838"},
+    {file = "openshift_python_utilities-5.0.12.tar.gz", hash = "sha256:34cf5e17d09c2b9dc9b07622736fd19202990d5d7e82f8cab0672b70de0e70a3"},
 ]
 
 [package.dependencies]
@@ -779,15 +779,16 @@ pytest = ">=7.4.0,<8.0.0"
 pytest-testconfig = ">=0.2.0,<0.3.0"
 python-simple-logger = ">=1.0.5,<2.0.0"
 pyyaml = ">=6.0.1,<7.0.0"
+timeout-sampler = ">=0.0.1,<0.0.2"
 
 [[package]]
 name = "openshift-python-wrapper"
-version = "4.15.11"
+version = "4.15.12"
 description = "Wrapper around https://github.com/kubernetes-client/python"
 optional = false
 python-versions = ">=3.8,<4.0"
 files = [
-    {file = "openshift_python_wrapper-4.15.11.tar.gz", hash = "sha256:e7b410854837b34906ccc7d236914a28b5c1676318445d852f55fe1536061662"},
+    {file = "openshift_python_wrapper-4.15.12.tar.gz", hash = "sha256:c9d5acb2af282912086991768cd0119ca17fd9b631023f36ee413033e95dc1ad"},
 ]
 
 [package.dependencies]
@@ -1014,13 +1015,13 @@ windows-terminal = ["colorama (>=0.4.6)"]
 
 [[package]]
 name = "pytest"
-version = "7.4.3"
+version = "7.4.4"
 description = "pytest: simple powerful testing with Python"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "pytest-7.4.3-py3-none-any.whl", hash = "sha256:0d009c083ea859a71b76adf7c1d502e4bc170b80a8ef002da5806527b9591fac"},
-    {file = "pytest-7.4.3.tar.gz", hash = "sha256:d989d136982de4e3b29dabcc838ad581c64e8ed52c11fbe86ddebd9da0818cd5"},
+    {file = "pytest-7.4.4-py3-none-any.whl", hash = "sha256:b090cdf5ed60bf4c45261be03239c2c1c22df034fbffe691abe93cd80cea01d8"},
+    {file = "pytest-7.4.4.tar.gz", hash = "sha256:2cf0005922c6ace4a3e2ec8b4080eb0d9753fdc93107415332f50ce9e7994280"},
 ]
 
 [package.dependencies]
