@@ -11,4 +11,4 @@ ignore:
  - ".github/in-solidarity.yml"  # default
  - ".github/workflows/*.yml"
  - "**/*.yml"
- - "app/manifests/*.j2"
+ - "openshift_cli_installer/manifests/*.j2"
