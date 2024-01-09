@@ -764,12 +764,12 @@ rosa-python-client = ">=1.0.28,<2.0.0"
 
 [[package]]
 name = "openshift-python-utilities"
-version = "5.0.13"
+version = "5.0.14"
 description = "A utilities repository for https://github.com/RedHatQE/openshift-python-wrapper"
 optional = false
 python-versions = ">=3.8,<4.0"
 files = [
-    {file = "openshift_python_utilities-5.0.13.tar.gz", hash = "sha256:ab47e7c1a767d5a363fb5d6da22701abe9cecaf52f8a7866b91f06a62ef88426"},
+    {file = "openshift_python_utilities-5.0.14.tar.gz", hash = "sha256:ea6539fcdca85ad7222952d18ed24341394e68c36a92e555514b0fe9f53e2381"},
 ]
 
 [package.dependencies]
