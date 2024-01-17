@@ -602,13 +602,13 @@ files = [
 
 [[package]]
 name = "kubernetes"
-version = "29.0.0"
+version = "28.1.0"
 description = "Kubernetes python client"
 optional = false
 python-versions = ">=3.6"
 files = [
-    {file = "kubernetes-29.0.0-py2.py3-none-any.whl", hash = "sha256:ab8cb0e0576ccdfb71886366efb102c6a20f268d817be065ce7f9909c631e43e"},
-    {file = "kubernetes-29.0.0.tar.gz", hash = "sha256:c4812e227ae74d07d53c88293e564e54b850452715a59a927e7e1bc6b9a60459"},
+    {file = "kubernetes-28.1.0-py2.py3-none-any.whl", hash = "sha256:10f56f8160dcb73647f15fafda268e7f60cf7dbc9f8e46d52fcd46d3beb0c18d"},
+    {file = "kubernetes-28.1.0.tar.gz", hash = "sha256:1468069a573430fb1cb5ad22876868f57977930f80a6749405da31cd6086a7e9"},
 ]
 
 [package.dependencies]
@@ -620,7 +620,7 @@ pyyaml = ">=5.4.1"
 requests = "*"
 requests-oauthlib = "*"
 six = ">=1.9.0"
-urllib3 = ">=1.24.2"
+urllib3 = ">=1.24.2,<2.0"
 websocket-client = ">=0.32.0,<0.40.0 || >0.40.0,<0.41.dev0 || >=0.43.dev0"
 
 [package.extras]
@@ -741,12 +741,12 @@ urllib3 = ">=1.25.3"
 
 [[package]]
 name = "openshift-cluster-management-python-wrapper"
-version = "1.0.61"
+version = "1.0.63"
 description = "Wrapper around https://github.com/openshift/openshift-cluster-management-python-client"
 optional = false
 python-versions = ">=3.8,<4.0"
 files = [
-    {file = "openshift_cluster_management_python_wrapper-1.0.61.tar.gz", hash = "sha256:f084e8e0f1ce74cc6e37c06bbe0991832957f5361ec888887f66a8ed766a4155"},
+    {file = "openshift_cluster_management_python_wrapper-1.0.63.tar.gz", hash = "sha256:36e8e718994ba92347b2af4a998dfa5e863292c1e9281044d6a7910aee52ace2"},
 ]
 
 [package.dependencies]
@@ -754,8 +754,8 @@ colorlog = ">=6.7.0,<7.0.0"
 importlib = ">=1.0.4,<2.0.0"
 openshift-cluster-management-python-client = ">=1.0.23,<2.0.0"
 openshift-python-utilities = ">=5.0.0,<6.0.0"
-openshift-python-wrapper = ">=4.14.4,<5.0.0"
-python-benedict = ">=0.33.0,<0.34.0"
+openshift-python-wrapper = ">=4.15.13,<5.0.0"
+python-benedict = "0.32.1"
 python-simple-logger = ">=1.0.5,<2.0.0"
 pyyaml = ">=6.0.1,<7.0.0"
 redhat-qe-cloud-tools = ">=1.0.10,<2.0.0"
@@ -784,20 +784,20 @@ timeout-sampler = ">=0.0.1,<0.0.2"
 
 [[package]]
 name = "openshift-python-wrapper"
-version = "4.15.16"
+version = "4.15.14"
 description = "Wrapper around https://github.com/kubernetes-client/python"
 optional = false
 python-versions = ">=3.8,<4.0"
 files = [
-    {file = "openshift_python_wrapper-4.15.16.tar.gz", hash = "sha256:12967e110da5c421565ca13e87fd261be6fcc3885e1a04ca698a1536b134aec1"},
+    {file = "openshift_python_wrapper-4.15.14.tar.gz", hash = "sha256:4c5e25cc64ae05e48afbea327d4ff8150fe4e07952df314821fb0fa01d017cf4"},
 ]
 
 [package.dependencies]
 colorlog = ">=6.7.0,<7.0.0"
 jinja2 = ">=3.1.2,<4.0.0"
-kubernetes = ">=29.0.0,<30.0.0"
+kubernetes = ">=28.1.0b1,<29.0.0"
 packaging = ">=23.1,<24.0"
-python-benedict = ">=0.33.0,<0.34.0"
+python-benedict = ">=0.32.0,<0.33.0"
 python-simple-logger = ">=1.0.6,<2.0.0"
 xmltodict = ">=0.13.0,<0.14.0"
 
@@ -1053,13 +1053,13 @@ pyyaml = "*"
 
 [[package]]
 name = "python-benedict"
-version = "0.33.1"
+version = "0.32.1"
 description = "python-benedict is a dict subclass with keylist/keypath/keyattr support, normalized I/O operations (base64, csv, ini, json, pickle, plist, query-string, toml, xls, xml, yaml) and many utilities... for humans, obviously."
 optional = false
 python-versions = "*"
 files = [
-    {file = "python-benedict-0.33.1.tar.gz", hash = "sha256:e65ecfc16b505b0fefa08ed97c65f6f93cf32c0309dd2e1614fc0f58f22b2c4e"},
-    {file = "python_benedict-0.33.1-py3-none-any.whl", hash = "sha256:8838ebe33ed7508d37472346e67516fcf525ebc717a6f48b37aa00e0b89bc463"},
+    {file = "python-benedict-0.32.1.tar.gz", hash = "sha256:d669cbd0ca4e6cd9fbdc10b8f68ae57ac3224b49f7f55e9b2c13622c0434a148"},
+    {file = "python_benedict-0.32.1-py3-none-any.whl", hash = "sha256:61272f128ea5046399d261047b33d53e0836c951d9697b23a02d0723f9322e1d"},
 ]
 
 [package.dependencies]
@@ -1069,9 +1069,8 @@ requests = ">=2.26.0,<3.0.0"
 
 [package.extras]
 all = ["python-benedict[io,parse,s3]"]
-html = ["beautifulsoup4 (>=4.12.0,<5.0.0)", "python-benedict[xml]"]
-io = ["python-benedict[html,toml,xls,xml,yaml]"]
-parse = ["ftfy (>=6.0.0,<7.0.0)", "mailchecker (>=4.1.0,<7.0.0)", "phonenumbers (>=8.12.0,<9.0.0)", "python-dateutil (>=2.8.0,<3.0.0)"]
+io = ["python-benedict[toml,xls,xml,yaml]"]
+parse = ["ftfy (>=6.0.0,<7.0.0)", "mailchecker (>=4.1.0,<6.0.0)", "phonenumbers (>=8.12.0,<9.0.0)", "python-dateutil (>=2.8.0,<3.0.0)"]
 s3 = ["boto3 (>=1.24.89,<2.0.0)"]
 toml = ["toml (>=0.10.2,<1.0.0)"]
 xls = ["openpyxl (>=3.0.0,<4.0.0)", "xlrd (>=2.0.0,<3.0.0)"]
@@ -1262,18 +1261,18 @@ rsa = ["oauthlib[signedtoken] (>=3.0.0)"]
 
 [[package]]
 name = "rosa-python-client"
-version = "1.0.44"
+version = "1.0.39"
 description = "Wrapper for rosa cli"
 optional = false
 python-versions = ">=3.8,<4.0"
 files = [
-    {file = "rosa_python_client-1.0.44.tar.gz", hash = "sha256:e309ee4c7ff92d7afbf85d4680e5dccc7b7a6945198a34cd93eba930427c4b97"},
+    {file = "rosa_python_client-1.0.39.tar.gz", hash = "sha256:e9cf96a70168e010de5f20ca03a0619ec1fe65f8b689bbf189185497c8a6a6ce"},
 ]
 
 [package.dependencies]
-python-benedict = ">=0.33.0,<0.34.0"
+python-benedict = ">=0.32.0,<0.33.0"
 python-simple-logger = ">=1.0.5,<2.0.0"
-redhat-qe-cloud-tools = "*"
+redhat-qe-cloud-tools = ">=1.0.6,<2.0.0"
 
 [[package]]
 name = "rsa"
