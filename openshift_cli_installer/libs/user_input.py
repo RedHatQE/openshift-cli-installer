@@ -12,8 +12,8 @@ from openshift_cli_installer.utils.cli_utils import (
 )
 from openshift_cli_installer.utils.const import (
     AWS_OSD_STR,
-    AWS_STR,
     CREATE_STR,
+    GCP_STR,
     GCP_OSD_STR,
     HYPERSHIFT_STR,
     OBSERVABILITY_SUPPORTED_STORAGE_TYPES,
@@ -21,6 +21,7 @@ from openshift_cli_installer.utils.const import (
     SUPPORTED_ACTIONS,
     SUPPORTED_PLATFORMS,
     USER_INPUT_CLUSTER_BOOLEAN_KEYS,
+    IPI_BASED_PLATFORMS,
 )
 
 
@@ -39,6 +40,7 @@ class UserInput:
         self.aws_access_key_id = self.user_kwargs.get("aws_access_key_id")
         self.aws_secret_access_key = self.user_kwargs.get("aws_secret_access_key")
         self.aws_account_id = self.user_kwargs.get("aws_account_id")
+        self.gcp_service_account_file = self.user_kwargs.get("gcp_service_account_file")
         self.clusters = self.get_clusters_from_user_input()
         self.ocm_token = self.user_kwargs.get("ocm_token")
         self.parallel = False if self.clusters and len(self.clusters) == 1 else self.user_kwargs.get("parallel")
@@ -61,7 +63,6 @@ class UserInput:
         self.registry_config_file = self.user_kwargs.get("registry_config_file")
         self.ssh_key_file = self.user_kwargs.get("ssh_key_file")
         self.docker_config_file = self.user_kwargs.get("docker_config_file")
-        self.gcp_service_account_file = self.user_kwargs.get("gcp_service_account_file")
         self.must_gather_output_dir = self.user_kwargs.get("must_gather_output_dir")
         self.create = self.action == CREATE_STR
 
@@ -94,6 +95,8 @@ class UserInput:
             )
             _cluster["aws-access-key-id"] = aws_access_key_id
             _cluster["aws-secret-access-key"] = aws_secret_access_key
+            if self.gcp_service_account_file:
+                _cluster["gcp-service-account-file"] = self.gcp_service_account_file
 
             for key in USER_INPUT_CLUSTER_BOOLEAN_KEYS:
                 cluster_key_value = _cluster.get(key)
@@ -150,11 +153,10 @@ class UserInput:
             self.is_platform_supported()
             self.assert_unique_cluster_names()
             self.assert_managed_acm_clusters_user_input()
-            self.assert_aws_ipi_installer_log_level_user_input()
-            self.assert_aws_ipi_user_input()
+            self.assert_ipi_installer_user_input()
             self.assert_aws_osd_hypershift_user_input()
             self.assert_acm_clusters_user_input()
-            self.assert_gcp_osd_user_input()
+            self.assert_gcp_user_input()
             self.assert_boolean_values()
             self.assert_cluster_platform_support_observability()
 
@@ -202,25 +204,27 @@ class UserInput:
                         self.logger.error(f"Managed ACM clusters: Cluster {managed_acm_cluster} not" " found")
                         raise click.Abort()
 
-    def assert_aws_ipi_user_input(self):
-        if any([_cluster["platform"] == AWS_STR for _cluster in self.clusters]):
-            if not self.docker_config_file or not os.path.exists(self.docker_config_file):
-                self.logger.error(
-                    "Docker config file is required for AWS installations."
-                    f" {self.docker_config_file} file does not exist."
-                )
-                raise click.Abort()
-
+    def assert_ipi_installer_user_input(self):
+        if any([_cluster["platform"] in IPI_BASED_PLATFORMS for _cluster in self.clusters]):
+            self.assert_ipi_installer_log_level_user_input()
             self.assert_registry_config_file_exists()
-
+            self.assert_docker_config_file_exists()
             if self.create:
                 self.assert_public_ssh_key_file_exists()
 
-    def assert_aws_ipi_installer_log_level_user_input(self):
+    def assert_docker_config_file_exists(self):
+        if not self.docker_config_file or not os.path.exists(self.docker_config_file):
+            self.logger.error(
+                "Docker config file is required for IPI installations."
+                f" {self.docker_config_file} file does not exist."
+            )
+            raise click.Abort()
+
+    def assert_ipi_installer_log_level_user_input(self):
         supported_log_levels = ["debug", "info", "warn", "error"]
         unsupported_log_levels = []
         for _cluster in self.clusters:
-            if _cluster["platform"] == AWS_STR:
+            if _cluster["platform"] in IPI_BASED_PLATFORMS:
                 log_level = _cluster.get("log_level", "error")
                 if log_level not in supported_log_levels:
                     unsupported_log_levels.append(f"LogLevel {log_level} for cluster {_cluster['name']}")
@@ -235,14 +239,14 @@ class UserInput:
     def assert_public_ssh_key_file_exists(self):
         if not self.ssh_key_file or not os.path.exists(self.ssh_key_file):
             self.logger.error(
-                "SSH file is required for AWS cluster installations. {self.ssh_key_file} file does not exist.",
+                "SSH file is required for IPI cluster installations. {self.ssh_key_file} file does not exist.",
             )
             raise click.Abort()
 
     def assert_registry_config_file_exists(self):
         if not self.registry_config_file or not os.path.exists(self.registry_config_file):
             self.logger.error(
-                "Registry config file is required for AWS cluster installations."
+                "Registry config file is required for IPI cluster installations."
                 f" {self.registry_config_file} file does not exist.",
             )
             raise click.Abort()
@@ -272,14 +276,14 @@ class UserInput:
                     self.logger.error(f"ACM not supported for {cluster_platform} clusters")
                     raise click.Abort()
 
-    def assert_gcp_osd_user_input(self):
+    def assert_gcp_user_input(self):
         if (
             self.create
-            and any([cluster["platform"] == GCP_OSD_STR for cluster in self.clusters])
+            and any([cluster["platform"] in (GCP_OSD_STR, GCP_STR) for cluster in self.clusters])
             and not self.gcp_service_account_file
         ):
             self.logger.error(
-                "`--gcp-service-account-file` option must be provided for {GCP_OSD_STR} clusters",
+                f"`--gcp-service-account-file` option must be provided for {GCP_OSD_STR} and {GCP_STR} clusters",
             )
             raise click.Abort()
 

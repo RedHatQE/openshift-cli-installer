@@ -3,61 +3,60 @@ import shlex
 
 import click
 import yaml
+import tempfile
 from ocp_utilities.utils import run_command
 from simple_logger.logger import get_logger
 
 from openshift_cli_installer.libs.clusters.ocp_cluster import OCPCluster
 from openshift_cli_installer.utils.cluster_versions import (
     filter_versions,
-    get_aws_versions,
+    get_ipi_cluster_versions,
 )
-from openshift_cli_installer.utils.const import CREATE_STR, DESTROY_STR, PRODUCTION_STR
+from openshift_cli_installer.utils.const import CREATE_STR, DESTROY_STR, PRODUCTION_STR, GCP_STR, AWS_STR
 from openshift_cli_installer.utils.general import (
     generate_unified_pull_secret,
     get_install_config_j2_template,
     get_local_ssh_key,
     zip_and_upload_to_s3,
 )
+from openshift_cli_installer.utils.general import get_dict_from_json
 
 
-class AwsIpiCluster(OCPCluster):
+class IpiCluster(OCPCluster):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.logger = get_logger(f"{self.__class__.__module__}-{self.__class__.__name__}")
         self.log_level = self.cluster.get("log_level", "error")
 
+        self.platform = None
+        self.gcp_project_id = None
         if kwargs.get("destroy_from_s3_bucket_or_local_directory"):
-            self._aws_download_installer()
+            self._ipi_download_installer()
         else:
             self.openshift_install_binary_path = None
-            self.aws_base_available_versions = None
+            self.ipi_base_available_versions = None
             self.cluster["ocm-env"] = self.cluster_info["ocm-env"] = PRODUCTION_STR
 
-            self._prepare_aws_ipi_cluster()
-            self.dump_cluster_data_to_file()
-
-        self.prepare_cluster_data()
-
-    def _prepare_aws_ipi_cluster(self):
-        self.aws_base_available_versions = get_aws_versions()
+    def _prepare_ipi_cluster(self):
+        self.ipi_base_available_versions = get_ipi_cluster_versions()
         self.all_available_versions.update(
             filter_versions(
                 wanted_version=self.cluster_info["user-requested-version"],
-                base_versions_dict=self.aws_base_available_versions,
+                base_versions_dict=self.ipi_base_available_versions,
                 platform=self.cluster_info["platform"],
                 stream=self.cluster_info["stream"],
             )
         )
         self.set_cluster_install_version()
         self._set_install_version_url()
-        self._aws_download_installer()
+        self._ipi_download_installer()
         if self.create:
             self._create_install_config_file()
 
-    def _aws_download_installer(self):
+    def _ipi_download_installer(self):
         openshift_install_str = "openshift-install"
         version_url = self.cluster_info["version-url"]
-        binary_dir = os.path.join("/tmp", version_url)
+        binary_dir = os.path.join(tempfile.TemporaryDirectory().name, version_url)
         self.openshift_install_binary_path = os.path.join(binary_dir, openshift_install_str)
         rc, _, err = run_command(
             command=shlex.split(
@@ -89,36 +88,35 @@ class AwsIpiCluster(OCPCluster):
             "pull_secret": self.pull_secret,
         }
 
-        worker_flavor = self.cluster.get("worker-flavor")
-        if worker_flavor:
+        if worker_flavor := self.cluster.get("worker-flavor"):
             terraform_parameters["worker_flavor"] = worker_flavor
 
-        worker_root_disk_size = self.cluster.get("worker-root-disk-size")
-        if worker_root_disk_size:
+        if worker_root_disk_size := self.cluster.get("worker-root-disk-size"):
             terraform_parameters["worker_root_disk_size"] = worker_root_disk_size
 
-        worker_replicas = self.cluster.get("worker-replicas")
-        if worker_replicas:
+        if worker_replicas := self.cluster.get("worker-replicas"):
             terraform_parameters["worker_replicas"] = worker_replicas
 
-        fips = self.cluster.get("fips")
-        if fips:
+        if self.gcp_project_id:
+            terraform_parameters["gcp_project_id"] = self.gcp_project_id
+
+        if fips := self.cluster.get("fips"):
             terraform_parameters["fips"] = fips
 
-        cluster_install_config = get_install_config_j2_template(jinja_dict=terraform_parameters)
+        cluster_install_config = get_install_config_j2_template(jinja_dict=terraform_parameters, platform=self.platform)
 
         with open(os.path.join(self.cluster_info["cluster-dir"], "install-config.yaml"), "w") as fd:
             fd.write(yaml.dump(cluster_install_config))
 
     def _set_install_version_url(self):
         cluster_version = self.cluster["version"]
-        version_url = [url for url, versions in self.aws_base_available_versions.items() if cluster_version in versions]
+        version_url = [url for url, versions in self.ipi_base_available_versions.items() if cluster_version in versions]
         if version_url:
             self.cluster_info["version-url"] = f"{version_url[0]}:{self.cluster_info['version']}"
         else:
             self.logger.error(
                 f"{self.log_prefix}: Cluster version url not found for"
-                f" {cluster_version} in {self.aws_base_available_versions.keys()}",
+                f" {cluster_version} in {self.ipi_base_available_versions.keys()}",
             )
             raise click.Abort()
 
@@ -181,3 +179,29 @@ class AwsIpiCluster(OCPCluster):
         self.run_installer_command(action=DESTROY_STR, raise_on_failure=True)
         self.logger.success(f"{self.log_prefix}: Cluster destroyed")
         self.delete_cluster_s3_buckets()
+
+
+class AwsIpiCluster(IpiCluster):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.logger = get_logger(f"{self.__class__.__module__}-{self.__class__.__name__}")
+        self.platform = AWS_STR
+        if not kwargs.get("destroy_from_s3_bucket_or_local_directory"):
+            self._prepare_ipi_cluster()
+            self.dump_cluster_data_to_file()
+
+        self.prepare_cluster_data()
+
+
+class GcpIpiCluster(IpiCluster):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.logger = get_logger(f"{self.__class__.__module__}-{self.__class__.__name__}")
+        self.platform = GCP_STR
+        self.gcp_service_account_file = kwargs["ocp_cluster"]["gcp-service-account-file"]
+        self.gcp_project_id = get_dict_from_json(gcp_service_account_file=self.gcp_service_account_file)["project_id"]
+        if not kwargs.get("destroy_from_s3_bucket_or_local_directory"):
+            self._prepare_ipi_cluster()
+            self.dump_cluster_data_to_file()
+
+        self.prepare_cluster_data()

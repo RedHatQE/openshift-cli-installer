@@ -110,12 +110,12 @@ def tts(ts):
         return int(ts)
 
 
-def get_install_config_j2_template(jinja_dict):
+def get_install_config_j2_template(jinja_dict, platform):
     env = Environment(
         loader=FileSystemLoader(get_manifests_path()), trim_blocks=True, lstrip_blocks=True, undefined=DebugUndefined
     )
 
-    template = env.get_template(name="install-config-template.j2")
+    template = env.get_template(name=f"{platform}-install-config-template.j2")
     rendered = template.render(jinja_dict)
     undefined_variables = meta.find_undeclared_variables(env.parse(rendered))
     if undefined_variables:
@@ -141,3 +141,8 @@ def get_pull_secret_data(registry_config_file):
 def get_local_ssh_key(ssh_key_file):
     with open(ssh_key_file) as fd:
         return fd.read().strip()
+
+
+def get_dict_from_json(gcp_service_account_file):
+    with open(gcp_service_account_file) as fd:
+        return json.loads(fd.read())

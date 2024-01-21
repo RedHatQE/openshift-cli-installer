@@ -172,7 +172,7 @@ class RosaCluster(OcmCluster):
             "aws-secret-access-key",
             "aws-account-id",
         )
-        ignore_prefix = ("acm-observability",)
+        ignore_prefix = ("acm-observability", "gcp")
         name = self.cluster_info["name"]
         command = f"create cluster --sts --cluster-name={name} "
         if self.cluster_info["platform"] == HYPERSHIFT_STR:
