@@ -741,12 +741,12 @@ urllib3 = ">=1.25.3"
 
 [[package]]
 name = "openshift-cluster-management-python-wrapper"
-version = "1.0.65"
+version = "1.0.66"
 description = "Wrapper around https://github.com/openshift/openshift-cluster-management-python-client"
 optional = false
 python-versions = ">=3.8,<4.0"
 files = [
-    {file = "openshift_cluster_management_python_wrapper-1.0.65.tar.gz", hash = "sha256:f485fd64c9ce62ae76fc6b99de6599255347d7b0a5119d179693cccc6ccf7b66"},
+    {file = "openshift_cluster_management_python_wrapper-1.0.66.tar.gz", hash = "sha256:7a6e3a2f5defa20cf578c08aa5f3080433c7cd22e0a92f0d85bd5cb28049a8e3"},
 ]
 
 [package.dependencies]
