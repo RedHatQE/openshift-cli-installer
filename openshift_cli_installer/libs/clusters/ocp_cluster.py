@@ -56,7 +56,7 @@ class OCPCluster(UserInput):
             self.s3_bucket_path = self.s3_bucket_path or self.cluster["cluster_info"].get("s3_bucket_path")
         else:
             self.cluster_info = copy.deepcopy(self.cluster)
-            self.cluster_shortuuid = shortuuid.uuid()
+            self.cluster_shortuuid = shortuuid.uuid().lower()
             self.cluster_info["name"] = self.get_cluster_name()
 
             self.cluster_info.update({
