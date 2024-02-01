@@ -15,7 +15,7 @@ must_gather_output_dir: null
 
 clusters:
 # AWS OSD cluster
-- name: aws-osd-c1
+- name: aws-osd-c1  # name-prefix can be passed instead of name
   platform: aws-osd
   region: us-east-2
   version: "4.13"

@@ -47,20 +47,22 @@ class OCPCluster(UserInput):
     def __init__(self, ocp_cluster, **kwargs):
         super().__init__(**kwargs)
         self.logger = get_logger(f"{self.__class__.__module__}-{self.__class__.__name__}")
-
         self.cluster = ocp_cluster
         destroy_from_s3_bucket_or_local_directory = kwargs.get("destroy_from_s3_bucket_or_local_directory")
+
         if destroy_from_s3_bucket_or_local_directory:
             self.cluster_info = self.cluster["cluster_info"]
             self.s3_bucket_name = self.s3_bucket_name or self.cluster["cluster_info"].get("s3_bucket_name")
             self.s3_bucket_path = self.s3_bucket_path or self.cluster["cluster_info"].get("s3_bucket_path")
         else:
             self.cluster_info = copy.deepcopy(self.cluster)
+            self.cluster_shortuuid = shortuuid.uuid()
+            self.cluster_info["name"] = self.get_cluster_name()
 
             self.cluster_info.update({
                 "display-name": self.cluster_info["name"],
                 "user-requested-version": self.cluster_info["version"],
-                "shortuuid": self.s3_bucket_path_uuid or shortuuid.uuid(),
+                "shortuuid": self.s3_bucket_path_uuid or self.cluster_shortuuid,
                 "aws-access-key-id": self.cluster.pop("aws-access-key-id", None),
                 "aws-secret-access-key": self.cluster.pop("aws-secret-access-key", None),
             })
@@ -76,9 +78,7 @@ class OCPCluster(UserInput):
                 )
 
             self.all_available_versions = {}
-
             self.cluster_info["stream"] = get_cluster_stream(cluster_data=self.cluster)
-
             self.cluster_info["cluster-dir"] = cluster_dir = self.cluster.pop(
                 "cluster_dir",
                 os.path.join(
@@ -90,7 +90,6 @@ class OCPCluster(UserInput):
             self.cluster_info["auth-path"] = auth_path = os.path.join(cluster_dir, "auth")
             self.cluster_info["kubeconfig-path"] = os.path.join(auth_path, "kubeconfig")
             Path(auth_path).mkdir(parents=True, exist_ok=True)
-
             self._add_s3_bucket_data()
 
         self.log_prefix = f"[C:{self.cluster_info['name']}|P:{self.cluster_info['platform']}|R:{self.cluster_info.get('region', 'auto-region')}]"
@@ -461,3 +460,10 @@ class OCPCluster(UserInput):
             raise click.Abort()
 
         return os.path.join(cluster_install_dir, "auth", "kubeconfig")
+
+    def get_cluster_name(self):
+        if self.cluster_info.get("name"):
+            return self.cluster_info["name"]
+
+        name_prefix = str(self.cluster_info["name-prefix"])
+        return f"{name_prefix}-{self.cluster_shortuuid[:14-len(name_prefix)]}"

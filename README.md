@@ -66,7 +66,7 @@ Action also can be passed to the CLI as `--action create/destroy` instead of spe
 Every call to the openshift installer cli must have at least one `--cluster` option.  
 
 * Mandatory parameters:
-  * name: The name of the cluster
+  * name or name-prefix: The name of the cluster or the prefix of the name of the cluster, if prefix is used we generate a unique name up to 15 characters.
   * platform: The platform to deploy the cluster on (supported platforms are: aws, rosa and hypershift)
   * region: The region to deploy the cluster. Optional for AWS-IPI and AWS-OSD clusters, but mandatory for other (GCP, ROSA, Hypershift) clusters.
 * Optional parameters:

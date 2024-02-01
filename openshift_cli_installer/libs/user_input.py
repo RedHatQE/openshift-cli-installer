@@ -151,6 +151,7 @@ class UserInput:
                 raise click.Abort()
 
             self.is_platform_supported()
+            self.assert_cluster_name()
             self.assert_unique_cluster_names()
             self.assert_managed_acm_clusters_user_input()
             self.assert_ipi_installer_user_input()
@@ -187,7 +188,7 @@ class UserInput:
 
     def assert_unique_cluster_names(self):
         if self.create:
-            cluster_names = [cluster["name"] for cluster in self.clusters]
+            cluster_names = [cluster.get("name") for cluster in self.clusters if cluster.get("name") is not None]
             if len(cluster_names) != len(set(cluster_names)):
                 self.logger.error(f"Cluster names must be unique: clusters {cluster_names}")
                 raise click.Abort()
@@ -349,3 +350,9 @@ class UserInput:
                 missing_storage_data.append(f"{base_error_str} is missing" " `acm-observability-s3-secret-access-key`")
 
         return missing_storage_data
+
+    def assert_cluster_name(self):
+        for cluster in self.clusters:
+            if not cluster.get("name", cluster.get("name-prefix")):
+                self.logger.error("Cluster name or name_prefix must be provided")
+                raise click.Abort()
