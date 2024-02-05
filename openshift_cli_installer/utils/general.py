@@ -54,7 +54,7 @@ def ignore_exceptions(logger=None, retry=None):
     return wrapper
 
 
-@ignore_exceptions()
+@ignore_exceptions(logger=LOGGER)
 def zip_and_upload_to_s3(install_dir, s3_bucket_name, s3_bucket_object_name):
     remove_terraform_folder_from_install_dir(install_dir=install_dir)
 
