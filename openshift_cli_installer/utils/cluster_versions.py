@@ -156,6 +156,7 @@ def get_ipi_cluster_versions():
             1
         ].splitlines()
 
+    # TODO: Use `is_version_accepted` to return only accepted versions
     return versions_dict
 
 
