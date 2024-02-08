@@ -23,6 +23,7 @@ fcn_exclude_functions =
     render,
     meta,
     time,
+    BeautifulSoup,
 
 enable-extensions =
     FCN,

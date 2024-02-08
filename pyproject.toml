@@ -45,6 +45,8 @@ ruff = "^0.2.0"
 timeout-sampler = ">=0.0.1"
 openshift-python-wrapper = ">=10.0.0"
 pytest-testconfig = "^0.2.0"
+beautifulsoup4 = "^4.12.3"
+requests = "^2.31.0"
 
 
 [tool.poetry.group.dev.dependencies]
