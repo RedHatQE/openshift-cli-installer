@@ -1,7 +1,9 @@
 import os
+import re
 import shlex
 
 import click
+import requests
 import yaml
 import tempfile
 from ocp_utilities.utils import run_command
@@ -11,6 +13,7 @@ from openshift_cli_installer.libs.clusters.ocp_cluster import OCPCluster
 from openshift_cli_installer.utils.cluster_versions import (
     filter_versions,
     get_ipi_cluster_versions,
+    parse_openshift_release_url,
 )
 from openshift_cli_installer.utils.const import CREATE_STR, DESTROY_STR, PRODUCTION_STR, GCP_STR, AWS_STR
 from openshift_cli_installer.utils.general import (
@@ -109,10 +112,19 @@ class IpiCluster(OCPCluster):
             fd.write(yaml.dump(cluster_install_config))
 
     def _set_install_version_url(self):
+        version_url = None
         cluster_version = self.cluster["version"]
-        version_url = [url for url, versions in self.ipi_base_available_versions.items() if cluster_version in versions]
+        for tr in parse_openshift_release_url():
+            version = any(_tr for _tr in tr.text.splitlines() if cluster_version == _tr)
+            if version:
+                href = tr.find_all("a", attrs={"class": "text-success"})[0]["href"]
+                version_url = re.search(
+                    r"oc adm release extract --tools (.*?):",
+                    requests.get(f"https://{[*self.ipi_base_available_versions][0]}{href}").text,
+                ).group(1)
+
         if version_url:
-            self.cluster_info["version-url"] = f"{version_url[0]}:{self.cluster_info['version']}"
+            self.cluster_info["version-url"] = f"{version_url}:{self.cluster_info['version']}"
         else:
             self.logger.error(
                 f"{self.log_prefix}: Cluster version url not found for"

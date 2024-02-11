@@ -24,6 +24,8 @@ fcn_exclude_functions =
     meta,
     time,
     BeautifulSoup,
+    find_all,
+    tr,
 
 enable-extensions =
     FCN,

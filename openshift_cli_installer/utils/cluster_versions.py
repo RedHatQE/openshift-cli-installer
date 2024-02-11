@@ -1,12 +1,10 @@
 import functools
 import re
-import shlex
 
 import click
 import rosa.cli
 import semver
 from ocm_python_wrapper.versions import Versions
-from ocp_utilities.utils import run_command
 from simple_logger.logger import get_logger
 import requests
 from bs4 import BeautifulSoup
@@ -84,38 +82,41 @@ def set_clusters_versions(clusters, base_available_versions):
 def filter_versions(wanted_version, base_versions_dict, platform, stream):
     versions_dict = {}
     version_key = get_split_version(version=wanted_version)
-    x86_64_str = "-x86_64"
     versions_dict[stream] = {version_key: {"versions": set(), "latest": ""}}
 
     for _source, versions in base_versions_dict.items():
         if platform in (HYPERSHIFT_STR, ROSA_STR, AWS_OSD_STR, GCP_OSD_STR) and stream != _source:
             continue
 
-        reg_stream = get_regex_str_for_version_match(platform=platform, stream=stream, x86_64_str=x86_64_str)
+        if stream == "stable" or stream == "candidate":
+            if len(wanted_version.split(".")) == 3:
+                match = re.findall(rf"({re.escape(wanted_version)})", "\n".join(versions))
+                if match:
+                    versions_dict[stream][version_key]["versions"].add(match[0])
+            else:
+                match = re.findall(rf"({re.escape(wanted_version)}(.\d+))", "\n".join(versions))
 
-        match = re.findall(rf"({re.escape(wanted_version)}(.\d+)?(-)?(\d+.)?{reg_stream}.*)", "\n".join(versions))
-        if match:
+        else:
+            match = re.findall(rf"({re.escape(wanted_version)}(.\d+)(-)?(\d+.)?({stream}).*)", "\n".join(versions))
+
+        if match and not versions_dict[stream].get(version_key, {}).get("versions", []):
             versions_dict[stream][version_key]["versions"] = set([_match[0] for _match in match])
 
         all_semver_versions = set()
         for available_version in versions_dict[stream][version_key].get("versions", []):
-            stripped = False
-            if x86_64_str in available_version:
-                stripped = True
-                available_version = available_version.replace(x86_64_str, "")
             try:
-                all_semver_versions.add((semver.Version.parse(available_version), stripped))
+                all_semver_versions.add((semver.Version.parse(available_version)))
             except ValueError:
                 continue
 
         if all_semver_versions:
-            max_version = str(max([ver[0] for ver in all_semver_versions]))
-            add_x86_64 = [ver[1] for ver in all_semver_versions if str(ver[0]) == max_version][0]
-            versions_dict[stream][version_key]["latest"] = f"{max_version}{x86_64_str if add_x86_64 else ''}"
+            max_version = str(max([ver for ver in all_semver_versions]))
+            versions_dict[stream][version_key]["latest"] = f"{max_version}"
 
     if not versions_dict[stream][version_key]["versions"]:
         LOGGER.error(f"Cluster version {wanted_version} not found for stream {stream}")
         raise click.Abort()
+
     return versions_dict
 
 
@@ -150,18 +151,14 @@ def get_cluster_stream(cluster_data):
 
 @functools.cache
 def get_ipi_cluster_versions():
-    dev_ocp_release = "quay.io/openshift-release-dev/ocp-release"
-    ocp_release = "registry.ci.openshift.org/ocp/release"
-    versions_dict = {}
+    _source = "openshift-release.apps.ci.l2s4.p1.openshiftapps.com"
+    _accepted_version_dict = {_source: []}
+    for tr in parse_openshift_release_url():
+        version, status = [_tr for _tr in tr.text.splitlines() if _tr][:2]
+        if status == "Accepted":
+            _accepted_version_dict[_source].append(version)
 
-    for source_repo in (dev_ocp_release, ocp_release):
-        versions_dict[source_repo] = run_command(command=shlex.split(f"regctl tag ls {source_repo}"), check=False)[
-            1
-        ].splitlines()
-
-    return get_accepted_versions_dict(
-        versions_dict=versions_dict, dev_ocp_release=dev_ocp_release, ocp_release=ocp_release
-    )
+    return _accepted_version_dict
 
 
 def update_rosa_osd_clusters_versions(clusters, _test=False, _test_versions_dict=None):
@@ -191,26 +188,10 @@ def update_rosa_osd_clusters_versions(clusters, _test=False, _test_versions_dict
     return set_clusters_versions(clusters=clusters, base_available_versions=base_available_versions_dict)
 
 
-def is_version_accepted(parsed_openshift_release_url, version):
-    for tr in parsed_openshift_release_url.find_all("tr"):
-        if version in tr.text and "Accepted" in tr.text:
-            return True
-    return False
-
-
-def get_accepted_versions_dict(versions_dict, dev_ocp_release, ocp_release):
-    _parsed_openshift_release_url = parse_openshift_release_url()
-    _accepted_version_dict = {dev_ocp_release: [], ocp_release: []}
-    for channel, versions in versions_dict.items():
-        for version in versions:
-            if is_version_accepted(parsed_openshift_release_url=_parsed_openshift_release_url, version=version):
-                _accepted_version_dict[channel].append(version)
-    return _accepted_version_dict
-
-
 @functools.cache
 def parse_openshift_release_url():
     url = "https://openshift-release.apps.ci.l2s4.p1.openshiftapps.com"
     LOGGER.info(f"Parsing {url}")
     req = requests.get(url)
-    return BeautifulSoup(req.text, "html.parser")
+    soup = BeautifulSoup(req.text, "html.parser")
+    return soup.find_all("tr")
