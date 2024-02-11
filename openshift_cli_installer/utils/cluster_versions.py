@@ -191,18 +191,19 @@ def update_rosa_osd_clusters_versions(clusters, _test=False, _test_versions_dict
     return set_clusters_versions(clusters=clusters, base_available_versions=base_available_versions_dict)
 
 
-def is_version_accepted(version):
-    for tr in parse_openshift_release_url().find_all("tr"):
+def is_version_accepted(parsed_openshift_release_url, version):
+    for tr in parsed_openshift_release_url.find_all("tr"):
         if version in tr.text and "Accepted" in tr.text:
             return True
     return False
 
 
 def get_accepted_versions_dict(versions_dict, dev_ocp_release, ocp_release):
+    _parsed_openshift_release_url = parse_openshift_release_url()
     _accepted_version_dict = {dev_ocp_release: [], ocp_release: []}
     for channel, versions in versions_dict.items():
         for version in versions:
-            if is_version_accepted(version=version):
+            if is_version_accepted(parsed_openshift_release_url=_parsed_openshift_release_url, version=version):
                 _accepted_version_dict[channel].append(version)
     return _accepted_version_dict
 
