@@ -150,14 +150,18 @@ def get_cluster_stream(cluster_data):
 
 @functools.cache
 def get_ipi_cluster_versions():
+    dev_ocp_release = "quay.io/openshift-release-dev/ocp-release"
+    ocp_release = "registry.ci.openshift.org/ocp/release"
     versions_dict = {}
-    for source_repo in ("quay.io/openshift-release-dev/ocp-release", "registry.ci.openshift.org/ocp/release"):
+
+    for source_repo in (dev_ocp_release, ocp_release):
         versions_dict[source_repo] = run_command(command=shlex.split(f"regctl tag ls {source_repo}"), check=False)[
             1
         ].splitlines()
 
-    # TODO: Use `is_version_accepted` to return only accepted versions
-    return versions_dict
+    return get_accepted_versions_dict(
+        versions_dict=versions_dict, dev_ocp_release=dev_ocp_release, ocp_release=ocp_release
+    )
 
 
 def update_rosa_osd_clusters_versions(clusters, _test=False, _test_versions_dict=None):
@@ -188,13 +192,24 @@ def update_rosa_osd_clusters_versions(clusters, _test=False, _test_versions_dict
 
 
 def is_version_accepted(version):
-    for tr in parse_openshift_release_url.find_all("tr"):
+    for tr in parse_openshift_release_url().find_all("tr"):
         if version in tr.text and "Accepted" in tr.text:
             return True
     return False
 
 
+def get_accepted_versions_dict(versions_dict, dev_ocp_release, ocp_release):
+    _accepted_version_dict = {dev_ocp_release: [], ocp_release: []}
+    for channel, versions in versions_dict.items():
+        for version in versions:
+            if is_version_accepted(version=version):
+                _accepted_version_dict[channel].append(version)
+    return _accepted_version_dict
+
+
 @functools.cache
 def parse_openshift_release_url():
-    req = requests.get("https://openshift-release.apps.ci.l2s4.p1.openshiftapps.com")
+    url = "https://openshift-release.apps.ci.l2s4.p1.openshiftapps.com"
+    LOGGER.info(f"Parsing {url}")
+    req = requests.get(url)
     return BeautifulSoup(req.text, "html.parser")
