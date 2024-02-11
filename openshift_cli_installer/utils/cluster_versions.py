@@ -11,7 +11,6 @@ from bs4 import BeautifulSoup
 
 from openshift_cli_installer.utils.const import (
     AWS_OSD_STR,
-    AWS_STR,
     GCP_OSD_STR,
     HYPERSHIFT_STR,
     ROSA_STR,
@@ -126,22 +125,6 @@ def get_split_version(version):
         version = ".".join(split_version[:-1])
 
     return version
-
-
-def get_regex_str_for_version_match(platform, stream, x86_64_str):
-    reg_stream = ""
-    if platform in (HYPERSHIFT_STR, ROSA_STR) and stream == "nightly":
-        reg_stream = stream
-
-    if platform == AWS_STR:
-        reg_stream = stream
-        if stream == "stable":
-            reg_stream = x86_64_str.strip("-")
-
-        elif stream not in ("nightly", "ci"):
-            reg_stream = rf"{stream}.\d+{x86_64_str}"
-
-    return reg_stream
 
 
 def get_cluster_stream(cluster_data):
