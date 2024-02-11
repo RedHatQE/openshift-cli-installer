@@ -97,5 +97,5 @@ class OsdCluster(OcmCluster):
             self.logger.success(f"{self.log_prefix}: Cluster destroyed successfully")
             self.delete_cluster_s3_buckets()
         except Exception as ex:
-            self.logger.error(f"{self.log_prefix}: Failed to run cluster delete\n{ex}")
+            self.logger.error(f"{self.log_prefix}: Failed to run cluster destroy\n{ex}")
             raise click.Abort()

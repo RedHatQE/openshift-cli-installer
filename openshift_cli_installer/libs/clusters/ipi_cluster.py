@@ -119,12 +119,12 @@ class IpiCluster(OCPCluster):
             if version:
                 href = tr.find_all("a", attrs={"class": "text-success"})[0]["href"]
                 version_url = re.search(
-                    r"oc adm release extract --tools (.*?):",
+                    r"oc adm release extract --tools (.*?)<",
                     requests.get(f"https://{[*self.ipi_base_available_versions][0]}{href}").text,
                 ).group(1)
 
         if version_url:
-            self.cluster_info["version-url"] = f"{version_url}:{self.cluster_info['version']}"
+            self.cluster_info["version-url"] = version_url
         else:
             self.logger.error(
                 f"{self.log_prefix}: Cluster version url not found for"
