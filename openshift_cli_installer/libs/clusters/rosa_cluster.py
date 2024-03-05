@@ -14,7 +14,7 @@ from openshift_cli_installer.utils.general import (
     get_manifests_path,
     zip_and_upload_to_s3,
 )
-from clouds.aws.session_clients import iam_client
+from clouds.aws.roles.roles import get_roles
 
 
 class RosaCluster(OcmCluster):
@@ -290,6 +290,6 @@ class RosaCluster(OcmCluster):
                 "ManagedOpenShift-HCP-ROSA-Worker-Role",
             }
 
-            if missing_roles := hcp_roles - {role["RoleName"] for role in iam_client().list_roles()["Roles"]}:
+            if missing_roles := hcp_roles - {role["RoleName"] for role in get_roles()}:
                 self.logger.error(f"The following roles are missing for {HYPERSHIFT_STR} deployment: {missing_roles}")
                 raise click.Abort()
