@@ -6,6 +6,8 @@ from functools import wraps
 from importlib.util import find_spec
 from pathlib import Path
 from time import sleep
+import random
+import string
 
 import click
 import yaml
@@ -144,3 +146,7 @@ def get_local_ssh_key(ssh_key_file):
 def get_dict_from_json(gcp_service_account_file):
     with open(gcp_service_account_file) as fd:
         return json.loads(fd.read())
+
+
+def random_resource_postfix(length=4):
+    return "".join(random.choice(string.ascii_lowercase) for _ in range(length))
