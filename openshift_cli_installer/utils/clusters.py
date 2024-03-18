@@ -45,15 +45,17 @@ def clusters_from_directories(directories):
     return clusters_data_list
 
 
-def get_destroy_clusters_kwargs(clusters_data_list, **kwargs):
-    kwargs["action"] = DESTROY_STR
+def get_destroy_clusters_kwargs(clusters_data_list, user_input):
+    user_input.action = DESTROY_STR
+    clusters = []
 
     for cluster_data_from_yaml in clusters_data_list:
         cluster_data_from_yaml["cluster"].pop("expiration-time", None)
         cluster_data_from_yaml["cluster"]["cluster_info"] = cluster_data_from_yaml["cluster_info"]
-        kwargs.setdefault("clusters", []).append(cluster_data_from_yaml["cluster"])
+        clusters.append(cluster_data_from_yaml["cluster"])
 
-    return kwargs
+    user_input.clusters = clusters
+    return user_input
 
 
 def prepare_clusters_directory_from_s3_bucket(s3_bucket_name, s3_bucket_path=None, query=None):
@@ -123,22 +125,22 @@ def get_all_zip_files_from_s3_bucket(client, s3_bucket_name, s3_bucket_path=None
                 yield os.path.split(_object_key)[-1] if s3_bucket_path else _object_key
 
 
-def destroy_clusters_from_s3_bucket_or_local_directory(**kwargs):
+def destroy_clusters_from_s3_bucket_or_local_directory(user_input):
     s3_clusters_data_list = []
     data_directory_clusters_data_list = []
 
-    s3_from_clusters_data_directory = kwargs["destroy_clusters_from_install_data_directory_using_s3_bucket"]
-    destroy_clusters_from_install_data_directory = kwargs["destroy_clusters_from_install_data_directory"]
-    destroy_clusters_from_s3_bucket_query = kwargs["destroy_clusters_from_s3_bucket_query"]
-    if kwargs["destroy_clusters_from_s3_bucket"] or destroy_clusters_from_s3_bucket_query:
+    s3_from_clusters_data_directory = user_input.destroy_clusters_from_install_data_directory_using_s3_bucket
+    destroy_clusters_from_install_data_directory = user_input.destroy_clusters_from_install_data_directory
+    destroy_clusters_from_s3_bucket_query = user_input.destroy_clusters_from_s3_bucket_query
+    if user_input.destroy_clusters_from_s3_bucket or destroy_clusters_from_s3_bucket_query:
         prepare_clusters_directory_from_s3_bucket(
-            s3_bucket_name=kwargs["s3_bucket_name"],
-            s3_bucket_path=kwargs["s3_bucket_path"],
+            s3_bucket_name=user_input.s3_bucket_name,
+            s3_bucket_path=user_input.s3_bucket_path,
             query=destroy_clusters_from_s3_bucket_query,
         )
 
     if destroy_clusters_from_install_data_directory or s3_from_clusters_data_directory:
-        clusters_from_directory = clusters_from_directories(directories=[kwargs["clusters_install_data_directory"]])
+        clusters_from_directory = clusters_from_directories(directories=[user_input.clusters_install_data_directory])
         if destroy_clusters_from_install_data_directory:
             data_directory_clusters_data_list.extend(clusters_from_directory)
 
@@ -154,12 +156,12 @@ def destroy_clusters_from_s3_bucket_or_local_directory(**kwargs):
 
     s3_clusters_data_list.extend(clusters_from_directories(directories=[DESTROY_CLUSTERS_FROM_S3_BASE_DATA_DIRECTORY]))
 
-    clusters_kwargs = get_destroy_clusters_kwargs(
+    updated_user_input = get_destroy_clusters_kwargs(
         clusters_data_list=s3_clusters_data_list + data_directory_clusters_data_list,
-        **kwargs,
+        user_input=user_input,
     )
-    if not clusters_kwargs.get("clusters"):
+    if not updated_user_input.clusters:
         LOGGER.error("No clusters to destroy")
         raise click.Abort()
 
-    return clusters_kwargs
+    return updated_user_input

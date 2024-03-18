@@ -11,13 +11,11 @@ from openshift_cli_installer.utils.general import tts
 
 
 class OcmCluster(OCPCluster):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self, ocp_cluster, user_input):
+        super().__init__(ocp_cluster=ocp_cluster, user_input=user_input)
         self.logger = get_logger(f"{self.__class__.__module__}-{self.__class__.__name__}")
 
-        destroy_from_s3_bucket_or_local_directory = kwargs.get("destroy_from_s3_bucket_or_local_directory")
-
-        if not destroy_from_s3_bucket_or_local_directory:
+        if not self.user_input.destroy_from_s3_bucket_or_local_directory:
             self.osd_base_available_versions_dict = {}
             self.rosa_base_available_versions_dict = {}
             self.cluster["channel-group"] = self.cluster_info["channel-group"] = self.cluster.get(

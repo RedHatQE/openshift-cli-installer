@@ -26,7 +26,6 @@ from ocp_utilities.utils import run_command
 from simple_logger.logger import get_logger
 from clouds.aws.aws_utils import aws_region_names, get_least_crowded_aws_vpc_region
 
-from openshift_cli_installer.libs.user_input import UserInput
 from openshift_cli_installer.utils.cluster_versions import (
     get_cluster_stream,
     get_split_version,
@@ -43,14 +42,13 @@ from openshift_cli_installer.utils.const import (
 from openshift_cli_installer.utils.general import tts
 
 
-class OCPCluster(UserInput):
-    def __init__(self, ocp_cluster, **kwargs):
-        super().__init__(**kwargs)
+class OCPCluster:
+    def __init__(self, ocp_cluster, user_input):
+        self.user_input = user_input
         self.logger = get_logger(f"{self.__class__.__module__}-{self.__class__.__name__}")
         self.cluster = ocp_cluster
-        destroy_from_s3_bucket_or_local_directory = kwargs.get("destroy_from_s3_bucket_or_local_directory")
 
-        if destroy_from_s3_bucket_or_local_directory:
+        if self.user_input.destroy_from_s3_bucket_or_local_directory:
             self.cluster_info = self.cluster["cluster_info"]
             self.s3_bucket_name = self.s3_bucket_name or self.cluster["cluster_info"].get("s3_bucket_name")
             self.s3_bucket_path = self.s3_bucket_path or self.cluster["cluster_info"].get("s3_bucket_path")
@@ -62,12 +60,12 @@ class OCPCluster(UserInput):
             self.cluster_info.update({
                 "display-name": self.cluster_info["name"],
                 "user-requested-version": self.cluster_info["version"],
-                "shortuuid": self.s3_bucket_path_uuid or self.cluster_shortuuid,
+                "shortuuid": self.user_input.s3_bucket_path_uuid or self.cluster_shortuuid,
                 "aws-access-key-id": self.cluster.pop("aws-access-key-id", None),
                 "aws-secret-access-key": self.cluster.pop("aws-secret-access-key", None),
             })
 
-            if self.create:
+            if self.user_input.create:
                 if self.cluster_info.get("auto-region") is True:
                     self.check_and_assign_aws_cluster_region()
 
@@ -82,7 +80,7 @@ class OCPCluster(UserInput):
             self.cluster_info["cluster-dir"] = cluster_dir = self.cluster.pop(
                 "cluster_dir",
                 os.path.join(
-                    self.clusters_install_data_directory,
+                    self.user_input.clusters_install_data_directory,
                     self.cluster_info["platform"],
                     self.cluster_info["name"],
                 ),
@@ -95,7 +93,7 @@ class OCPCluster(UserInput):
         self.log_prefix = f"[C:{self.cluster_info['name']}|P:{self.cluster_info['platform']}|R:{self.cluster_info.get('region', 'auto-region')}]"
         self.timeout = tts(ts=self.cluster.get("timeout", TIMEOUT_60MIN))
 
-        if not destroy_from_s3_bucket_or_local_directory:
+        if not self.user_input.destroy_from_s3_bucket_or_local_directory:
             self.dump_cluster_data_to_file()
 
         self.ocm_client = None
@@ -133,16 +131,18 @@ class OCPCluster(UserInput):
 
     def get_ocm_client(self):
         return OCMPythonClient(
-            token=self.ocm_token,
+            token=self.user_input.ocm_token,
             endpoint="https://sso.redhat.com/auth/realms/redhat-external/protocol/openid-connect/token",
             api_host=self.cluster_info["ocm-env"],
             discard_unknown_keys=True,
         ).client
 
     def _add_s3_bucket_data(self):
-        object_name = self.s3_bucket_object_name or f"{self.cluster_info['name']}-{self.cluster_info['shortuuid']}"
+        object_name = (
+            self.user_input.s3_bucket_object_name or f"{self.cluster_info['name']}-{self.cluster_info['shortuuid']}"
+        )
         self.cluster_info["s3-object-name"] = (
-            f"{f'{self.s3_bucket_path}/' if self.s3_bucket_path else ''}{object_name}.zip"
+            f"{f'{self.user_input.s3_bucket_path}/' if self.user_input.s3_bucket_path else ''}{object_name}.zip"
         )
 
     def check_and_assign_aws_cluster_region(self):
@@ -181,7 +181,7 @@ class OCPCluster(UserInput):
         self.logger.success(f"{self.log_prefix}: Cluster version set to {self.cluster_info['version']}")
 
     def dump_cluster_data_to_file(self):
-        if not self.create:
+        if not self.user_input.create:
             return
 
         _cluster_data = {}
@@ -325,7 +325,7 @@ class OCPCluster(UserInput):
             _s3_client = s3_client(region_name=region)
             s3_secret_data = f"""
             type: {S3_STR}
-            config:
+            config:kwargs
               bucket: {bucket_name}
               endpoint: s3.{region}.amazonaws.com
               insecure: true
@@ -407,7 +407,7 @@ class OCPCluster(UserInput):
 
                 self.logger.info(f"{self.log_prefix}: Attach {_managed_cluster_name} to ACM hub")
 
-                if self.parallel:
+                if self.user_input.parallel:
                     futures.append(executor.submit(self.attach_cluster_to_acm, **action_kwargs))
                 else:
                     self.attach_cluster_to_acm(**action_kwargs)

@@ -9,7 +9,6 @@ from simple_logger.logger import get_logger
 from openshift_cli_installer.libs.clusters.ipi_cluster import AwsIpiCluster, GcpIpiCluster
 from openshift_cli_installer.libs.clusters.osd_cluster import OsdCluster
 from openshift_cli_installer.libs.clusters.rosa_cluster import RosaCluster
-from openshift_cli_installer.libs.user_input import UserInput
 from openshift_cli_installer.utils.const import (
     AWS_OSD_STR,
     AWS_STR,
@@ -22,10 +21,9 @@ from openshift_cli_installer.utils.const import (
 )
 
 
-class OCPClusters(UserInput):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-
+class OCPClusters:
+    def __init__(self, user_input):
+        self.user_input = user_input
         self.logger = get_logger(f"{self.__class__.__module__}-{self.__class__.__name__}")
         self.aws_ipi_clusters = []
         self.gcp_ipi_clusters = []
@@ -36,34 +34,34 @@ class OCPClusters(UserInput):
 
         self.s3_target_dirs = []
 
-        for _cluster in self.clusters:
-            self.add_to_cluster_lists(ocp_cluster=_cluster, **kwargs)
+        for _cluster in user_input.clusters:
+            self.add_to_cluster_lists(ocp_cluster=_cluster)
 
-        if self.create:
+        if self.user_input.create:
             self.check_ocm_managed_existing_clusters()
             self.is_region_support_hypershift()
             self.is_region_support_aws()
             self.is_region_support_gcp()
 
-    def add_to_cluster_lists(self, ocp_cluster, **kwargs):
+    def add_to_cluster_lists(self, ocp_cluster):
         _cluster_platform = ocp_cluster["platform"]
         if _cluster_platform == AWS_STR:
-            self.aws_ipi_clusters.append(AwsIpiCluster(ocp_cluster=ocp_cluster, **kwargs))
+            self.aws_ipi_clusters.append(AwsIpiCluster(ocp_cluster=ocp_cluster, user_input=self.user_input))
 
         if _cluster_platform == GCP_STR:
-            self.gcp_ipi_clusters.append(GcpIpiCluster(ocp_cluster=ocp_cluster, **kwargs))
+            self.gcp_ipi_clusters.append(GcpIpiCluster(ocp_cluster=ocp_cluster, user_input=self.user_input))
 
         if _cluster_platform == AWS_OSD_STR:
-            self.aws_osd_clusters.append(OsdCluster(ocp_cluster=ocp_cluster, **kwargs))
+            self.aws_osd_clusters.append(OsdCluster(ocp_cluster=ocp_cluster, user_input=self.user_input))
 
         if _cluster_platform == ROSA_STR:
-            self.rosa_clusters.append(RosaCluster(ocp_cluster=ocp_cluster, **kwargs))
+            self.rosa_clusters.append(RosaCluster(ocp_cluster=ocp_cluster, user_input=self.user_input))
 
         if _cluster_platform == HYPERSHIFT_STR:
-            self.hypershift_clusters.append(RosaCluster(ocp_cluster=ocp_cluster, **kwargs))
+            self.hypershift_clusters.append(RosaCluster(ocp_cluster=ocp_cluster, user_input=self.user_input))
 
         if _cluster_platform == GCP_OSD_STR:
-            self.gcp_osd_clusters.append(OsdCluster(ocp_cluster=ocp_cluster, **kwargs))
+            self.gcp_osd_clusters.append(OsdCluster(ocp_cluster=ocp_cluster, user_input=self.user_input))
 
     @property
     def list_clusters(self):
@@ -145,7 +143,7 @@ class OCPClusters(UserInput):
     def is_region_support_gcp(self):
         if _clusters := self.gcp_ipi_clusters + self.gcp_osd_clusters:
             self.logger.info(f"Check if regions are {GCP_STR}-supported.")
-            supported_regions = get_gcp_regions(gcp_service_account_file=self.gcp_service_account_file)
+            supported_regions = get_gcp_regions(gcp_service_account_file=self.user_input.gcp_service_account_file)
             unsupported_regions = []
             for _cluster in _clusters:
                 cluster_region = _cluster.cluster_info["region"]
@@ -158,15 +156,15 @@ class OCPClusters(UserInput):
 
     def run_create_or_destroy_clusters(self):
         futures = []
-        action_str = "create_cluster" if self.create else "destroy_cluster"
+        action_str = "create_cluster" if self.user_input.create else "destroy_cluster"
 
         with ThreadPoolExecutor() as executor:
             for cluster in self.list_clusters:
                 action_func = getattr(cluster, action_str)
                 self.logger.info(
-                    f"Executing {self.action} cluster {cluster.cluster_info['name']} [parallel: {self.parallel}]"
+                    f"Executing {self.user_input.action} cluster {cluster.cluster_info['name']} [parallel: {self.user_input.parallel}]"
                 )
-                if self.parallel:
+                if self.user_input.parallel:
                     futures.append(executor.submit(action_func))
                 else:
                     action_func()
@@ -179,14 +177,14 @@ class OCPClusters(UserInput):
         for result in as_completed(futures):
             _exception = result.exception()
             if _exception:
-                if self.create:
+                if self.user_input.create:
                     create_clusters_error = True
                 else:
                     raise click.Abort()
 
         # If one cluster failed to create we want to destroy all clusters
         if create_clusters_error:
-            self.create = False
+            self.user_input.create = False
             self.logger.error("One cluster failed to create, destroying all clusters")
             self.run_create_or_destroy_clusters()
             raise click.Abort()

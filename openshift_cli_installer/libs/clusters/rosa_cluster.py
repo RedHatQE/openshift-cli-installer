@@ -18,12 +18,11 @@ from clouds.aws.roles.roles import get_roles
 
 
 class RosaCluster(OcmCluster):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self, ocp_cluster, user_input):
+        super().__init__(ocp_cluster=ocp_cluster, user_input=user_input)
         self.logger = get_logger(f"{self.__class__.__module__}-{self.__class__.__name__}")
-
-        if self.create:
-            self.cluster_info["aws-account-id"] = self.aws_account_id
+        if self.user_input.create:
+            self.cluster_info["aws-account-id"] = self.user_input.aws_account_id
             self.assert_hypershift_missing_roles()
             self.get_rosa_versions()
             self.all_available_versions.update(
@@ -36,7 +35,7 @@ class RosaCluster(OcmCluster):
             )
             self.set_cluster_install_version()
 
-        if not kwargs.get("destroy_from_s3_bucket_or_local_directory"):
+        if not self.user_input.destroy_from_s3_bucket_or_local_directory:
             if self.cluster_info["platform"] == HYPERSHIFT_STR:
                 self.terraform = None
                 self.cluster["tags"] = "dns:external"
