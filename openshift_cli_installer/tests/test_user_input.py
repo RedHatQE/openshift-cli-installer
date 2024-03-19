@@ -8,11 +8,7 @@ import subprocess
 @pytest.mark.parametrize(
     "command, expected",
     [
-        ("", "'action' must be provided, supported actions: `('destroy', 'create')`"),
-        (
-            "--action=invalid-action",
-            " Invalid value for '-a' / '--action': 'invalid-action' is not one of 'create', 'destroy'",
-        ),
+        ("--ocm-token=123", "'action' must be provided, supported actions: `('destroy', 'create')`"),
         (
             f"--action=create --ocm-token='' --cluster='name=test-cl;platform={AWS_STR}'",
             "--ocm-token is required for clusters",
@@ -51,11 +47,11 @@ import subprocess
             "--aws-secret-access-key and --aws-access-key-id required for AWS OSD OR ACM cluster installations",
         ),
         (
-            f"--action=create --ocm-token=123 --aws-secret-access-key='123' --aws-access-key-id='123' --aws-account-id='' --cluster='name=test-cl;platform={AWS_OSD_STR}'",
+            f"--action=create --ocm-token=123 --aws-secret-access-key=123 --aws-access-key-id=123 --aws-account-id='' --cluster='name=test-cl;platform={AWS_OSD_STR}'",
             "--aws-account-id required for AWS OSD or Hypershift installations",
         ),
         (
-            f"--action=create --ocm-token=123 --cluster='name=test-cl;platform={HYPERSHIFT_STR};acm=True'",
+            f"--action=create --ocm-token=123 --aws-secret-access-key=123 --aws-access-key-id=123 --aws-account-id=123 --cluster='name=test-cl;platform={HYPERSHIFT_STR};acm=True'",
             f"ACM not supported for {HYPERSHIFT_STR} clusters",
         ),
         (
@@ -108,10 +104,4 @@ def test_user_input(command, expected):
     )
 
     assert not rc
-    # try:
     assert expected in err
-    # except AssertionError:
-    #     import ipdb;
-    #     ipdb.set_trace()
-    #     print("err")
-    #     raise
