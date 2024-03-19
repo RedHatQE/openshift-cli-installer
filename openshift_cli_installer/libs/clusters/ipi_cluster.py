@@ -186,10 +186,10 @@ class IpiCluster(OCPCluster):
         except Exception as ex:
             _rollback_on_error(_ex=ex)
 
-        if self.s3_bucket_name:
+        if self.user_input.s3_bucket_name:
             zip_and_upload_to_s3(
                 install_dir=self.cluster_info["cluster-dir"],
-                s3_bucket_name=self.s3_bucket_name,
+                s3_bucket_name=self.user_input.s3_bucket_name,
                 s3_bucket_object_name=self.cluster_info["s3-object-name"],
             )
 

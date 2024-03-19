@@ -138,7 +138,7 @@ class UserInput:
 
         else:
             if not self.action:
-                self.logger.error("'action' must be provided, supported actions: `{SUPPORTED_ACTIONS}`")
+                self.logger.error(f"'action' must be provided, supported actions: `{SUPPORTED_ACTIONS}`")
 
                 raise click.Abort()
 
@@ -151,6 +151,7 @@ class UserInput:
                 self.logger.error("At least one '--cluster' option must be provided.")
                 raise click.Abort()
 
+            self.assert_boolean_values()
             self.is_platform_supported()
             self.assert_cluster_name()
             self.assert_unique_cluster_names()
@@ -159,7 +160,6 @@ class UserInput:
             self.assert_aws_osd_hypershift_user_input()
             self.assert_acm_clusters_user_input()
             self.assert_gcp_user_input()
-            self.assert_boolean_values()
             self.assert_cluster_platform_support_observability()
 
     def abort_no_ocm_token(self):
@@ -203,7 +203,7 @@ class UserInput:
                         name=managed_acm_cluster, clusters=self.clusters
                     )
                     if not managed_acm_cluster_data:
-                        self.logger.error(f"Managed ACM clusters: Cluster {managed_acm_cluster} not" " found")
+                        self.logger.error(f"Managed ACM clusters: Cluster not found {managed_acm_cluster}")
                         raise click.Abort()
 
     def assert_ipi_installer_user_input(self):
@@ -215,10 +215,13 @@ class UserInput:
                 self.assert_public_ssh_key_file_exists()
 
     def assert_docker_config_file_exists(self):
-        if not self.docker_config_file or not os.path.exists(self.docker_config_file):
+        if not self.docker_config_file:
+            self.logger.error("Docker config file is required for IPI installations.")
+            raise click.Abort()
+
+        if not os.path.exists(self.docker_config_file) and not self.dry_run:
             self.logger.error(
-                "Docker config file is required for IPI installations."
-                f" {self.docker_config_file} file does not exist."
+                f"{self.docker_config_file} file does not exist.",
             )
             raise click.Abort()
 
@@ -233,23 +236,32 @@ class UserInput:
 
         if unsupported_log_levels:
             self.logger.error(
-                f"{unsupported_log_levels} not supported for openshift-installer cli."
+                f"{unsupported_log_levels} log levels are not supported for openshift-installer cli."
                 f" Supported options are {supported_log_levels}"
             )
             raise click.Abort()
 
     def assert_public_ssh_key_file_exists(self):
-        if not self.ssh_key_file or not os.path.exists(self.ssh_key_file):
+        if not self.ssh_key_file:
             self.logger.error(
-                "SSH file is required for IPI cluster installations. {self.ssh_key_file} file does not exist.",
+                "SSH file is required for IPI cluster installations.",
+            )
+            raise click.Abort()
+
+        if not os.path.exists(self.ssh_key_file) and not self.dry_run:
+            self.logger.error(
+                f"{self.ssh_key_file} file does not exist.",
             )
             raise click.Abort()
 
     def assert_registry_config_file_exists(self):
-        if not self.registry_config_file or not os.path.exists(self.registry_config_file):
+        if not self.registry_config_file:
+            self.logger.error("Registry config file is required for IPI cluster installations.")
+            raise click.Abort()
+
+        if not os.path.exists(self.registry_config_file) and not self.dry_run:
             self.logger.error(
-                "Registry config file is required for IPI cluster installations."
-                f" {self.registry_config_file} file does not exist.",
+                f"{self.registry_config_file} file does not exist.",
             )
             raise click.Abort()
 
@@ -265,7 +277,7 @@ class UserInput:
     def assert_aws_credentials_exist(self):
         if not (self.aws_secret_access_key and self.aws_access_key_id):
             self.logger.error(
-                "--aws-secret-access-key and aws-access-key-id required for AWS OSD OR ACM cluster installations.",
+                "--aws-secret-access-key and --aws-access-key-id required for AWS OSD OR ACM cluster installations.",
             )
             raise click.Abort()
 
@@ -333,7 +345,7 @@ class UserInput:
             if missing_storage_data:
                 _storage_clusters = "\n".join(missing_storage_data)
                 self.logger.error(
-                    "The following clusters are missing storage data for observability:\n{_storage_clusters}\n"
+                    f"The following clusters are missing storage data for observability:\n{_storage_clusters}\n"
                 )
             raise click.Abort()
 

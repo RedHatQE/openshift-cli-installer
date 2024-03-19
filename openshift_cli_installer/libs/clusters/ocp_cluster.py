@@ -50,8 +50,8 @@ class OCPCluster:
 
         if self.user_input.destroy_from_s3_bucket_or_local_directory:
             self.cluster_info = self.cluster["cluster_info"]
-            self.s3_bucket_name = self.s3_bucket_name or self.cluster["cluster_info"].get("s3_bucket_name")
-            self.s3_bucket_path = self.s3_bucket_path or self.cluster["cluster_info"].get("s3_bucket_path")
+            self.s3_bucket_name = self.user_input.s3_bucket_name or self.cluster["cluster_info"].get("s3_bucket_name")
+            self.s3_bucket_path = self.user_input.s3_bucket_path or self.cluster["cluster_info"].get("s3_bucket_path")
         else:
             self.cluster_info = copy.deepcopy(self.cluster)
             self.cluster_shortuuid = shortuuid.uuid().lower()
