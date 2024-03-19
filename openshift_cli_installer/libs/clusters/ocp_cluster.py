@@ -325,7 +325,7 @@ class OCPCluster:
             _s3_client = s3_client(region_name=region)
             s3_secret_data = f"""
             type: {S3_STR}
-            config:kwargs
+            config:
               bucket: {bucket_name}
               endpoint: s3.{region}.amazonaws.com
               insecure: true
