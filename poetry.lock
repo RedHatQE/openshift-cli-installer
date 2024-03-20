@@ -763,12 +763,12 @@ urllib3 = ">=1.25.3"
 
 [[package]]
 name = "openshift-cluster-management-python-wrapper"
-version = "1.0.87"
+version = "1.0.88"
 description = "Wrapper around https://github.com/openshift/openshift-cluster-management-python-client"
 optional = false
 python-versions = ">=3.8,<4.0"
 files = [
-    {file = "openshift_cluster_management_python_wrapper-1.0.87.tar.gz", hash = "sha256:71de32687c62f16057e35af2793b62daea2520cb5d537880ae3984186b1d3c32"},
+    {file = "openshift_cluster_management_python_wrapper-1.0.88.tar.gz", hash = "sha256:a93d949cf60ed2d7bfa765dfed3a29b64a6a0a6cc6ddb57503decf171b38c1aa"},
 ]
 
 [package.dependencies]
@@ -809,12 +809,12 @@ timeout-sampler = ">=0.0.1"
 
 [[package]]
 name = "openshift-python-wrapper"
-version = "10.0.19"
+version = "10.0.20"
 description = "Wrapper around https://github.com/kubernetes-client/python"
 optional = false
 python-versions = ">=3.8,<4.0"
 files = [
-    {file = "openshift_python_wrapper-10.0.19.tar.gz", hash = "sha256:deb9b6ba40360d0ac1b8f4b48c45a2b15d0003622f8fc82773bd7a7819926e3b"},
+    {file = "openshift_python_wrapper-10.0.20.tar.gz", hash = "sha256:9d8d77c3a894b8eb3fce8dac0d0709c596a1d0a598eda2ee6ac1659249eae7d6"},
 ]
 
 [package.dependencies]
@@ -1133,12 +1133,12 @@ files = [
 
 [[package]]
 name = "python-simple-logger"
-version = "1.0.16"
+version = "1.0.17"
 description = "A simple logger for python"
 optional = false
 python-versions = ">=3.8,<4.0"
 files = [
-    {file = "python_simple_logger-1.0.16.tar.gz", hash = "sha256:392d08358fc0bc0b334eaeb5a81d58568a0abbd6719774de5e71bb1198dca6ad"},
+    {file = "python_simple_logger-1.0.17.tar.gz", hash = "sha256:187d04637e83737dd49e0bba4785933d7ab3eb8b96b85acd826e0a17e34f47d2"},
 ]
 
 [package.dependencies]
