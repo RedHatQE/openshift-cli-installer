@@ -206,6 +206,7 @@ class OCPCluster:
             "timeout_watch",
             "ipi_base_available_versions",
             "_already_processed",
+            "user_input",
         )
         for _key, _val in self.to_dict.items():
             if _key in keys_to_pop or not _val:
