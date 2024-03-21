@@ -211,7 +211,7 @@ must-gather will try to collect data when cluster installation fails and cluster
     is_flag=True,
     show_default=True,
 )
-def installer(**kwargs):
+def main(**kwargs):
     """
     Create/Destroy Openshift cluster/s
     """
@@ -258,7 +258,7 @@ if __name__ == "__main__":
     should_raise = False
     _logger = get_logger(name="openshift-cli-installer")
     try:
-        installer()
+        main()
     except Exception as ex:
         import sys
         import traceback

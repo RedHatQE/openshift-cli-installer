@@ -35,7 +35,7 @@ classifiers = [
 ]
 
 [tool.poetry.scripts]
-openshift-cli-installer = "openshift_cli_installer.cli:installer"
+openshift-cli-installer = "openshift_cli_installer.cli:main"
 
 [tool.poetry.dependencies]
 python = "^3.8"
