@@ -1,3 +1,33 @@
 {
-  "$schema": "https://docs.renovatebot.com/renovate-schema.json"
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "packageRules": [
+    {
+      "matchPackagePatterns": [
+        "jinja2",
+        "shortuuid",
+        "click",
+        "rosa-python-client",
+        "openshift-cluster-management-python-wrapper",
+        "python-terraform",
+        "semver",
+        "openshift-python-utilities",
+        "pyaml-env",
+        "google-cloud-compute",
+        "redhat-qe-cloud-tools",
+        "python-simple-logger",
+        "ruff",
+        "timeout-sampler",
+        "openshift-python-wrapper",
+        "pytest-testconfig",
+        "beautifulsoup4",
+        "requests",
+        "ipdb",
+        "ipython",
+        "pytest",
+        "pytest-mock",
+        "pytest-cov"
+      ],
+      "groupName": "poetry-deps"
+    }
+  ]
 }
