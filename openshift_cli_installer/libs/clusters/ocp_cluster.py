@@ -39,7 +39,7 @@ from openshift_cli_installer.utils.const import (
     STAGE_STR,
     TIMEOUT_60MIN,
 )
-from openshift_cli_installer.utils.general import tts
+from pyhelper_utils.general import tts
 
 
 class OCPCluster:

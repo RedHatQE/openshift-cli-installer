@@ -7,7 +7,7 @@ from simple_logger.logger import get_logger
 
 from openshift_cli_installer.libs.clusters.ocp_cluster import OCPCluster
 from openshift_cli_installer.utils.const import HYPERSHIFT_STR, STAGE_STR
-from openshift_cli_installer.utils.general import tts
+from pyhelper_utils.general import tts
 
 
 class OcmCluster(OCPCluster):

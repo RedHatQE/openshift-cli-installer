@@ -1,6 +1,5 @@
 import json
 import os
-import re
 import shutil
 from functools import wraps
 from importlib.util import find_spec
@@ -69,48 +68,19 @@ def zip_and_upload_to_s3(install_dir, s3_bucket_name, s3_bucket_object_name):
 def get_manifests_path():
     manifests_path = os.path.join("openshift_cli_installer", "manifests")
     if not os.path.isdir(manifests_path):
-        manifests_path = os.path.join(find_spec("openshift_cli_installer").submodule_search_locations[0], "manifests")
+        manifests_path = os.path.join(
+            find_spec("openshift_cli_installer").submodule_search_locations[0],
+            "manifests",
+        )
     return manifests_path
-
-
-# TODO: Move to own repository.
-def tts(ts):
-    """
-    Convert time string to seconds.
-
-    Args:
-        ts (str): time string to convert, can be and int followed by s/m/h
-            if only numbers was sent return int(ts)
-
-    Example:
-        >>> tts(ts="1h")
-        3600
-        >>> tts(ts="3600")
-        3600
-
-    Returns:
-        int: Time in seconds
-    """
-    try:
-        time_and_unit = re.match(r"(?P<time>\d+)(?P<unit>\w)", str(ts)).groupdict()
-    except AttributeError:
-        return int(ts)
-
-    _time = int(time_and_unit["time"])
-    _unit = time_and_unit["unit"].lower()
-    if _unit == "s":
-        return _time
-    elif _unit == "m":
-        return _time * 60
-    elif _unit == "h":
-        return _time * 60 * 60
-    else:
-        return int(ts)
 
 
 def get_install_config_j2_template(jinja_dict, platform):
     env = Environment(
-        loader=FileSystemLoader(get_manifests_path()), trim_blocks=True, lstrip_blocks=True, undefined=DebugUndefined
+        loader=FileSystemLoader(get_manifests_path()),
+        trim_blocks=True,
+        lstrip_blocks=True,
+        undefined=DebugUndefined,
     )
 
     template = env.get_template(name=f"{platform}-install-config-template.j2")
