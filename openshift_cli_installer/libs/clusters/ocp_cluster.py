@@ -282,7 +282,7 @@ class OCPCluster:
 
         self.dump_cluster_data_to_file()
 
-    def set_cluster_auth(self):
+    def set_cluster_auth(self, idp_user=None, idp_password=None):
         auth_path = self.cluster_info["auth-path"]
         Path(auth_path).mkdir(parents=True, exist_ok=True)
 
@@ -291,6 +291,15 @@ class OCPCluster:
 
         with open(os.path.join(auth_path, "kubeadmin-password"), "w") as fd:
             fd.write(self.cluster_object.kubeadmin_password)
+
+        if idp_user and idp_password:
+            with open(os.path.join(auth_path, f"{idp_user}-password"), "w") as fd:
+                fd.write(idp_password)
+
+            with open(os.path.join(auth_path, "api.login"), "w") as fd:
+                fd.write(
+                    f"oc login {self.ocp_client.configuration.host} -u {idp_user} -p {idp_password} --insecure-skip-tls-verify=true"
+                )
 
         self.dump_cluster_data_to_file()
 

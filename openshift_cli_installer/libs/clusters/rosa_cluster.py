@@ -6,7 +6,8 @@ import click
 import rosa.cli
 from python_terraform import IsNotFlagged, Terraform
 from simple_logger.logger import get_logger
-
+import secrets
+import string
 from openshift_cli_installer.libs.clusters.ocm_cluster import OcmCluster
 from openshift_cli_installer.utils.cluster_versions import filter_versions
 from openshift_cli_installer.utils.const import HYPERSHIFT_STR
@@ -14,6 +15,8 @@ from openshift_cli_installer.utils.general import (
     get_manifests_path,
     zip_and_upload_to_s3,
 )
+from ocp_resources.group import Group
+from timeout_sampler import TimeoutSampler
 from clouds.aws.roles.roles import get_roles
 
 
@@ -193,6 +196,8 @@ class RosaCluster(OcmCluster):
         return command
 
     def create_cluster(self):
+        idp_user, idp_password = None, None
+
         self.timeout_watch = self.start_time_watcher()
         if self.cluster_info["platform"] == HYPERSHIFT_STR:
             self.create_oidc()
@@ -209,8 +214,14 @@ class RosaCluster(OcmCluster):
             )
 
             self.cluster_object.wait_for_cluster_ready(wait_timeout=self.timeout_watch.remaining_time())
-            self.set_cluster_auth()
+
+            # Must be called right after the cluster is ready.
             self.add_cluster_info_to_cluster_object()
+
+            if self.cluster_info["platform"] == HYPERSHIFT_STR:
+                idp_user, idp_password = self.create_hypershift_idp()
+
+            self.set_cluster_auth(idp_user=idp_user, idp_password=idp_password)
             self.logger.success(f"{self.log_prefix}: Cluster created successfully")
 
         except Exception as ex:
@@ -292,3 +303,50 @@ class RosaCluster(OcmCluster):
             if missing_roles := hcp_roles - {role["RoleName"] for role in get_roles()}:
                 self.logger.error(f"The following roles are missing for {HYPERSHIFT_STR} deployment: {missing_roles}")
                 raise click.Abort()
+
+    def create_hypershift_idp(self):
+        """
+        For hypershift cluster create IDP to be able to login to the cluster with user and password.
+
+        Returns:
+            tuple: idp_user and idp_password.
+        """
+        idp_user = "rosa-admin"
+        idp_password = self.generate_hypershift_password()
+        aws_region = self.cluster_info["region"]
+        commands = [
+            f"create idp -c {self.cluster_object.cluster_id} --type htpasswd --name rosa-htpasswd --username={idp_user} --password={idp_password}",
+            f"grant user cluster-admin --user={idp_user} --cluster={self.cluster_object.cluster_id}",
+        ]
+        rosa_command_success = True
+        for command in commands:
+            try:
+                rosa.cli.execute(
+                    command=command,
+                    ocm_client=self.ocm_client,
+                    aws_region=aws_region,
+                )
+            except Exception as ex:
+                rosa_command_success = False
+                self.logger.error(f"{self.log_prefix}: Failed to create IDP\n{ex}")
+
+        if rosa_command_success:
+            try:
+                for sampler in TimeoutSampler(
+                    wait_timeout=300,
+                    sleep=10,
+                    func=Group,
+                    client=self.ocp_client,
+                    name="cluster-admins",
+                ):
+                    if sampler and idp_user in sampler.instance.users:
+                        break
+
+            except Exception as ex:
+                self.logger.error(f"{self.log_prefix}: {idp_user} is not part of cluster-admins\n{ex}")
+
+        return idp_user, idp_password
+
+    def generate_hypershift_password(self):
+        alphabet = string.ascii_letters + string.digits
+        return "".join(secrets.choice(alphabet) for _ in range(20))
