@@ -329,6 +329,7 @@ class RosaCluster(OcmCluster):
             except Exception as ex:
                 rosa_command_success = False
                 self.logger.error(f"{self.log_prefix}: Failed to create IDP\n{ex}")
+                break
 
         if rosa_command_success:
             try:
