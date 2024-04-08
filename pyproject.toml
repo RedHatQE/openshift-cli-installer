@@ -57,7 +57,7 @@ openshift-python-wrapper = ">=10.0.0"
 pytest-testconfig = "^0.2.0"
 beautifulsoup4 = "^4.12.3"
 requests = "^2.31.0"
-pyhelper-utils = "^0.0.4"
+pyhelper-utils = "^0.0.6"
 
 
 [tool.poetry.group.dev.dependencies]
