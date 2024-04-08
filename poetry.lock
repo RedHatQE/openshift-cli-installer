@@ -831,12 +831,12 @@ urllib3 = ">=1.25.3"
 
 [[package]]
 name = "openshift-cluster-management-python-wrapper"
-version = "1.0.97"
+version = "1.0.99"
 description = "Wrapper around https://github.com/openshift/openshift-cluster-management-python-client"
 optional = false
 python-versions = "<4.0,>=3.8"
 files = [
-    {file = "openshift_cluster_management_python_wrapper-1.0.97.tar.gz", hash = "sha256:d6faa52f8acca8aa05b1d0c804ef797fca56134953c1ba169b522d2c48d9479e"},
+    {file = "openshift_cluster_management_python_wrapper-1.0.99.tar.gz", hash = "sha256:f2e759b13e527b21b35629871ace31d0141fa802c7faa77149bd69ce42b8f31d"},
 ]
 
 [package.dependencies]
@@ -855,12 +855,12 @@ timeout-sampler = ">=0.0.2"
 
 [[package]]
 name = "openshift-python-utilities"
-version = "5.0.34"
+version = "5.0.35"
 description = "A utilities repository for https://github.com/RedHatQE/openshift-python-wrapper"
 optional = false
 python-versions = "<4.0,>=3.8"
 files = [
-    {file = "openshift_python_utilities-5.0.34.tar.gz", hash = "sha256:c087b1b1cccb0956a37007d08d92152f15da5db051fb99f21fd173698e4bae8c"},
+    {file = "openshift_python_utilities-5.0.35.tar.gz", hash = "sha256:c375f07f512167cbae4500e18b7f7ccf65f01b6a1a32c80e7f620a283fab0299"},
 ]
 
 [package.dependencies]
@@ -876,12 +876,12 @@ timeout-sampler = ">=0.0.17"
 
 [[package]]
 name = "openshift-python-wrapper"
-version = "10.0.29"
+version = "10.0.31"
 description = "Wrapper around https://github.com/kubernetes-client/python"
 optional = false
 python-versions = "<4.0,>=3.8"
 files = [
-    {file = "openshift_python_wrapper-10.0.29.tar.gz", hash = "sha256:a00a4c3d7745645994ff08dcb5c42fc552e0e24f463fa6c21563ec223a20e563"},
+    {file = "openshift_python_wrapper-10.0.31.tar.gz", hash = "sha256:24aaffb7883b12ff5bdf1315bc19c8e61988a29b91064495bce6f05e38918aa8"},
 ]
 
 [package.dependencies]
@@ -1349,12 +1349,12 @@ files = [
 
 [[package]]
 name = "redhat-qe-cloud-tools"
-version = "1.0.58"
+version = "1.0.59"
 description = "Python utilities to manage cloud services, such as AWS."
 optional = false
 python-versions = "<4.0,>=3.8"
 files = [
-    {file = "redhat_qe_cloud_tools-1.0.58.tar.gz", hash = "sha256:c362520abe4f413d2f61810c56163d208a1b766d35434c78ac4e30fa948935fc"},
+    {file = "redhat_qe_cloud_tools-1.0.59.tar.gz", hash = "sha256:bb1b83fb360a43c47462d463626b6c59655919090e01f7760e3be2f098237645"},
 ]
 
 [package.dependencies]
@@ -1407,12 +1407,12 @@ rsa = ["oauthlib[signedtoken] (>=3.0.0)"]
 
 [[package]]
 name = "rosa-python-client"
-version = "1.0.76"
+version = "1.0.78"
 description = "Wrapper for rosa cli"
 optional = false
 python-versions = "<4.0,>=3.8"
 files = [
-    {file = "rosa_python_client-1.0.76.tar.gz", hash = "sha256:06b6d577ed6aaeb1575632a22ff49a3e801e35094b948adc3f90af5a545b4ca2"},
+    {file = "rosa_python_client-1.0.78.tar.gz", hash = "sha256:4eb5bd11cc3dfdec6e5a250e970e0d9b2b4c78968ea43d94354ee24d838a63b6"},
 ]
 
 [package.dependencies]
