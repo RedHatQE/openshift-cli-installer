@@ -1111,16 +1111,17 @@ windows-terminal = ["colorama (>=0.4.6)"]
 
 [[package]]
 name = "pyhelper-utils"
-version = "0.0.3"
+version = "0.0.4"
 description = "Collective utility functions for python projects"
 optional = false
 python-versions = "<4.0,>=3.8"
 files = [
-    {file = "pyhelper_utils-0.0.3.tar.gz", hash = "sha256:7f85cb48b6fe28b195a6630f024e4f397742040846d91468827d3f0112ae89d1"},
+    {file = "pyhelper_utils-0.0.4.tar.gz", hash = "sha256:dce86768cf1552e95a5edf9ad5c74be5df0fad53c4e8444fe2f374bff5733bbd"},
 ]
 
 [package.dependencies]
 python-simple-logger = ">=1.0.19,<2.0.0"
+requests = ">=2.31.0,<3.0.0"
 
 [[package]]
 name = "pytest"
@@ -1675,4 +1676,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.8"
-content-hash = "4556ec624bc57c15778c023a3501d784f9d072ce46e413e478abf81640b85121"
+content-hash = "eca79fcb39452a7191a8b0bcd183b859822b57fd6cdb32fef9cf50ce3ee646f8"
