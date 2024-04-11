@@ -14,7 +14,7 @@ Each cluster can be provided with different configuration options, such as worke
 ### Container
 
 Image locate at [openshift-cli-installer](https://quay.io/repository/redhat_msi/openshift-cli-installer)  
-To pull the image: `podman pull quay.io/openshift-cli-installer`
+To pull the image: `podman pull quay.io/redhat_msi/openshift-cli-installer`
 
 ### Create clusters from YAML file
 
