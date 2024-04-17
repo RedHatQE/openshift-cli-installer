@@ -3,8 +3,6 @@ import re
 from typing import Dict, List
 
 import click
-import rosa.cli
-from ocm_python_wrapper.versions import Versions
 from simple_logger.logger import get_logger
 import requests
 from bs4 import BeautifulSoup
@@ -80,14 +78,6 @@ def get_cluster_version_to_install(
     return match
 
 
-def get_split_version(version):
-    split_version = version.split(".")
-    if len(split_version) > 2:
-        version = ".".join(split_version[:-1])
-
-    return version
-
-
 def get_cluster_stream(cluster_data):
     _platform = cluster_data["platform"]
     return cluster_data["stream"] if _platform in IPI_BASED_PLATFORMS else cluster_data["channel-group"]
@@ -104,30 +94,6 @@ def get_ipi_cluster_versions() -> Dict[str, Dict[str, List[str]]]:
             _accepted_version_dict[_source].setdefault(_version_key, []).append(version)
 
     return _accepted_version_dict
-
-
-def update_rosa_osd_clusters_versions(clusters):
-    base_available_versions_dict = {}
-    for cluster_data in clusters:
-        if cluster_data["platform"] in (AWS_OSD_STR, GCP_OSD_STR):
-            base_available_versions_dict.update(
-                Versions(client=cluster_data["ocm-client"]).get(channel_group=cluster_data["channel-group"])
-            )
-
-        elif cluster_data["platform"] in (ROSA_STR, HYPERSHIFT_STR):
-            channel_group = cluster_data["channel-group"]
-            base_available_versions = rosa.cli.execute(
-                command=(
-                    f"list versions --channel-group={channel_group} "
-                    f"{'--hosted-cp' if cluster_data['platform'] == HYPERSHIFT_STR else ''}"
-                ),
-                aws_region=cluster_data["region"],
-                ocm_client=cluster_data["ocm-client"],
-            )["out"]
-            _all_versions = [ver["raw_id"] for ver in base_available_versions]
-            base_available_versions_dict.setdefault(channel_group, []).extend(_all_versions)
-
-    return set_clusters_versions(clusters=clusters, base_available_versions=base_available_versions_dict)
 
 
 @functools.cache
