@@ -19,30 +19,6 @@ from openshift_cli_installer.utils.const import (
 LOGGER = get_logger(name=__name__)
 
 
-def set_clusters_versions(clusters, base_available_versions):
-    for cluster_data in clusters:
-        cluster_name = cluster_data.get("name", "test-cluster")
-        cluster_version = cluster_data["version"]
-        platform = cluster_data["platform"]
-
-        if platform in IPI_BASED_PLATFORMS:
-            version_url = [
-                url for url, versions in base_available_versions.items() if cluster_data["version"] in versions
-            ]
-            if version_url:
-                cluster_data["version-url"] = version_url[0]
-            else:
-                LOGGER.error(
-                    f"{cluster_name}: Cluster version url not found for"
-                    f" {cluster_version} in {base_available_versions.keys()}",
-                )
-                raise click.Abort()
-
-        LOGGER.info(f"{cluster_name}: Cluster version set to {cluster_data['version']}")
-
-    return clusters
-
-
 def get_cluster_version_to_install(
     wanted_version: str, base_versions_dict: Dict, platform: str, stream: str, log_prefix: str, cluster_name: str
 ) -> str:
