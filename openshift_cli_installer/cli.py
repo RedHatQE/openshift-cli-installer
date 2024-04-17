@@ -242,7 +242,6 @@ def main(**kwargs):
         else:
             user_input.destroy_from_s3_bucket_or_local_directory = False
             clusters = OCPClusters(user_input=user_input)
-            __import__("ipdb").set_trace()
             clusters.run_create_or_destroy_clusters()
 
             if user_input.action == CREATE_STR:
