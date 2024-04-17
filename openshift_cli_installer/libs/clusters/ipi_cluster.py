@@ -12,7 +12,7 @@ from simple_logger.logger import get_logger
 
 from openshift_cli_installer.libs.clusters.ocp_cluster import OCPCluster
 from openshift_cli_installer.utils.cluster_versions import (
-    filter_versions,
+    get_cluster_version_to_install,
     get_ipi_cluster_versions,
     parse_openshift_release_url,
 )
@@ -47,15 +47,14 @@ class IpiCluster(OCPCluster):
 
     def _prepare_ipi_cluster(self):
         self.ipi_base_available_versions = get_ipi_cluster_versions()
-        self.all_available_versions.update(
-            filter_versions(
-                wanted_version=self.cluster_info["user-requested-version"],
-                base_versions_dict=self.ipi_base_available_versions,
-                platform=self.cluster_info["platform"],
-                stream=self.cluster_info["stream"],
-            )
+        self.cluster["version"] = get_cluster_version_to_install(
+            wanted_version=self.cluster_info["user-requested-version"],
+            base_versions_dict=self.ipi_base_available_versions,
+            platform=self.cluster_info["platform"],
+            stream=self.cluster_info["stream"],
+            log_prefix=self.log_prefix,
+            cluster_name=self.cluster_info["name"],
         )
-        self.set_cluster_install_version()
         self._set_install_version_url()
         self._ipi_download_installer()
         if self.user_input.create:

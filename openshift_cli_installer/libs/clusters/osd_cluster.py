@@ -2,7 +2,7 @@ import click
 from simple_logger.logger import get_logger
 
 from openshift_cli_installer.libs.clusters.ocm_cluster import OcmCluster
-from openshift_cli_installer.utils.cluster_versions import filter_versions
+from openshift_cli_installer.utils.cluster_versions import get_cluster_version_to_install
 from openshift_cli_installer.utils.const import AWS_OSD_STR, GCP_OSD_STR
 from openshift_cli_installer.utils.general import zip_and_upload_to_s3, get_dict_from_json
 
@@ -20,16 +20,14 @@ class OsdCluster(OcmCluster):
         if self.user_input.create:
             self.cluster_info["aws-account-id"] = self.user_input.aws_account_id
             self.get_osd_versions()
-            self.all_available_versions.update(
-                filter_versions(
-                    wanted_version=self.cluster_info["user-requested-version"],
-                    base_versions_dict=self.osd_base_available_versions_dict,
-                    platform=platform,
-                    stream=self.cluster_info["stream"],
-                )
+            self.cluster["version"] = get_cluster_version_to_install(
+                wanted_version=self.cluster_info["user-requested-version"],
+                base_versions_dict=self.osd_base_available_versions_dict,
+                platform=platform,
+                stream=self.cluster_info["stream"],
+                log_prefix=self.log_prefix,
+                cluster_name=self.cluster_info["name"],
             )
-
-            self.set_cluster_install_version()
 
         if self.user_input.destroy_from_s3_bucket_or_local_directory:
             self.dump_cluster_data_to_file()

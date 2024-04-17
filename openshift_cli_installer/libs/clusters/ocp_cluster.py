@@ -28,7 +28,6 @@ from clouds.aws.aws_utils import aws_region_names, get_least_crowded_aws_vpc_reg
 
 from openshift_cli_installer.utils.cluster_versions import (
     get_cluster_stream,
-    get_split_version,
 )
 from openshift_cli_installer.utils.const import (
     AWS_OSD_STR,
@@ -156,34 +155,6 @@ class OCPCluster:
 
             self.logger.info(f"Assigning region {region} to cluster {self.cluster_info['name']}")
             self.cluster_info["region"] = region
-
-    def set_cluster_install_version(self):
-        version = self.cluster_info["user-requested-version"]
-        version_key = get_split_version(version=version)
-        all_stream_versions = self.all_available_versions[self.cluster_info["stream"]][version_key]
-        err_msg = f"{self.log_prefix}: Cluster version {version} not found for stream {self.cluster_info['stream']}"
-        if len(version.split(".")) == 3:
-            for _ver in all_stream_versions["versions"]:
-                if version in _ver:
-                    self.cluster["version"] = self.cluster_info["version"] = _ver
-                    break
-            else:
-                self.logger.error(f"{err_msg}")
-                raise click.Abort()
-
-        elif len(version.split(".")) < 2:
-            self.logger.error(
-                f"{self.log_prefix}: Version must be at least x.y (4.3), got {version}",
-            )
-            raise click.Abort()
-        else:
-            try:
-                self.cluster["version"] = self.cluster_info["version"] = all_stream_versions["latest"]
-            except KeyError:
-                self.logger.error(f"{err_msg}")
-                raise click.Abort()
-
-        self.logger.success(f"{self.log_prefix}: Cluster version set to {self.cluster_info['version']}")
 
     def dump_cluster_data_to_file(self):
         if not self.user_input.create:
