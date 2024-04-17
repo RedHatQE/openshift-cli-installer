@@ -88,7 +88,13 @@ def filter_versions(wanted_version, base_versions_dict, platform, stream):
             continue
 
         if stream == "stable" or stream == "candidate":
-            if len(wanted_version.split(".")) == 3:
+            wanted_version_len = len(wanted_version.split("."))
+            if wanted_version_len == 4:
+                match = re.findall(rf"({re.escape(wanted_version)})", "\n".join(versions))
+                if match:
+                    versions_dict[stream][version_key]["versions"].add(match[0])
+
+            elif wanted_version_len == 3:
                 match = re.findall(rf"({re.escape(wanted_version)})", "\n".join(versions))
                 if match:
                     versions_dict[stream][version_key]["versions"].add(match[0])
