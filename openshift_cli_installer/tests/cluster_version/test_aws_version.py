@@ -10,9 +10,9 @@ from openshift_cli_installer.utils.cluster_versions import (
 @pytest.mark.parametrize(
     "clusters",
     [
-        ([{"version": "4.15", "stream": "stable", "expected": "4.15.9"}]),
+        ([{"version": "4.15", "stream": "stable", "expected": "4.15.8"}]),
         ([
-            {"version": "4.15", "stream": "stable", "expected": "4.15.9"},
+            {"version": "4.15", "stream": "stable", "expected": "4.15.8"},
             {
                 "version": "4.16",
                 "stream": "nightly",
@@ -32,7 +32,7 @@ from openshift_cli_installer.utils.cluster_versions import (
         ([{"version": "4.15.0-rc.8", "stream": "rc", "expected": "4.15.0-rc.8"}]),
         ([{"version": "4.16", "stream": "ci", "expected": "4.16.0-0.ci-2024-04-17-034741"}]),
         ([{"version": "4.16.0-0.ci-2024-04-17-034741", "stream": "ci", "expected": "4.16.0-0.ci-2024-04-17-034741"}]),
-        ([{"version": "4.15.9", "stream": "stable", "expected": "4.15.9"}]),
+        ([{"version": "4.15.8", "stream": "stable", "expected": "4.15.8"}]),
         ([{"version": "4", "stream": "stable", "expected": "error"}]),
         ([{"version": "100.5.1", "stream": "stable", "expected": "error"}]),
         ([{"version": "100.5", "stream": "stable", "expected": "error"}]),

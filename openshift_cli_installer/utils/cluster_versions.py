@@ -64,13 +64,13 @@ def get_cluster_version_to_install(
                 if stream != "stable":
                     _match = [_ver for _ver in _match if stream in _ver]
                 match = _match[0]
-                continue
+                break
 
         else:
             _version_key = re.findall(r"^\d+.\d+", wanted_version)[0]
             if _match := [_version for _version in versions.get(_version_key, []) if _version == wanted_version]:
                 match = _match[0]
-                continue
+                break
 
     if not match:
         LOGGER.error(f"Cluster version {wanted_version} not found for stream {stream}")
