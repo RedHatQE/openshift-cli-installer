@@ -1,7 +1,7 @@
 import click
 import pytest
 
-from openshift_cli_installer.tests.cluster_version.rosa_base_versions import ROSA_BASE_VERSIONS
+from openshift_cli_installer.tests.cluster_version.osd_base_versions import OSD_BASE_VERSIONS
 from openshift_cli_installer.utils.cluster_versions import (
     get_cluster_version_to_install,
 )
@@ -33,7 +33,7 @@ def test_aws_cluster_version(clusters):
     for cluster in clusters:
         res = get_cluster_version_to_install(
             wanted_version=cluster["version"],
-            base_versions_dict=ROSA_BASE_VERSIONS,
+            base_versions_dict=OSD_BASE_VERSIONS,
             platform="rosa",
             stream=cluster["stream"],
             log_prefix="test-cluster-versions",
@@ -56,7 +56,7 @@ def test_aws_cluster_version_negative(cluster):
     with pytest.raises(click.Abort):
         get_cluster_version_to_install(
             wanted_version=cluster["version"],
-            base_versions_dict=ROSA_BASE_VERSIONS,
+            base_versions_dict=OSD_BASE_VERSIONS,
             platform="rosa",
             stream=cluster["stream"],
             log_prefix="test-cluster-versions",
