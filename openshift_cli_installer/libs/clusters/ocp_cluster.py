@@ -69,6 +69,9 @@ class OCPCluster:
                 "aws-secret-access-key": self.cluster.pop("aws-secret-access-key", None),
             })
 
+            # To avoid duplicate version, already saved as user-requested-version
+            self.cluster_info.pop("version")
+
             if self.user_input.create:
                 if self.cluster_info.get("auto-region") is True:
                     self.check_and_assign_aws_cluster_region()
