@@ -1,6 +1,7 @@
 import click
 import pytest
 
+from openshift_cli_installer.tests.cluster_version.constants import PARAMETRIZE_NEGATIVE_TESTS
 from openshift_cli_installer.tests.cluster_version.rosa_osd_base_versions import ROSA_OSD_BASE_VERSIONS
 from openshift_cli_installer.utils.cluster_versions import (
     get_cluster_version_to_install,
@@ -27,13 +28,6 @@ PARAMETRIZE_TESTS = [
     ([{"version": "4.15", "stream": "candidate", "expected": "4.15.9"}]),
 ]
 
-PARAMETRIZE_NEGATIVE_TESTS = [
-    ({"version": "4", "stream": "stable", "expected": "error"}),
-    ({"version": "100.5.1", "stream": "stable", "expected": "error"}),
-    ({"version": "100.5", "stream": "stable", "expected": "error"}),
-    ({"version": "4.15.40", "stream": "stable", "expected": "error"}),
-]
-
 
 @pytest.mark.parametrize(
     "clusters",
@@ -47,7 +41,6 @@ def test_osd_cluster_version(clusters):
             platform="aws-osd",
             stream=cluster["stream"],
             log_prefix="test-cluster-versions",
-            cluster_name="test-cluster",
         )
 
         assert res == cluster["expected"]
@@ -65,7 +58,6 @@ def test_osd_cluster_version_negative(cluster):
             platform="aws-osd",
             stream=cluster["stream"],
             log_prefix="test-cluster-versions",
-            cluster_name="test-cluster",
         )
 
 
@@ -81,7 +73,6 @@ def test_rosa_cluster_version(clusters):
             platform="rosa",
             stream=cluster["stream"],
             log_prefix="test-cluster-versions",
-            cluster_name="test-cluster",
         )
 
         assert res == cluster["expected"]
@@ -99,5 +90,4 @@ def test_rosa_cluster_version_negative(cluster):
             platform="rosa",
             stream=cluster["stream"],
             log_prefix="test-cluster-versions",
-            cluster_name="test-cluster",
         )

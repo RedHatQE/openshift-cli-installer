@@ -53,7 +53,6 @@ class IpiCluster(OCPCluster):
             platform=self.cluster_info["platform"],
             stream=self.cluster_info["stream"],
             log_prefix=self.log_prefix,
-            cluster_name=self.cluster_info["name"],
         )
         self._set_install_version_url()
         self._ipi_download_installer()

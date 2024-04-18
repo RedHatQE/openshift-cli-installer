@@ -2,6 +2,7 @@ import click
 import pytest
 
 from openshift_cli_installer.tests.cluster_version.aws_base_versions import AWS_BASE_VERSIONS
+from openshift_cli_installer.tests.cluster_version.constants import PARAMETRIZE_NEGATIVE_TESTS
 from openshift_cli_installer.utils.cluster_versions import (
     get_cluster_version_to_install,
 )
@@ -43,7 +44,6 @@ def test_aws_cluster_version(clusters):
             platform="aws",
             stream=cluster["stream"],
             log_prefix="test-cluster-versions",
-            cluster_name="test-cluster",
         )
 
         assert res == cluster["expected"]
@@ -51,12 +51,7 @@ def test_aws_cluster_version(clusters):
 
 @pytest.mark.parametrize(
     "cluster",
-    [
-        ({"version": "4", "stream": "stable", "expected": "error"}),
-        ({"version": "100.5.1", "stream": "stable", "expected": "error"}),
-        ({"version": "100.5", "stream": "stable", "expected": "error"}),
-        ({"version": "4.15.40", "stream": "stable", "expected": "error"}),
-    ],
+    PARAMETRIZE_NEGATIVE_TESTS,
 )
 def test_aws_cluster_version_negative(cluster):
     with pytest.raises(click.Abort):
@@ -66,5 +61,4 @@ def test_aws_cluster_version_negative(cluster):
             platform="aws",
             stream=cluster["stream"],
             log_prefix="test-cluster-versions",
-            cluster_name="test-cluster",
         )

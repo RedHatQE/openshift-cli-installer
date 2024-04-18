@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+import functools
 import re
 from typing import Dict, List
 
@@ -43,18 +44,20 @@ class OcmCluster(OCPCluster):
                 f"{(datetime.now() + timedelta(seconds=_expiration_time)).isoformat()}Z"
             )
 
+    @functools.cache
     def get_osd_versions(self):
         updated_versions_dict: Dict[str, Dict[str, List[str]]] = {}
-        for cannel, versions in (
+        for channel, versions in (
             Versions(client=self.ocm_client).get(channel_group=self.cluster_info["channel-group"]).items()
         ):
-            updated_versions_dict[cannel] = {}
+            updated_versions_dict[channel] = {}
             for version in versions:
                 _version_key = re.findall(r"^\d+.\d+", version)[0]
-                updated_versions_dict[cannel].setdefault(_version_key, []).append(version)
+                updated_versions_dict[channel].setdefault(_version_key, []).append(version)
 
         self.osd_base_available_versions_dict.update(updated_versions_dict)
 
+    @functools.cache
     def get_rosa_versions(self):
         _cannel_group = self.cluster_info["channel-group"]
         base_available_versions = rosa.cli.execute(

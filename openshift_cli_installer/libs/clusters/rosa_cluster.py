@@ -34,7 +34,6 @@ class RosaCluster(OcmCluster):
                 platform=self.cluster_info["platform"],
                 stream=self.cluster_info["stream"],
                 log_prefix=self.log_prefix,
-                cluster_name=self.cluster_info["name"],
             )
 
         if not self.user_input.destroy_from_s3_bucket_or_local_directory:

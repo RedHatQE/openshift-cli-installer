@@ -20,11 +20,11 @@ LOGGER = get_logger(name=__name__)
 
 
 def get_cluster_version_to_install(
-    wanted_version: str, base_versions_dict: Dict, platform: str, stream: str, log_prefix: str, cluster_name: str
+    wanted_version: str, base_versions_dict: Dict, platform: str, stream: str, log_prefix: str
 ) -> str:
     wanted_version_len = len(wanted_version.split("."))
     if wanted_version_len < 2:
-        LOGGER.error(f"{cluster_name}: Version must be at least x.y (4.3), got {wanted_version}")
+        LOGGER.error(f"{log_prefix}: Version must be at least x.y (4.3), got {wanted_version}")
         raise click.Abort()
 
     match = None
@@ -47,7 +47,7 @@ def get_cluster_version_to_install(
                 break
 
     if not match:
-        LOGGER.error(f"Cluster version {wanted_version} not found for stream {stream}")
+        LOGGER.error(f"{log_prefix}: Cluster version {wanted_version} not found for stream {stream}")
         raise click.Abort()
 
     LOGGER.success(f"{log_prefix}: Cluster version set to {match} [{stream}]")
