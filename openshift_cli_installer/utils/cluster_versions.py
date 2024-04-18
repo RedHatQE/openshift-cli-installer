@@ -35,7 +35,7 @@ def get_cluster_version_to_install(
 
         if wanted_version_len == 2:
             if _match := versions.get(wanted_version):
-                if stream != "stable":
+                if stream != "stable" and platform in IPI_BASED_PLATFORMS:
                     _match = [_ver for _ver in _match if stream in _ver]
                 match = _match[0]
                 break

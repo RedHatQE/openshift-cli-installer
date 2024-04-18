@@ -60,7 +60,7 @@ class OcmCluster(OCPCluster):
         base_available_versions = rosa.cli.execute(
             command=(
                 f"list versions --channel-group={_cannel_group} "
-                f"{'--hosted-cp' if _cannel_group == HYPERSHIFT_STR else ''}"
+                f"{'--hosted-cp' if self.cluster_info['platform'] == HYPERSHIFT_STR else ''}"
             ),
             aws_region=self.cluster_info["region"],
             ocm_client=self.ocm_client,

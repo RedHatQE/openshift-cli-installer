@@ -24,6 +24,7 @@ PARAMETRIZE_TESTS = [
         }
     ]),
     ([{"version": "4.15.8", "stream": "stable", "expected": "4.15.8"}]),
+    ([{"version": "4.15", "stream": "candidate", "expected": "4.15.9"}]),
 ]
 
 PARAMETRIZE_NEGATIVE_TESTS = [
