@@ -87,6 +87,18 @@ import subprocess
             "--action=create --ocm-token=123 --destroy-clusters-from-install-data-directory --destroy-clusters-from-install-data-directory-using-s3-bucket --cluster='name=test-cl;platform=unsupported'",
             "`--destroy-clusters-from-install-data-directory-using-s3-bucket` is not supported when running with `--destroy-clusters-from-install-data-directory`",
         ),
+        (
+            " --action=create --ocm-token=123 --registry-config-file=reg.json --cluster='name=test-cl;platform=aws;stream=stream;region=reg1'",
+            "Clusters data directory: /openshift-cli-installer/clusters-install-data is not writable",
+        ),
+        (
+            "--action=create --ocm-token=123 --registry-config-file=reg.json --clusters-install-data-directory=/tmp/clinstall --cluster='name=test-cl;platform=aws;stream=bad-stream;region=reg1'",
+            "aws platform does not support stream bad-stream, supported streams are ('stable', 'nightly', 'ec', 'ci', 'rc')",
+        ),
+        (
+            "--action=create --ocm-token=123 --registry-config-file=reg.json --clusters-install-data-directory=/tmp/clinstall --cluster='name=test-cl;platform=rosa;channel-group=bad-stream;region=reg1'",
+            "rosa platform does not support channel-group bad-stream, supported channels are ('stable', 'candidate', 'nightly')",
+        ),
     ],
 )
 def test_user_input(command, expected):

@@ -17,6 +17,7 @@ from openshift_cli_installer.utils.const import (
     GCP_OSD_STR,
     HYPERSHIFT_STR,
     OBSERVABILITY_SUPPORTED_STORAGE_TYPES,
+    ROSA_STR,
     S3_STR,
     SUPPORTED_ACTIONS,
     SUPPORTED_PLATFORMS,
@@ -152,7 +153,7 @@ class UserInput:
 
             self.assert_boolean_values()
             self.is_platform_supported()
-            self.assert_cluster_name()
+            self.assert_missing_cluster_name_or_prefix()
             self.assert_unique_cluster_names()
             self.assert_managed_acm_clusters_user_input()
             self.assert_ipi_installer_user_input()
@@ -162,6 +163,7 @@ class UserInput:
             self.assert_cluster_platform_support_observability()
             self.assert_missing_cluster_region()
             self.assert_clusters_data_directory_missing_permissions()
+            self.assert_platform_not_match_channel_or_stream()
 
     def abort_no_ocm_token(self):
         if not self.ocm_token:
@@ -365,7 +367,7 @@ class UserInput:
 
         return missing_storage_data
 
-    def assert_cluster_name(self):
+    def assert_missing_cluster_name_or_prefix(self):
         for cluster in self.clusters:
             if not cluster.get("name", cluster.get("name-prefix")):
                 self.logger.error("Cluster name or name_prefix must be provided")
@@ -388,3 +390,23 @@ class UserInput:
         if not os.access(os.path.dirname(self.clusters_install_data_directory), os.W_OK):
             self.logger.error(f"Clusters data directory: {self.clusters_install_data_directory} is not writable")
             raise click.Abort()
+
+    def assert_platform_not_match_channel_or_stream(self):
+        ipi_based_platforms_streams = ("stable", "nightly", "ec", "ci", "rc")
+        osd_supported_channels = ("stable", "candidate", "nightly")
+        for cluster in self.clusters:
+            _platform = cluster["platform"]
+            if _platform in IPI_BASED_PLATFORMS and cluster.get("stream", "stable") not in ipi_based_platforms_streams:
+                self.logger.error(
+                    f"{_platform} platform does not support stream {cluster['stream']}, supported streams are {ipi_based_platforms_streams}",
+                )
+                raise click.Abort()
+
+            elif (
+                _platform in (HYPERSHIFT_STR, ROSA_STR, AWS_OSD_STR, GCP_OSD_STR)
+                and cluster.get("channel-group", "stable") not in osd_supported_channels
+            ):
+                self.logger.error(
+                    f"{_platform} platform does not support channel-group {cluster['channel-group']}, supported channels are {osd_supported_channels}",
+                )
+                raise click.Abort()

@@ -16,6 +16,27 @@ Each cluster can be provided with different configuration options, such as worke
 Image locate at [openshift-cli-installer](https://quay.io/repository/redhat_msi/openshift-cli-installer)  
 To pull the image: `podman pull quay.io/redhat_msi/openshift-cli-installer`
 
+### Command line
+
+##### Install inside poetry venv:
+
+```bash
+poetry install
+poetry run python openshift_cli_installer/cli.py --help
+```
+
+##### Install as system cli:
+
+```bash
+pipx install .
+```
+
+For shell complition Add this to ~/.bashrc or ~/.zshrc:
+
+```bash
+eval "$(_OPENSHIFT_CLI_INSTALLER_COMPLETE=zsh_source openshift-cli-installer)"
+```
+
 ### Create clusters from YAML file
 
 User can create/destroy clusters by sending YAML file instead with CLI args
