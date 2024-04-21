@@ -1,8 +1,7 @@
 from datetime import datetime, timedelta
-import functools
 import re
 from typing import Dict, List
-
+import sys
 import rosa.cli
 from ocm_python_wrapper.cluster import Cluster
 from ocm_python_wrapper.versions import Versions
@@ -11,6 +10,13 @@ from simple_logger.logger import get_logger
 from openshift_cli_installer.libs.clusters.ocp_cluster import OCPCluster
 from openshift_cli_installer.utils.const import HYPERSHIFT_STR, STAGE_STR
 from pyhelper_utils.general import tts
+
+
+version = sys.version_info
+if version[0] == 3 and version[1] < 9:
+    from functools import lru_cache as cache
+else:
+    from functools import cache  # type: ignore[no-redef]
 
 
 class OcmCluster(OCPCluster):
@@ -44,7 +50,7 @@ class OcmCluster(OCPCluster):
                 f"{(datetime.now() + timedelta(seconds=_expiration_time)).isoformat()}Z"
             )
 
-    @functools.cache
+    @cache
     def get_osd_versions(self):
         updated_versions_dict: Dict[str, Dict[str, List[str]]] = {}
         for channel, versions in (
@@ -57,7 +63,7 @@ class OcmCluster(OCPCluster):
 
         self.osd_base_available_versions_dict.update(updated_versions_dict)
 
-    @functools.cache
+    @cache
     def get_rosa_versions(self):
         _cannel_group = self.cluster_info["channel-group"]
         base_available_versions = rosa.cli.execute(

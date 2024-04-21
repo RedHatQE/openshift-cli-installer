@@ -1,4 +1,3 @@
-import functools
 import re
 from typing import Dict, List
 
@@ -6,6 +5,7 @@ import click
 from simple_logger.logger import get_logger
 import requests
 from bs4 import BeautifulSoup
+import sys
 
 from openshift_cli_installer.utils.const import (
     AWS_OSD_STR,
@@ -14,6 +14,12 @@ from openshift_cli_installer.utils.const import (
     ROSA_STR,
     IPI_BASED_PLATFORMS,
 )
+
+version = sys.version_info
+if version[0] == 3 and version[1] < 9:
+    from functools import lru_cache as cache
+else:
+    from functools import cache  # type: ignore[no-redef]
 
 
 LOGGER = get_logger(name=__name__)
@@ -59,7 +65,7 @@ def get_cluster_stream(cluster_data):
     return cluster_data["stream"] if _platform in IPI_BASED_PLATFORMS else cluster_data["channel-group"]
 
 
-@functools.cache
+@cache
 def get_ipi_cluster_versions() -> Dict[str, Dict[str, List[str]]]:
     _source = "openshift-release.apps.ci.l2s4.p1.openshiftapps.com"
     _accepted_version_dict: Dict[str, Dict[str, List[str]]] = {_source: {}}
@@ -72,7 +78,7 @@ def get_ipi_cluster_versions() -> Dict[str, Dict[str, List[str]]]:
     return _accepted_version_dict
 
 
-@functools.cache
+@cache
 def parse_openshift_release_url():
     url = "https://openshift-release.apps.ci.l2s4.p1.openshiftapps.com"
     LOGGER.info(f"Parsing {url}")
