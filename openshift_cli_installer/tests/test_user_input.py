@@ -1,7 +1,6 @@
-import click
 import re
 import pytest
-from openshift_cli_installer.libs.user_input import UserInput
+from openshift_cli_installer.libs.user_input import UserInput, UserInputError
 from openshift_cli_installer.utils.const import AWS_STR, AWS_OSD_STR, HYPERSHIFT_STR, GCP_STR, S3_STR
 
 TEST_CL = {"name": "test-cl", "platform": AWS_STR}
@@ -231,5 +230,5 @@ TEST_CL = {"name": "test-cl", "platform": AWS_STR}
 )
 def test_user_input(command, expected):
     command["dry_run"] = True
-    with pytest.raises(click.UsageError, match=re.escape(expected)):
+    with pytest.raises(UserInputError, match=re.escape(expected)):
         UserInput(**command)

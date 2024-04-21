@@ -1,7 +1,6 @@
 import ast
 import os
 
-import click
 from pyaml_env import parse_config
 from simple_logger.logger import get_logger
 
@@ -24,6 +23,10 @@ from openshift_cli_installer.utils.const import (
     USER_INPUT_CLUSTER_BOOLEAN_KEYS,
     IPI_BASED_PLATFORMS,
 )
+
+
+class UserInputError(Exception):
+    pass
 
 
 class UserInput:
@@ -114,7 +117,7 @@ class UserInput:
 
         if self.destroy_clusters_from_s3_bucket or self.destroy_clusters_from_s3_bucket_query:
             if not self.s3_bucket_name:
-                raise click.UsageError(
+                raise UserInputError(
                     "`--s3-bucket-name` must be provided when running with `--destroy-clusters-from-s3-bucket` or `--destroy-clusters-from-s3-bucket-query`"
                 )
 
@@ -122,7 +125,7 @@ class UserInput:
             self.destroy_clusters_from_install_data_directory
             and self.destroy_clusters_from_install_data_directory_using_s3_bucket
         ):
-            raise click.UsageError(
+            raise UserInputError(
                 "`--destroy-clusters-from-install-data-directory-using-s3-bucket` is"
                 " not supported when running with"
                 " `--destroy-clusters-from-install-data-directory`",
@@ -136,13 +139,13 @@ class UserInput:
 
         else:
             if not self.action:
-                raise click.UsageError(f"'action' must be provided, supported actions: `{SUPPORTED_ACTIONS}`")
+                raise UserInputError(f"'action' must be provided, supported actions: `{SUPPORTED_ACTIONS}`")
 
             if self.action not in SUPPORTED_ACTIONS:
-                raise click.UsageError(f"'{self.action}' is not supported, supported actions: `{SUPPORTED_ACTIONS}`")
+                raise UserInputError(f"'{self.action}' is not supported, supported actions: `{SUPPORTED_ACTIONS}`")
 
             if not self.clusters:
-                raise click.UsageError("At least one '--cluster' option must be provided.")
+                raise UserInputError("At least one '--cluster' option must be provided.")
 
             self.assert_boolean_values()
             self.is_platform_supported()
@@ -160,7 +163,7 @@ class UserInput:
 
     def abort_no_ocm_token(self):
         if not self.ocm_token:
-            raise click.UsageError("--ocm-token is required for clusters")
+            raise UserInputError("--ocm-token is required for clusters")
 
     def is_platform_supported(self):
         unsupported_platforms = []
@@ -175,16 +178,16 @@ class UserInput:
 
         if unsupported_platforms or missing_platforms:
             if unsupported_platforms:
-                raise click.UsageError("\n".join(unsupported_platforms))
+                raise UserInputError("\n".join(unsupported_platforms))
 
             if missing_platforms:
-                raise click.UsageError("\n".join(missing_platforms))
+                raise UserInputError("\n".join(missing_platforms))
 
     def assert_unique_cluster_names(self):
         if self.create:
             cluster_names = [cluster.get("name") for cluster in self.clusters if cluster.get("name") is not None]
             if len(cluster_names) != len(set(cluster_names)):
-                raise click.UsageError(f"Cluster names must be unique: clusters {cluster_names}")
+                raise UserInputError(f"Cluster names must be unique: clusters {cluster_names}")
 
     def assert_managed_acm_clusters_user_input(self):
         if self.create:
@@ -195,7 +198,7 @@ class UserInput:
                         name=managed_acm_cluster, clusters=self.clusters
                     )
                     if not managed_acm_cluster_data:
-                        raise click.UsageError(f"Managed ACM clusters: Cluster not found {managed_acm_cluster}")
+                        raise UserInputError(f"Managed ACM clusters: Cluster not found {managed_acm_cluster}")
 
     def assert_ipi_installer_user_input(self):
         if any([_cluster["platform"] in IPI_BASED_PLATFORMS for _cluster in self.clusters]):
@@ -207,10 +210,10 @@ class UserInput:
 
     def assert_docker_config_file_exists(self):
         if not self.docker_config_file:
-            raise click.UsageError("Docker config file is required for IPI installations.")
+            raise UserInputError("Docker config file is required for IPI installations.")
 
         if not os.path.exists(self.docker_config_file) and not self.dry_run:
-            raise click.UsageError(f"{self.docker_config_file} file does not exist.")
+            raise UserInputError(f"{self.docker_config_file} file does not exist.")
 
     def assert_ipi_installer_log_level_user_input(self):
         supported_log_levels = ["debug", "info", "warn", "error"]
@@ -222,34 +225,34 @@ class UserInput:
                     unsupported_log_levels.append(f"LogLevel {log_level} for cluster {_cluster['name']}")
 
         if unsupported_log_levels:
-            raise click.UsageError(
+            raise UserInputError(
                 f"{unsupported_log_levels} log levels are not supported for openshift-installer cli."
                 f" Supported options are {supported_log_levels}"
             )
 
     def assert_public_ssh_key_file_exists(self):
         if not self.ssh_key_file:
-            raise click.UsageError("SSH file is required for IPI cluster installations.")
+            raise UserInputError("SSH file is required for IPI cluster installations.")
 
         if not os.path.exists(self.ssh_key_file) and not self.dry_run:
-            raise click.UsageError(f"{self.ssh_key_file} file does not exist.")
+            raise UserInputError(f"{self.ssh_key_file} file does not exist.")
 
     def assert_registry_config_file_exists(self):
         if not self.registry_config_file:
-            raise click.UsageError("Registry config file is required for IPI cluster installations.")
+            raise UserInputError("Registry config file is required for IPI cluster installations.")
 
         if not os.path.exists(self.registry_config_file) and not self.dry_run:
-            raise click.UsageError(f"{self.registry_config_file} file does not exist.")
+            raise UserInputError(f"{self.registry_config_file} file does not exist.")
 
     def assert_aws_osd_hypershift_user_input(self):
         if any([_cluster["platform"] in (AWS_OSD_STR, HYPERSHIFT_STR) for _cluster in self.clusters]):
             self.assert_aws_credentials_exist()
             if not self.aws_account_id and self.create:
-                raise click.UsageError("--aws-account-id required for AWS OSD or Hypershift installations.")
+                raise UserInputError("--aws-account-id required for AWS OSD or Hypershift installations.")
 
     def assert_aws_credentials_exist(self):
         if not (self.aws_secret_access_key and self.aws_access_key_id):
-            raise click.UsageError(
+            raise UserInputError(
                 "--aws-secret-access-key and --aws-access-key-id required for AWS OSD OR ACM cluster installations."
             )
 
@@ -259,7 +262,7 @@ class UserInput:
             for _cluster in acm_clusters:
                 cluster_platform = _cluster["platform"]
                 if cluster_platform == HYPERSHIFT_STR:
-                    raise click.UsageError(f"ACM not supported for {cluster_platform} clusters")
+                    raise UserInputError(f"ACM not supported for {cluster_platform} clusters")
 
     def assert_gcp_user_input(self):
         if (
@@ -267,7 +270,7 @@ class UserInput:
             and any([cluster["platform"] in (GCP_OSD_STR, GCP_STR) for cluster in self.clusters])
             and not self.gcp_service_account_file
         ):
-            raise click.UsageError(
+            raise UserInputError(
                 f"`--gcp-service-account-file` option must be provided for {GCP_OSD_STR} and {GCP_STR} clusters"
             )
 
@@ -280,7 +283,7 @@ class UserInput:
                     if cluster_data_key in USER_INPUT_CLUSTER_BOOLEAN_KEYS and not isinstance(cluster_data_value, bool)
                 ]
                 if non_bool_keys:
-                    raise click.UsageError(f"The following keys must be booleans: {non_bool_keys}")
+                    raise UserInputError(f"The following keys must be booleans: {non_bool_keys}")
 
     def assert_cluster_platform_support_observability(self):
         not_supported_clusters = []
@@ -315,7 +318,7 @@ class UserInput:
             if missing_storage_data:
                 _storage_clusters = "\n".join(missing_storage_data)
                 msg += f"The following clusters are missing storage data for observability:\n{_storage_clusters}\n"
-            raise click.UsageError(msg)
+            raise UserInputError(msg)
 
     @staticmethod
     def check_missing_observability_storage_data(
@@ -335,7 +338,7 @@ class UserInput:
     def assert_missing_cluster_name_or_prefix(self):
         for cluster in self.clusters:
             if not cluster.get("name", cluster.get("name-prefix")):
-                raise click.UsageError("Cluster name or name_prefix must be provided")
+                raise UserInputError("Cluster name or name_prefix must be provided")
 
     def assert_missing_cluster_region(self):
         # TODO: add tests
@@ -344,14 +347,14 @@ class UserInput:
             for _cluster in self.clusters
             if not _cluster.get("region") and not _cluster.get("auto-region")
         ]:
-            raise click.UsageError(
+            raise UserInputError(
                 f"Cluster region must be provided for the following clusters: {clusters_wtih_missing_regions}"
             )
 
     def assert_clusters_data_directory_missing_permissions(self):
         # TODO: add tests
         if not os.access(os.path.dirname(self.clusters_install_data_directory), os.W_OK):
-            raise click.UsageError(f"Clusters data directory: {self.clusters_install_data_directory} is not writable")
+            raise UserInputError(f"Clusters data directory: {self.clusters_install_data_directory} is not writable")
 
     def assert_platform_not_match_channel_or_stream(self):
         ipi_based_platforms_streams = ("stable", "nightly", "ec", "ci", "rc")
@@ -359,7 +362,7 @@ class UserInput:
         for cluster in self.clusters:
             _platform = cluster["platform"]
             if _platform in IPI_BASED_PLATFORMS and cluster.get("stream", "stable") not in ipi_based_platforms_streams:
-                raise click.UsageError(
+                raise UserInputError(
                     f"{_platform} platform does not support stream {cluster['stream']}, supported streams are {ipi_based_platforms_streams}",
                 )
 
@@ -367,6 +370,6 @@ class UserInput:
                 _platform in (HYPERSHIFT_STR, ROSA_STR, AWS_OSD_STR, GCP_OSD_STR)
                 and cluster.get("channel-group", "stable") not in osd_supported_channels
             ):
-                raise click.UsageError(
+                raise UserInputError(
                     f"{_platform} platform does not support channel-group {cluster['channel-group']}, supported channels are {osd_supported_channels}",
                 )
