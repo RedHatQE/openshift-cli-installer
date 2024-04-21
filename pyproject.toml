@@ -1,5 +1,5 @@
 [tool.coverage.run]
-omit = ["openshift_cli_installer/tests/*", "openshift_cli_installer/app.py"]
+omit = ["openshift_cli_installer/tests/*", "openshift_cli_installer/cli.py"]
 
 [tool.coverage.report]
 fail_under = 40   # TODO: Need to be at least 60
