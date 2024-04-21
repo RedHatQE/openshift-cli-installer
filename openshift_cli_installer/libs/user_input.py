@@ -49,7 +49,7 @@ class UserInput:
         self.ocm_token = self.user_kwargs.get("ocm_token")
         self.parallel = False if self.clusters and len(self.clusters) == 1 else self.user_kwargs.get("parallel")
         self.clusters_install_data_directory = (
-            self.user_kwargs.get("clusters_install_data_directory") or "/openshift-cli-installer/clusters-install-data"
+            self.user_kwargs["clusters_install_data_directory"] or "/openshift-cli-installer/clusters-install-data"
         )
         self.destroy_clusters_from_s3_config_files = self.user_kwargs.get("destroy_clusters_from_s3_config_files")
         self.s3_bucket_name = self.user_kwargs.get("s3_bucket_name")
@@ -352,7 +352,6 @@ class UserInput:
             )
 
     def assert_clusters_data_directory_missing_permissions(self):
-        # TODO: add tests
         if not os.access(os.path.dirname(self.clusters_install_data_directory), os.W_OK):
             raise UserInputError(f"Clusters data directory: {self.clusters_install_data_directory} is not writable")
 

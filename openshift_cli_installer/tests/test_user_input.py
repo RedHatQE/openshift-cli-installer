@@ -4,23 +4,41 @@ from openshift_cli_installer.libs.user_input import UserInput, UserInputError
 from openshift_cli_installer.utils.const import AWS_STR, AWS_OSD_STR, HYPERSHIFT_STR, GCP_STR, S3_STR
 
 TEST_CL = {"name": "test-cl", "platform": AWS_STR}
+CLUSTER_DATA_DIR = "/tmp/cinstall"
 
 
 @pytest.mark.parametrize(
     "command, expected",
     [
-        ({"ocm_token": "123"}, "'action' must be provided, supported actions: `('destroy', 'create')`"),
         (
-            {"action": "create", "ocm_token": "", "clusters": [TEST_CL]},
+            {"clusters_install_data_directory": CLUSTER_DATA_DIR, "ocm_token": "123"},
+            "'action' must be provided, supported actions: `('destroy', 'create')`",
+        ),
+        (
+            {
+                "clusters_install_data_directory": CLUSTER_DATA_DIR,
+                "action": "create",
+                "ocm_token": "",
+                "clusters": [TEST_CL],
+            },
             "--ocm-token is required for clusters",
         ),
-        ({"action": "create", "ocm_token": "123"}, "At least one '--cluster' option must be provided"),
         (
-            {"action": "create", "ocm_token": "123", "clusters": [{"platform": AWS_STR}]},
+            {"clusters_install_data_directory": CLUSTER_DATA_DIR, "action": "create", "ocm_token": "123"},
+            "At least one '--cluster' option must be provided",
+        ),
+        (
+            {
+                "clusters_install_data_directory": CLUSTER_DATA_DIR,
+                "action": "create",
+                "ocm_token": "123",
+                "clusters": [{"platform": AWS_STR}],
+            },
             "Cluster name or name_prefix must be provided",
         ),
         (
             {
+                "clusters_install_data_directory": CLUSTER_DATA_DIR,
                 "action": "create",
                 "ocm_token": "123",
                 "clusters": [TEST_CL, {"name": "test-cl", "platform": AWS_STR}],
@@ -29,6 +47,7 @@ TEST_CL = {"name": "test-cl", "platform": AWS_STR}
         ),
         (
             {
+                "clusters_install_data_directory": CLUSTER_DATA_DIR,
                 "action": "create",
                 "ocm_token": "123",
                 "registry_config-file": "reg.json",
@@ -38,6 +57,7 @@ TEST_CL = {"name": "test-cl", "platform": AWS_STR}
         ),
         (
             {
+                "clusters_install_data_directory": CLUSTER_DATA_DIR,
                 "action": "create",
                 "ocm_token": "123",
                 "clusters": [{"name": "test-cl", "platform": AWS_STR, "log_level": "unsupported"}],
@@ -45,11 +65,17 @@ TEST_CL = {"name": "test-cl", "platform": AWS_STR}
             "log levels are not supported for openshift-installer cli",
         ),
         (
-            {"action": "create", "ocm_token": "123", "clusters": [TEST_CL]},
+            {
+                "clusters_install_data_directory": CLUSTER_DATA_DIR,
+                "action": "create",
+                "ocm_token": "123",
+                "clusters": [TEST_CL],
+            },
             "Registry config file is required for IPI cluster installations",
         ),
         (
             {
+                "clusters_install_data_directory": CLUSTER_DATA_DIR,
                 "action": "create",
                 "ocm_token": "123",
                 "docker_config_file": "",
@@ -60,6 +86,7 @@ TEST_CL = {"name": "test-cl", "platform": AWS_STR}
         ),
         (
             {
+                "clusters_install_data_directory": CLUSTER_DATA_DIR,
                 "action": "create",
                 "ocm_token": "123",
                 "docker_config_file": "dok.json",
@@ -71,6 +98,7 @@ TEST_CL = {"name": "test-cl", "platform": AWS_STR}
         ),
         (
             {
+                "clusters_install_data_directory": CLUSTER_DATA_DIR,
                 "action": "create",
                 "ocm_token": "123",
                 "aws_secret_access_key": "",
@@ -81,6 +109,7 @@ TEST_CL = {"name": "test-cl", "platform": AWS_STR}
         ),
         (
             {
+                "clusters_install_data_directory": CLUSTER_DATA_DIR,
                 "action": "create",
                 "ocm_token": "123",
                 "aws_secret_access_key": "123",
@@ -92,6 +121,7 @@ TEST_CL = {"name": "test-cl", "platform": AWS_STR}
         ),
         (
             {
+                "clusters_install_data_directory": CLUSTER_DATA_DIR,
                 "action": "create",
                 "ocm_token": "123",
                 "aws_secret_access_key": "123",
@@ -103,6 +133,7 @@ TEST_CL = {"name": "test-cl", "platform": AWS_STR}
         ),
         (
             {
+                "clusters_install_data_directory": CLUSTER_DATA_DIR,
                 "action": "create",
                 "ocm_token": "123",
                 "clusters": [{"name": "test-cl", "platform": AWS_STR, "acm-clusters": "mycluser1"}],
@@ -111,6 +142,7 @@ TEST_CL = {"name": "test-cl", "platform": AWS_STR}
         ),
         (
             {
+                "clusters_install_data_directory": CLUSTER_DATA_DIR,
                 "action": "create",
                 "ocm_token": "123",
                 "docker_config_file": "dok.json",
@@ -122,6 +154,7 @@ TEST_CL = {"name": "test-cl", "platform": AWS_STR}
         ),
         (
             {
+                "clusters_install_data_directory": CLUSTER_DATA_DIR,
                 "action": "create",
                 "ocm_token": "123",
                 "registry_config_file": "reg.json",
@@ -140,6 +173,7 @@ TEST_CL = {"name": "test-cl", "platform": AWS_STR}
         ),
         (
             {
+                "clusters_install_data_directory": CLUSTER_DATA_DIR,
                 "action": "create",
                 "ocm_token": "123",
                 "registry_config_file": "reg.json",
@@ -158,13 +192,27 @@ TEST_CL = {"name": "test-cl", "platform": AWS_STR}
             },
             "The following clusters are missing storage data for observability:",
         ),
-        ({"action": "create", "ocm_token": "123", "clusters": [{"name": "test-cl"}]}, "is missing platform"),
         (
-            {"action": "create", "ocm_token": "123", "clusters": [{"name": "test-cl", "platform": "unsupported"}]},
+            {
+                "clusters_install_data_directory": CLUSTER_DATA_DIR,
+                "action": "create",
+                "ocm_token": "123",
+                "clusters": [{"name": "test-cl"}],
+            },
+            "is missing platform",
+        ),
+        (
+            {
+                "clusters_install_data_directory": CLUSTER_DATA_DIR,
+                "action": "create",
+                "ocm_token": "123",
+                "clusters": [{"name": "test-cl", "platform": "unsupported"}],
+            },
             "platform 'unsupported' is not supported",
         ),
         (
             {
+                "clusters_install_data_directory": CLUSTER_DATA_DIR,
                 "action": "create",
                 "ocm_token": "123",
                 "destroy_clusters_from_s3_bucket": True,
@@ -174,6 +222,7 @@ TEST_CL = {"name": "test-cl", "platform": AWS_STR}
         ),
         (
             {
+                "clusters_install_data_directory": CLUSTER_DATA_DIR,
                 "action": "create",
                 "ocm_token": "123",
                 "destroy_clusters_from_s3_bucket_query": True,
@@ -183,6 +232,7 @@ TEST_CL = {"name": "test-cl", "platform": AWS_STR}
         ),
         (
             {
+                "clusters_install_data_directory": CLUSTER_DATA_DIR,
                 "action": "create",
                 "ocm_token": "123",
                 "destroy_clusters_from_install_data_directory": True,
@@ -193,35 +243,48 @@ TEST_CL = {"name": "test-cl", "platform": AWS_STR}
         ),
         (
             {
+                "clusters_install_data_directory": "/",
                 "action": "create",
                 "ocm_token": "123",
                 "registry_config_file": "reg.json",
                 "docker_config_file": "dok.json",
                 "ssh_key_file": "ssh.key",
-                "clusters": [{"name": "test-cl", "platform": "aws", "stream": "stream", "region": "reg1"}],
+                "clusters": [{"name": "test-cl", "platform": "aws", "stream": "stable", "region": "reg1"}],
             },
-            "Clusters data directory: /openshift-cli-installer/clusters-install-data is not writable",
+            "Clusters data directory: / is not writable",
         ),
         (
             {
+                "clusters_install_data_directory": CLUSTER_DATA_DIR,
                 "action": "create",
                 "ocm_token": "123",
                 "registry_config_file": "reg.json",
                 "docker_config_file": "dok.json",
                 "ssh_key_file": "ssh.key",
-                "clusters_install_data_directory": "/tmp/clinstall",
+                "clusters": [{"name": "test-cl", "platform": "aws", "stream": "stable"}],
+            },
+            "Cluster region must be provided for the following clusters",
+        ),
+        (
+            {
+                "clusters_install_data_directory": CLUSTER_DATA_DIR,
+                "action": "create",
+                "ocm_token": "123",
+                "registry_config_file": "reg.json",
+                "docker_config_file": "dok.json",
+                "ssh_key_file": "ssh.key",
                 "clusters": [{"name": "test-cl", "platform": "aws", "stream": "bad-stream", "region": "reg1"}],
             },
             "aws platform does not support stream bad-stream, supported streams are ('stable', 'nightly', 'ec', 'ci', 'rc')",
         ),
         (
             {
+                "clusters_install_data_directory": CLUSTER_DATA_DIR,
                 "action": "create",
                 "ocm_token": "123",
                 "registry_config_file": "reg.json",
                 "docker_config_file": "dok.json",
                 "ssh_key_file": "ssh.key",
-                "clusters_install_data_directory": "/tmp/clinstall",
                 "clusters": [{"name": "test-cl", "platform": "rosa", "channel-group": "bad-stream", "region": "reg1"}],
             },
             "rosa platform does not support channel-group bad-stream, supported channels are ('stable', 'candidate', 'nightly')",
