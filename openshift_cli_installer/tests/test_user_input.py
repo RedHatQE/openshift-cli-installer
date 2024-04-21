@@ -243,7 +243,7 @@ CLUSTER_DATA_DIR = "/tmp/cinstall"
         ),
         (
             {
-                "clusters_install_data_directory": "/sirectorynotexistsnever",
+                "clusters_install_data_directory": "/directory/not/exists/never",
                 "action": "create",
                 "ocm_token": "123",
                 "registry_config_file": "reg.json",
@@ -251,7 +251,7 @@ CLUSTER_DATA_DIR = "/tmp/cinstall"
                 "ssh_key_file": "ssh.key",
                 "clusters": [{"name": "test-cl", "platform": "aws", "stream": "stable", "region": "reg1"}],
             },
-            "Clusters data directory: /sirectorynotexistsnever is not writable",
+            "Clusters data directory: /directory/not/exists/never is not writable",
         ),
         (
             {
