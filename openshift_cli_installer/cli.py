@@ -1,4 +1,6 @@
 import os
+from typing import Any
+
 from pyhelper_utils.runners import function_runner_with_pdb
 
 import click
@@ -202,7 +204,7 @@ must-gather will try to collect data when cluster installation fails and cluster
     is_flag=True,
     show_default=True,
 )
-def main(**kwargs):
+def main(**kwargs: Any) -> None:
     """
     Create/Destroy Openshift cluster/s
     """

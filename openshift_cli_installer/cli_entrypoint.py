@@ -1,4 +1,5 @@
 import shutil
+from typing import Any
 
 from openshift_cli_installer.libs.clusters.ocp_clusters import OCPClusters
 from openshift_cli_installer.libs.user_input import UserInput
@@ -7,7 +8,7 @@ from openshift_cli_installer.utils.const import CREATE_STR, DESTROY_CLUSTERS_FRO
 from openshift_cli_installer.utils.gcp_utils import restore_gcp_configuration, set_gcp_configuration
 
 
-def cli_entrypoint(**kwargs):
+def cli_entrypoint(**kwargs: Any) -> None:
     user_input = UserInput(**kwargs)
 
     if user_input.dry_run:

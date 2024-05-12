@@ -1,6 +1,10 @@
+from __future__ import annotations
+
 # Taken from https://gist.github.com/welel/9cf860dd3f4d3e09f9b4305878b3a04e
+from typing import Any, Dict
 
 import click
+from click import Parameter
 
 
 class DictParamType(click.ParamType):
@@ -31,7 +35,12 @@ class DictParamType(click.ParamType):
 
     name = "dictionary"
 
-    def convert(self, cli_value, param, ctx):
+    def convert(
+        self,
+        cli_value: Any,
+        param: Parameter | None = None,
+        ctx: click.Context | None = None,
+    ) -> Dict[Any, Any]:
         """Converts CLI value to the dictionary structure.
 
         Args:
@@ -49,6 +58,8 @@ class DictParamType(click.ParamType):
         """
         if isinstance(cli_value, dict):
             return cli_value
+
+        pair = None
         try:
             keyvalue_pairs = cli_value.rstrip(";").split(";")
             result_dict = {}

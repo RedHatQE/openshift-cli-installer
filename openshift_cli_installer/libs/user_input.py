@@ -1,5 +1,6 @@
 import ast
 import os
+from typing import Any, Dict, List
 
 from pyaml_env import parse_config
 from simple_logger.logger import get_logger
@@ -30,7 +31,7 @@ class UserInputError(Exception):
 
 
 class UserInput:
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs: Any) -> None:
         self.logger = get_logger(name=self.__class__.__module__)
         self.user_kwargs = kwargs
         self.clusters_yaml_config_file = self.user_kwargs.get("clusters_yaml_config_file")
@@ -41,33 +42,34 @@ class UserInput:
 
         self.dry_run = self.user_kwargs.get("dry_run")
         self.action = self.user_kwargs.get("action")
-        self.aws_access_key_id = self.user_kwargs.get("aws_access_key_id")
-        self.aws_secret_access_key = self.user_kwargs.get("aws_secret_access_key")
-        self.aws_account_id = self.user_kwargs.get("aws_account_id")
-        self.gcp_service_account_file = self.user_kwargs.get("gcp_service_account_file")
+        self.aws_access_key_id = self.user_kwargs.get("aws_access_key_id", "")
+        self.aws_secret_access_key = self.user_kwargs.get("aws_secret_access_key", "")
+        self.aws_account_id = self.user_kwargs.get("aws_account_id", "")
+        self.gcp_service_account_file = self.user_kwargs.get("gcp_service_account_file", "")
         self.clusters = self.get_clusters_from_user_input()
-        self.ocm_token = self.user_kwargs.get("ocm_token")
-        self.parallel = False if self.clusters and len(self.clusters) == 1 else self.user_kwargs.get("parallel")
+        self.ocm_token = self.user_kwargs.get("ocm_token", "")
+        self.parallel = False if self.clusters and len(self.clusters) == 1 else self.user_kwargs.get("parallel", False)
         self.clusters_install_data_directory = (
             self.user_kwargs["clusters_install_data_directory"] or "/openshift-cli-installer/clusters-install-data"
         )
-        self.destroy_clusters_from_s3_config_files = self.user_kwargs.get("destroy_clusters_from_s3_config_files")
-        self.s3_bucket_name = self.user_kwargs.get("s3_bucket_name")
-        self.s3_bucket_path = self.user_kwargs.get("s3_bucket_path")
-        self.s3_bucket_path_uuid = self.user_kwargs.get("s3_bucket_path_uuid")
-        self.s3_bucket_object_name = self.user_kwargs.get("s3_bucket_object_name")
-        self.destroy_clusters_from_s3_bucket = self.user_kwargs.get("destroy_clusters_from_s3_bucket")
-        self.destroy_clusters_from_s3_bucket_query = self.user_kwargs.get("destroy_clusters_from_s3_bucket_query")
+        self.destroy_clusters_from_s3_config_files = self.user_kwargs.get("destroy_clusters_from_s3_config_files", "")
+        self.s3_bucket_name = self.user_kwargs.get("s3_bucket_name", "")
+        self.s3_bucket_path = self.user_kwargs.get("s3_bucket_path", "")
+        self.s3_bucket_path_uuid = self.user_kwargs.get("s3_bucket_path_uuid", "")
+        self.s3_bucket_object_name = self.user_kwargs.get("s3_bucket_object_name", "")
+        self.destroy_clusters_from_s3_bucket = self.user_kwargs.get("destroy_clusters_from_s3_bucket", "")
+        self.destroy_clusters_from_s3_bucket_query = self.user_kwargs.get("destroy_clusters_from_s3_bucket_query", "")
         self.destroy_clusters_from_install_data_directory = self.user_kwargs.get(
-            "destroy_clusters_from_install_data_directory"
+            "destroy_clusters_from_install_data_directory", ""
         )
         self.destroy_clusters_from_install_data_directory_using_s3_bucket = self.user_kwargs.get(
-            "destroy_clusters_from_install_data_directory_using_s3_bucket"
+            "destroy_clusters_from_install_data_directory_using_s3_bucket", ""
         )
-        self.registry_config_file = self.user_kwargs.get("registry_config_file")
-        self.ssh_key_file = self.user_kwargs.get("ssh_key_file")
-        self.docker_config_file = self.user_kwargs.get("docker_config_file")
-        self.must_gather_output_dir = self.user_kwargs.get("must_gather_output_dir")
+        self.destroy_from_s3_bucket_or_local_directory = False
+        self.registry_config_file = self.user_kwargs.get("registry_config_file", "")
+        self.ssh_key_file = self.user_kwargs.get("ssh_key_file", "")
+        self.docker_config_file = self.user_kwargs.get("docker_config_file", "")
+        self.must_gather_output_dir = self.user_kwargs.get("must_gather_output_dir", "")
         self.create = self.action == CREATE_STR
 
         # We need to make sure that we don't process the same input twice
@@ -82,7 +84,7 @@ class UserInput:
         self.logger.info("Initializing User Input")
         self.verify_user_input()
 
-    def get_clusters_from_user_input(self):
+    def get_clusters_from_user_input(self) -> List[Dict[str, Any]]:
         # From CLI, we get `cluster`, from YAML file we get `clusters`
         clusters = self.user_kwargs.get("cluster", [])
         if not clusters:
@@ -112,13 +114,14 @@ class UserInput:
 
         return clusters
 
-    def verify_user_input(self):
+    def verify_user_input(self) -> None:
         self.abort_no_ocm_token()
 
         if self.destroy_clusters_from_s3_bucket or self.destroy_clusters_from_s3_bucket_query:
             if not self.s3_bucket_name:
                 raise UserInputError(
-                    "`--s3-bucket-name` must be provided when running with `--destroy-clusters-from-s3-bucket` or `--destroy-clusters-from-s3-bucket-query`"
+                    "`--s3-bucket-name` must be provided when running with `--destroy-clusters-from-s3-bucket` or "
+                    "`--destroy-clusters-from-s3-bucket-query`"
                 )
 
         elif (
@@ -161,11 +164,11 @@ class UserInput:
             self.assert_clusters_data_directory_missing_permissions()
             self.assert_platform_not_match_channel_or_stream()
 
-    def abort_no_ocm_token(self):
+    def abort_no_ocm_token(self) -> None:
         if not self.ocm_token:
             raise UserInputError("--ocm-token is required for clusters")
 
-    def is_platform_supported(self):
+    def is_platform_supported(self) -> None:
         unsupported_platforms = []
         missing_platforms = []
         for _cluster in self.clusters:
@@ -183,13 +186,13 @@ class UserInput:
             if missing_platforms:
                 raise UserInputError("\n".join(missing_platforms))
 
-    def assert_unique_cluster_names(self):
+    def assert_unique_cluster_names(self) -> None:
         if self.create:
             cluster_names = [cluster.get("name") for cluster in self.clusters if cluster.get("name") is not None]
             if len(cluster_names) != len(set(cluster_names)):
                 raise UserInputError(f"Cluster names must be unique: clusters {cluster_names}")
 
-    def assert_managed_acm_clusters_user_input(self):
+    def assert_managed_acm_clusters_user_input(self) -> None:
         if self.create:
             for cluster in self.clusters:
                 managed_acm_clusters = get_managed_acm_clusters_from_user_input(cluster=cluster)
@@ -200,7 +203,7 @@ class UserInput:
                     if not managed_acm_cluster_data:
                         raise UserInputError(f"Managed ACM clusters: Cluster not found {managed_acm_cluster}")
 
-    def assert_ipi_installer_user_input(self):
+    def assert_ipi_installer_user_input(self) -> None:
         if any([_cluster["platform"] in IPI_BASED_PLATFORMS for _cluster in self.clusters]):
             self.assert_ipi_installer_log_level_user_input()
             self.assert_registry_config_file_exists()
@@ -208,14 +211,14 @@ class UserInput:
             if self.create:
                 self.assert_public_ssh_key_file_exists()
 
-    def assert_docker_config_file_exists(self):
+    def assert_docker_config_file_exists(self) -> None:
         if not self.docker_config_file:
             raise UserInputError("Docker config file is required for IPI installations.")
 
         if not os.path.exists(self.docker_config_file) and not self.dry_run:
             raise UserInputError(f"{self.docker_config_file} file does not exist.")
 
-    def assert_ipi_installer_log_level_user_input(self):
+    def assert_ipi_installer_log_level_user_input(self) -> None:
         supported_log_levels = ["debug", "info", "warn", "error"]
         unsupported_log_levels = []
         for _cluster in self.clusters:
@@ -230,33 +233,33 @@ class UserInput:
                 f" Supported options are {supported_log_levels}"
             )
 
-    def assert_public_ssh_key_file_exists(self):
+    def assert_public_ssh_key_file_exists(self) -> None:
         if not self.ssh_key_file:
             raise UserInputError("SSH file is required for IPI cluster installations.")
 
         if not os.path.exists(self.ssh_key_file) and not self.dry_run:
             raise UserInputError(f"{self.ssh_key_file} file does not exist.")
 
-    def assert_registry_config_file_exists(self):
+    def assert_registry_config_file_exists(self) -> None:
         if not self.registry_config_file:
             raise UserInputError("Registry config file is required for IPI cluster installations.")
 
         if not os.path.exists(self.registry_config_file) and not self.dry_run:
             raise UserInputError(f"{self.registry_config_file} file does not exist.")
 
-    def assert_aws_osd_hypershift_user_input(self):
+    def assert_aws_osd_hypershift_user_input(self) -> None:
         if any([_cluster["platform"] in (AWS_OSD_STR, HYPERSHIFT_STR) for _cluster in self.clusters]):
             self.assert_aws_credentials_exist()
             if not self.aws_account_id and self.create:
                 raise UserInputError("--aws-account-id required for AWS OSD or Hypershift installations.")
 
-    def assert_aws_credentials_exist(self):
+    def assert_aws_credentials_exist(self) -> None:
         if not (self.aws_secret_access_key and self.aws_access_key_id):
             raise UserInputError(
                 "--aws-secret-access-key and --aws-access-key-id required for AWS OSD OR ACM cluster installations."
             )
 
-    def assert_acm_clusters_user_input(self):
+    def assert_acm_clusters_user_input(self) -> None:
         acm_clusters = [_cluster for _cluster in self.clusters if _cluster.get("acm") is True]
         if acm_clusters and self.create:
             for _cluster in acm_clusters:
@@ -264,7 +267,7 @@ class UserInput:
                 if cluster_platform == HYPERSHIFT_STR:
                     raise UserInputError(f"ACM not supported for {cluster_platform} clusters")
 
-    def assert_gcp_user_input(self):
+    def assert_gcp_user_input(self) -> None:
         if (
             self.create
             and any([cluster["platform"] in (GCP_OSD_STR, GCP_STR) for cluster in self.clusters])
@@ -274,7 +277,7 @@ class UserInput:
                 f"`--gcp-service-account-file` option must be provided for {GCP_OSD_STR} and {GCP_STR} clusters"
             )
 
-    def assert_boolean_values(self):
+    def assert_boolean_values(self) -> None:
         if self.create:
             for cluster in self.clusters:
                 non_bool_keys = [
@@ -285,7 +288,7 @@ class UserInput:
                 if non_bool_keys:
                     raise UserInputError(f"The following keys must be booleans: {non_bool_keys}")
 
-    def assert_cluster_platform_support_observability(self):
+    def assert_cluster_platform_support_observability(self) -> None:
         not_supported_clusters = []
         missing_storage_data = []
         for cluster in self.clusters:
@@ -322,9 +325,9 @@ class UserInput:
 
     @staticmethod
     def check_missing_observability_storage_data(
-        cluster,
-        storage_type,
-    ):
+        cluster: Dict[str, Any],
+        storage_type: str,
+    ) -> List[str]:
         missing_storage_data = []
         base_error_str = f"cluster: {cluster['name']} - storage type: {storage_type}"
         if storage_type == S3_STR:
@@ -335,12 +338,12 @@ class UserInput:
 
         return missing_storage_data
 
-    def assert_missing_cluster_name_or_prefix(self):
+    def assert_missing_cluster_name_or_prefix(self) -> None:
         for cluster in self.clusters:
             if not cluster.get("name", cluster.get("name-prefix")):
                 raise UserInputError("Cluster name or name_prefix must be provided")
 
-    def assert_missing_cluster_region(self):
+    def assert_missing_cluster_region(self) -> None:
         # TODO: add tests
         if clusters_wtih_missing_regions := [
             _cluster["name"]
@@ -351,18 +354,19 @@ class UserInput:
                 f"Cluster region must be provided for the following clusters: {clusters_wtih_missing_regions}"
             )
 
-    def assert_clusters_data_directory_missing_permissions(self):
+    def assert_clusters_data_directory_missing_permissions(self) -> None:
         if not os.access(os.path.dirname(self.clusters_install_data_directory), os.W_OK):
             raise UserInputError(f"Clusters data directory: {self.clusters_install_data_directory} is not writable")
 
-    def assert_platform_not_match_channel_or_stream(self):
+    def assert_platform_not_match_channel_or_stream(self) -> None:
         ipi_based_platforms_streams = ("stable", "nightly", "ec", "ci", "rc")
         osd_supported_channels = ("stable", "candidate", "nightly")
         for cluster in self.clusters:
             _platform = cluster["platform"]
             if _platform in IPI_BASED_PLATFORMS and cluster.get("stream", "stable") not in ipi_based_platforms_streams:
                 raise UserInputError(
-                    f"{_platform} platform does not support stream {cluster['stream']}, supported streams are {ipi_based_platforms_streams}",
+                    f"{_platform} platform does not support stream {cluster['stream']}, "
+                    f"supported streams are {ipi_based_platforms_streams}",
                 )
 
             elif (
@@ -370,5 +374,6 @@ class UserInput:
                 and cluster.get("channel-group", "stable") not in osd_supported_channels
             ):
                 raise UserInputError(
-                    f"{_platform} platform does not support channel-group {cluster['channel-group']}, supported channels are {osd_supported_channels}",
+                    f"{_platform} platform does not support channel-group {cluster['channel-group']}, "
+                    f"supported channels are {osd_supported_channels}",
                 )
