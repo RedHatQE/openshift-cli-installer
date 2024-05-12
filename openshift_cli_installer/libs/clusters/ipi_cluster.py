@@ -132,7 +132,7 @@ class IpiCluster(OCPCluster):
                     r"oc adm release extract --tools (.*?)<",
                     requests.get(f"https://{[*self.ipi_base_available_versions][0]}{href}").text,
                 )
-                version_url = version_url_match.group(1) if version_url_match else ""
+                version_url = version_url_match.group(1) if version_url_match else None
 
         if version_url:
             self.cluster_info["version-url"] = version_url
