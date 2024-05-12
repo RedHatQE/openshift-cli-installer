@@ -77,6 +77,6 @@ class OcmCluster(OCPCluster):
         )["out"]
         _all_versions = [ver["raw_id"] for ver in base_available_versions]
         self.rosa_base_available_versions_dict[_channel_group] = {}
-        for version in _all_versions:
-            _version_key = re.findall(r"^\d+.\d+", version)[0]
-            self.rosa_base_available_versions_dict[_channel_group].setdefault(_version_key, []).append(version)
+        for _version in _all_versions:
+            _version_key = re.findall(r"^\d+.\d+", _version)[0]
+            self.rosa_base_available_versions_dict[_channel_group].setdefault(_version_key, []).append(_version)

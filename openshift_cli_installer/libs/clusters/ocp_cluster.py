@@ -128,7 +128,7 @@ class OCPCluster:
         self.pull_secret = ""
         self.timeout_watch: TimeoutWatch = None
         self.cluster_object: Any = None
-        self.ocp_client: DynamicClient
+        self.ocp_client: DynamicClient = None
 
     @property
     def to_dict(self) -> Dict[str, Any]:
@@ -220,13 +220,16 @@ class OCPCluster:
 
     def collect_must_gather(self) -> None:
         name: str = self.cluster_info["name"]
+        platform: str = self.cluster_info["platform"]
+
         try:
             target_dir: str = os.path.join(
                 self.user_input.must_gather_output_dir,
                 "must-gather",
-                self.cluster_info["platform"],
+                platform,
                 name,
             )
+
         except Exception as ex:
             self.logger.error(f"{self.log_prefix}: Failed to get data; must-gather could not be executed on: {ex}")
             return
