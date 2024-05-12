@@ -46,7 +46,7 @@ class IpiCluster(OCPCluster):
             self._ipi_download_installer()
         else:
             self.openshift_install_binary_path = ""
-            self.ipi_base_available_versions: Dict[str, Dict[str, List[str]]] = {}
+            self.ipi_base_available_versions: Dict[str, Dict[str, List[str]]]
             self.cluster["ocm-env"] = self.cluster_info["ocm-env"] = PRODUCTION_STR
 
     def _prepare_ipi_cluster(self) -> None:

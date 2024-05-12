@@ -107,7 +107,7 @@ def prepare_clusters_directory_from_s3_bucket(s3_bucket_name: str, s3_bucket_pat
             extract_futures.append(
                 extract_executor.submit(
                     shutil.unpack_archive,
-                    **{
+                    **{  # type: ignore
                         "filename": zip_file_path,
                         "extract_dir": os.path.split(zip_file_path)[0],
                         "format": "zip",

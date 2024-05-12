@@ -8,7 +8,7 @@ LOGGER = get_logger(name=__name__)
 
 def get_managed_acm_clusters_from_user_input(
     cluster: Dict[str, Any],
-) -> List[Dict[str, Any]]:
+) -> List[str]:
     managed_acm_clusters = cluster.get("acm-clusters")
 
     # When user input is a single string, we need to convert it to a list

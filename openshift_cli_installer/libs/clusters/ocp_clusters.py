@@ -1,4 +1,3 @@
-from asyncio import Future
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Any, Dict, List
 
@@ -116,7 +115,7 @@ class OCPClusters:
         if self.hypershift_clusters:
             self.logger.info(f"Check if regions are {HYPERSHIFT_STR}-supported.")
             unsupported_regions = []
-            hypershift_regions_dict = {PRODUCTION_STR: List[str], STAGE_STR: List[str]}
+            hypershift_regions_dict: Dict[str, List[str]] = {PRODUCTION_STR: [], STAGE_STR: []}
             for _cluster in self.hypershift_clusters:
                 region = _cluster.cluster_info["region"]
                 ocm_env = _cluster.cluster_info["ocm-env"]
@@ -162,7 +161,7 @@ class OCPClusters:
                 raise click.Abort()
 
     def run_create_or_destroy_clusters(self) -> None:
-        futures: List[Future] = []
+        futures: List[Any] = []
         action_str = "create_cluster" if self.user_input.create else "destroy_cluster"
 
         with ThreadPoolExecutor() as executor:
@@ -180,7 +179,7 @@ class OCPClusters:
             if futures:
                 self.process_create_destroy_clusters_threads_results(futures=futures)
 
-    def process_create_destroy_clusters_threads_results(self, futures: List[Future]) -> None:
+    def process_create_destroy_clusters_threads_results(self, futures: List[Any]) -> None:
         create_clusters_error = False
         for result in as_completed(futures):
             _exception = result.exception()

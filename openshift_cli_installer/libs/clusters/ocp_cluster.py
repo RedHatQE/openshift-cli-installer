@@ -31,7 +31,6 @@ from ocp_utilities.must_gather import run_must_gather
 from simple_logger.logger import get_logger
 from clouds.aws.aws_utils import aws_region_names, get_least_crowded_aws_vpc_region
 
-from openshift_cli_installer.libs.clusters.ocp_clusters import OCPClusters
 from openshift_cli_installer.libs.user_input import UserInput
 from openshift_cli_installer.utils.cluster_versions import (
     get_cluster_stream,
@@ -46,6 +45,12 @@ from openshift_cli_installer.utils.const import (
     TIMEOUT_60MIN,
 )
 from pyhelper_utils.general import tts
+
+from typing import TYPE_CHECKING
+
+
+if TYPE_CHECKING:
+    from openshift_cli_installer.libs.clusters.ocp_clusters import OCPClusters
 
 
 class OCPCluster:
@@ -121,7 +126,7 @@ class OCPCluster:
         self.ocm_client = DefaultApi
         self.ssh_key = ""
         self.pull_secret = ""
-        self.timeout_watch: TimeoutWatch | None = None
+        self.timeout_watch: TimeoutWatch = None
         self.cluster_object: Any = None
         self.ocp_client: DynamicClient
 
@@ -322,7 +327,7 @@ class OCPCluster:
 
     def enable_observability(self) -> None:
         thanos_secret_data = None
-        _s3_client: "botocore.client.S3"
+        _s3_client: "botocore.client.S3" = None
         bucket_name = f"{self.cluster_info['name']}-observability-{self.cluster_info['shortuuid']}"
 
         if self.cluster_info["acm-observability-storage-type"] == S3_STR:
