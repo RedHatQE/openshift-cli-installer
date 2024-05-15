@@ -60,7 +60,12 @@ CLUSTER_DATA_DIR = "/tmp/cinstall"
                 "clusters_install_data_directory": CLUSTER_DATA_DIR,
                 "action": "create",
                 "ocm_token": "123",
-                "clusters": [{"name": "test-cl", "platform": AWS_STR, "log_level": "unsupported"}],
+                "docker_config_file": "dok.json",
+                "registry_config_file": "reg.json",
+                "ssh_key_file": "ssh.key",
+                "clusters": [
+                    {"name": "test-cl", "platform": AWS_STR, "region": "test-region", "log_level": "unsupported"}
+                ],
             },
             "log levels are not supported for openshift-installer cli",
         ),
@@ -293,5 +298,6 @@ CLUSTER_DATA_DIR = "/tmp/cinstall"
 )
 def test_user_input(command, expected):
     command["dry_run"] = True
+
     with pytest.raises(UserInputError, match=re.escape(expected)):
         UserInput(**command)
