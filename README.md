@@ -64,6 +64,7 @@ Action also can be passed to the CLI as `--action create/destroy` instead of spe
   - `platform=aws`: Must pass in cluster parameters
   - `base-domain`: cluster parameter is mandatory
   - `auto-region=True`: Optional cluster parameter for assigning `region` param to a region which have the least number of VPCs.
+  - `log_level`: Log level, defaults to `error` for cluster config to hide the openshift-installer logs which contains kubeadmin password.
   - `--registry-config-file`: registry-config json file path, can be obtained from [openshift local cluster](https://console.redhat.com/openshift/create/local)
   - `--docker-config-file`: Path to Docker config.json file, defaults to `~/.docker/config.json`. File must include token for `registry.ci.openshift.org`
   - `--ssh-key-file`: id_rsa file path, defaults to `/openshift-cli-installer/ssh-key/id_rsa.pub`
@@ -258,8 +259,6 @@ podman run quay.io/redhat_msi/openshift-cli-installer \
     --s3-bucket-object-name=cluster-backup \
     --cluster 'name=ipi1;base-domain=gcp.interop.ccitredhat.com;platform=gcp;region=us-east1;version=4.14.0-ec.2;worker-flavor=custom-4-16384;log_level=info'
 ```
-
-- Default `log_level=error` is set for cluster config to hide the openshift-installer logs which contains kubeadmin password.
 
 ```
 podman run quay.io/redhat_msi/openshift-cli-installer \

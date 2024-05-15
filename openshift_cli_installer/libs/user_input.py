@@ -160,6 +160,7 @@ class UserInput:
             self.assert_missing_cluster_region()
             self.assert_clusters_data_directory_missing_permissions()
             self.assert_platform_not_match_channel_or_stream()
+            self.assert_cluster_installer_log_level_user_input()
 
     def abort_no_ocm_token(self):
         if not self.ocm_token:
@@ -202,7 +203,6 @@ class UserInput:
 
     def assert_ipi_installer_user_input(self):
         if any([_cluster["platform"] in IPI_BASED_PLATFORMS for _cluster in self.clusters]):
-            self.assert_ipi_installer_log_level_user_input()
             self.assert_registry_config_file_exists()
             self.assert_docker_config_file_exists()
             if self.create:
@@ -215,19 +215,30 @@ class UserInput:
         if not os.path.exists(self.docker_config_file) and not self.dry_run:
             raise UserInputError(f"{self.docker_config_file} file does not exist.")
 
-    def assert_ipi_installer_log_level_user_input(self):
+    def assert_cluster_installer_log_level_user_input(self):
         supported_log_levels = ["debug", "info", "warn", "error"]
         unsupported_log_levels = []
+        unsupported_platforms = []
         for _cluster in self.clusters:
+            log_level = _cluster.get("log_level")
+
             if _cluster["platform"] in IPI_BASED_PLATFORMS:
-                log_level = _cluster.get("log_level", "error")
-                if log_level not in supported_log_levels:
+                if log_level and log_level not in supported_log_levels:
                     unsupported_log_levels.append(f"LogLevel {log_level} for cluster {_cluster['name']}")
+
+            elif log_level:
+                unsupported_platforms.append(_cluster["name"])
 
         if unsupported_log_levels:
             raise UserInputError(
                 f"{unsupported_log_levels} log levels are not supported for openshift-installer cli."
                 f" Supported options are {supported_log_levels}"
+            )
+
+        if unsupported_platforms:
+            raise UserInputError(
+                f"Cluster(s) {','.join(unsupported_platforms)} platforms do not support `log_level` option. "
+                "Did you mean: `debug: true`?"
             )
 
     def assert_public_ssh_key_file_exists(self):
