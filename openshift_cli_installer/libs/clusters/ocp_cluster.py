@@ -1,3 +1,4 @@
+from __future__ import annotations
 import base64
 import copy
 import os
@@ -6,11 +7,15 @@ import shutil
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import timedelta
 from pathlib import Path
+from typing import Any, Dict, List
 
+import botocore
 import click
 import shortuuid
 import yaml
 from clouds.aws.session_clients import s3_client
+from kubernetes.dynamic import DynamicClient
+from ocm_python_client.api.default_api import DefaultApi
 from ocm_python_wrapper.ocm_client import OCMPythonClient
 from ocp_resources.cluster_version import ClusterVersion
 from ocp_resources.managed_cluster import ManagedCluster
@@ -19,13 +24,14 @@ from ocp_resources.multi_cluster_observability import MultiClusterObservability
 from ocp_resources.namespace import Namespace
 from ocp_resources.route import Route
 from ocp_resources.secret import Secret
+from pyhelper_utils.shell import run_command
 from timeout_sampler import TimeoutWatch
 from ocp_utilities.infra import get_client
 from ocp_utilities.must_gather import run_must_gather
-from ocp_utilities.utils import run_command
 from simple_logger.logger import get_logger
 from clouds.aws.aws_utils import aws_region_names, get_least_crowded_aws_vpc_region
 
+from openshift_cli_installer.libs.user_input import UserInput
 from openshift_cli_installer.utils.cluster_versions import (
     get_cluster_stream,
 )
@@ -40,24 +46,33 @@ from openshift_cli_installer.utils.const import (
 )
 from pyhelper_utils.general import tts
 
+from typing import TYPE_CHECKING
+
+
+if TYPE_CHECKING:
+    from openshift_cli_installer.libs.clusters.ocp_clusters import OCPClusters
+
 
 class OCPCluster:
-    def __init__(self, ocp_cluster, user_input):
+    def __init__(self, ocp_cluster: Dict[str, Any], user_input: UserInput) -> None:
         self.user_input = user_input
         self.logger = get_logger(f"{self.__class__.__module__}-{self.__class__.__name__}")
         self.cluster = ocp_cluster
 
         self.s3_bucket_name = self.user_input.s3_bucket_name or self.cluster.get("cluster_info", {}).get(
-            "s3_bucket_name"
+            "s3_bucket_name", ""
         )
         self.s3_bucket_path = self.user_input.s3_bucket_path or self.cluster.get("cluster_info", {}).get(
-            "s3_bucket_path"
+            "s3_bucket_path", ""
         )
 
-        if self.user_input.destroy_from_s3_bucket_or_local_directory:
-            self.cluster_info = self.cluster["cluster_info"]
-        else:
-            self.cluster_info = copy.deepcopy(self.cluster)
+        self.cluster_info: Dict[str, Any] = (
+            self.cluster["cluster_info"]
+            if self.user_input.destroy_from_s3_bucket_or_local_directory
+            else copy.deepcopy(self.cluster)
+        )
+
+        if not self.user_input.destroy_from_s3_bucket_or_local_directory:
             self.cluster_shortuuid = shortuuid.uuid().lower()
             self.cluster_info["name"] = self.get_cluster_name()
 
@@ -65,8 +80,8 @@ class OCPCluster:
                 "display-name": self.cluster_info["name"],
                 "user-requested-version": self.cluster_info["version"],
                 "shortuuid": self.user_input.s3_bucket_path_uuid or self.cluster_shortuuid,
-                "aws-access-key-id": self.cluster.pop("aws-access-key-id", None),
-                "aws-secret-access-key": self.cluster.pop("aws-secret-access-key", None),
+                "aws-access-key-id": self.cluster.pop("aws-access-key-id", ""),
+                "aws-secret-access-key": self.cluster.pop("aws-secret-access-key", ""),
             })
 
             # To avoid duplicate version, already saved as user-requested-version
@@ -82,7 +97,9 @@ class OCPCluster:
                     "acm-observability-s3-region", self.cluster_info["region"]
                 )
 
-            self.all_available_versions = {}
+            self.all_available_versions: Dict[str, Dict[str, List[str]]] = self.cluster.get(
+                "all_available_versions", {}
+            )
             self.cluster_info["stream"] = get_cluster_stream(cluster_data=self.cluster)
             self.cluster_info["cluster-dir"] = cluster_dir = self.cluster.pop(
                 "cluster_dir",
@@ -97,24 +114,27 @@ class OCPCluster:
             Path(auth_path).mkdir(parents=True, exist_ok=True)
             self._add_s3_bucket_data()
 
-        self.log_prefix = f"[C:{self.cluster_info['name']}|P:{self.cluster_info['platform']}|R:{self.cluster_info.get('region', 'auto-region')}]"
+        self.log_prefix = (
+            f"[C:{self.cluster_info['name']}|P:{self.cluster_info['platform']}|"
+            f"R:{self.cluster_info.get('region', 'auto-region')}]"
+        )
         self.timeout = tts(ts=self.cluster.get("timeout", TIMEOUT_60MIN))
 
         if not self.user_input.destroy_from_s3_bucket_or_local_directory:
             self.dump_cluster_data_to_file()
 
-        self.ocm_client = None
-        self.ssh_key = None
-        self.pull_secret = None
-        self.timeout_watch = None
-        self.cluster_object = None
-        self.ocp_client = None
+        self.ocm_client = DefaultApi
+        self.ssh_key = ""
+        self.pull_secret = ""
+        self.timeout_watch: TimeoutWatch = None
+        self.cluster_object: Any = None
+        self.ocp_client: DynamicClient = None
 
     @property
-    def to_dict(self):
+    def to_dict(self) -> Dict[str, Any]:
         return self.__dict__
 
-    def start_time_watcher(self):
+    def start_time_watcher(self) -> TimeoutWatch:
         if self.timeout_watch:
             self.logger.info(
                 f"{self.log_prefix}: Reusing timeout watcher, time left: "
@@ -125,7 +145,7 @@ class OCPCluster:
         self.logger.info(f"{self.log_prefix}: Start timeout watcher, time left: {timedelta(seconds=self.timeout)}")
         return TimeoutWatch(timeout=self.timeout)
 
-    def prepare_cluster_data(self):
+    def prepare_cluster_data(self) -> None:
         supported_envs = (PRODUCTION_STR, STAGE_STR)
         if self.cluster_info["ocm-env"] not in supported_envs:
             self.logger.error(
@@ -136,7 +156,7 @@ class OCPCluster:
 
         self.ocm_client = self.get_ocm_client()
 
-    def get_ocm_client(self):
+    def get_ocm_client(self) -> DefaultApi:
         return OCMPythonClient(
             token=self.user_input.ocm_token,
             endpoint="https://sso.redhat.com/auth/realms/redhat-external/protocol/openid-connect/token",
@@ -144,7 +164,7 @@ class OCPCluster:
             discard_unknown_keys=True,
         ).client
 
-    def _add_s3_bucket_data(self):
+    def _add_s3_bucket_data(self) -> None:
         object_name = (
             self.user_input.s3_bucket_object_name or f"{self.cluster_info['name']}-{self.cluster_info['shortuuid']}"
         )
@@ -152,14 +172,14 @@ class OCPCluster:
             f"{f'{self.user_input.s3_bucket_path}/' if self.user_input.s3_bucket_path else ''}{object_name}.zip"
         )
 
-    def check_and_assign_aws_cluster_region(self):
+    def check_and_assign_aws_cluster_region(self) -> None:
         if self.cluster_info["platform"] in [AWS_STR, AWS_OSD_STR]:
             region = get_least_crowded_aws_vpc_region(region_list=aws_region_names())
 
             self.logger.info(f"Assigning region {region} to cluster {self.cluster_info['name']}")
             self.cluster_info["region"] = region
 
-    def dump_cluster_data_to_file(self):
+    def dump_cluster_data_to_file(self) -> None:
         if not self.user_input.create:
             return
 
@@ -198,15 +218,18 @@ class OCPCluster:
         with open(_cluster_data_yaml_file, "w") as fd:
             fd.write(yaml.dump(_cluster_data))
 
-    def collect_must_gather(self):
-        name = self.cluster_info["name"]
+    def collect_must_gather(self) -> None:
+        name: str = self.cluster_info["name"]
+        platform: str = self.cluster_info["platform"]
+
         try:
-            target_dir = os.path.join(
+            target_dir: str = os.path.join(
                 self.user_input.must_gather_output_dir,
                 "must-gather",
-                self.cluster_info["platform"],
+                platform,
                 name,
             )
+
         except Exception as ex:
             self.logger.error(f"{self.log_prefix}: Failed to get data; must-gather could not be executed on: {ex}")
             return
@@ -235,7 +258,7 @@ class OCPCluster:
             self.logger.info(f"{self.log_prefix}: Delete must-gather target directory {target_dir}.")
             shutil.rmtree(target_dir)
 
-    def add_cluster_info_to_cluster_object(self):
+    def add_cluster_info_to_cluster_object(self) -> None:
         """
         Adds cluster information to the given clusters data dictionary.
 
@@ -260,7 +283,7 @@ class OCPCluster:
 
         self.dump_cluster_data_to_file()
 
-    def set_cluster_auth(self, idp_user=None, idp_password=None):
+    def set_cluster_auth(self, idp_user: str = "", idp_password: str = "") -> None:
         auth_path = self.cluster_info["auth-path"]
         Path(auth_path).mkdir(parents=True, exist_ok=True)
 
@@ -276,18 +299,19 @@ class OCPCluster:
 
             with open(os.path.join(auth_path, "api.login"), "w") as fd:
                 fd.write(
-                    f"oc login {self.ocp_client.configuration.host} -u {idp_user} -p {idp_password} --insecure-skip-tls-verify=true"
+                    f"oc login {self.ocp_client.configuration.host} -u {idp_user} -p {idp_password} "
+                    "--insecure-skip-tls-verify=true"
                 )
 
         self.dump_cluster_data_to_file()
 
-    def delete_cluster_s3_buckets(self):
+    def delete_cluster_s3_buckets(self) -> None:
         if s3_file := self.cluster_info.get("s3-object-name"):
             self.logger.info(f"{self.log_prefix}: Deleting S3 file {s3_file} from {self.s3_bucket_name}")
             s3_client().delete_object(Bucket=self.s3_bucket_name, Key=s3_file)
             self.logger.success(f"{self.log_prefix}: {s3_file} deleted ")
 
-    def install_acm(self):
+    def install_acm(self) -> None:
         self.logger.info(f"{self.log_prefix}: Installing ACM")
         run_command(
             command=shlex.split(f"cm install acm --kubeconfig {self.cluster_info['kubeconfig-path']}"),
@@ -304,9 +328,9 @@ class OCPCluster:
 
         self.logger.success(f"{self.log_prefix}: ACM installed successfully")
 
-    def enable_observability(self):
+    def enable_observability(self) -> None:
         thanos_secret_data = None
-        _s3_client = None
+        _s3_client: "botocore.client.S3" = None
         bucket_name = f"{self.cluster_info['name']}-observability-{self.cluster_info['shortuuid']}"
 
         if self.cluster_info["acm-observability-storage-type"] == S3_STR:
@@ -322,7 +346,7 @@ class OCPCluster:
               secret_key: {self.cluster_info["aws-secret-access-key"]}
             """
             s3_secret_data_bytes = s3_secret_data.encode("ascii")
-            thanos_secret_data = {"thanos.yaml": base64.b64encode(s3_secret_data_bytes).decode("utf-8")}
+            thanos_secret_data = {"thanos.yaml": base64.b64encode(s3_secret_data_bytes).decode()}
             self.logger.info(f"{self.log_prefix}: Create S3 bucket {bucket_name} in {region}")
             _s3_client.create_bucket(
                 Bucket=bucket_name.lower(),
@@ -378,10 +402,10 @@ class OCPCluster:
 
             raise click.Abort()
 
-    def attach_clusters_to_acm_hub(self, clusters):
+    def attach_clusters_to_acm_hub(self, clusters: OCPClusters) -> None:
         futures = []
         with ThreadPoolExecutor() as executor:
-            for _managed_acm_cluster in self.cluster_info.get("acm-clusters"):
+            for _managed_acm_cluster in self.cluster_info.get("acm-clusters", []):
                 _managed_acm_cluster_object = clusters.get_cluster_object_by_name(name=_managed_acm_cluster)
                 _managed_cluster_name = _managed_acm_cluster_object.cluster_info["name"]
                 managed_acm_cluster_kubeconfig = self.get_cluster_kubeconfig_from_install_dir(
@@ -413,10 +437,10 @@ class OCPCluster:
 
     def attach_cluster_to_acm(
         self,
-        managed_acm_cluster_name,
-        acm_cluster_kubeconfig,
-        managed_acm_cluster_kubeconfig,
-    ):
+        managed_acm_cluster_name: str,
+        acm_cluster_kubeconfig: str,
+        managed_acm_cluster_kubeconfig: str,
+    ) -> None:
         if not self.ocp_client:
             self.ocp_client = get_client(config_file=acm_cluster_kubeconfig)
 
@@ -442,9 +466,11 @@ class OCPCluster:
             f"{self.log_prefix}: attached {managed_acm_cluster_name} to cluster {self.cluster_info['name']}"
         )
 
-    def get_cluster_kubeconfig_from_install_dir(self, cluster_name, cluster_platform):
+    def get_cluster_kubeconfig_from_install_dir(self, cluster_name: str, cluster_platform: str) -> str:
         cluster_install_dir = os.path.join(
-            self.user_input.clusters_install_data_directory, cluster_platform, cluster_name
+            self.user_input.clusters_install_data_directory,
+            cluster_platform,
+            cluster_name,
         )
         if not os.path.exists(cluster_install_dir):
             self.logger.error(f"{self.log_prefix}: ACM managed cluster data dir not found in {cluster_install_dir}")
@@ -452,7 +478,7 @@ class OCPCluster:
 
         return os.path.join(cluster_install_dir, "auth", "kubeconfig")
 
-    def get_cluster_name(self):
+    def get_cluster_name(self) -> str:
         if self.cluster_info.get("name"):
             return self.cluster_info["name"]
 

@@ -1,14 +1,19 @@
+from __future__ import annotations
 import os
 import shutil
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
+from typing import Any, Dict, Generator, List
 
+import botocore
 import click
 import yaml
 from clouds.aws.session_clients import s3_client
+from ocm_python_client.api.default_api import DefaultApi
 from ocm_python_wrapper.ocm_client import OCMPythonClient
 from simple_logger.logger import get_logger
 
+from openshift_cli_installer.libs.user_input import UserInput
 from openshift_cli_installer.utils.const import (
     CLUSTER_DATA_YAML_FILENAME,
     DESTROY_CLUSTERS_FROM_S3_BASE_DATA_DIRECTORY,
@@ -18,7 +23,7 @@ from openshift_cli_installer.utils.const import (
 LOGGER = get_logger(name=__name__)
 
 
-def get_ocm_client(ocm_token, ocm_env):
+def get_ocm_client(ocm_token: str, ocm_env: str) -> DefaultApi:
     return OCMPythonClient(
         token=ocm_token,
         endpoint="https://sso.redhat.com/auth/realms/redhat-external/protocol/openid-connect/token",
@@ -27,7 +32,7 @@ def get_ocm_client(ocm_token, ocm_env):
     ).client
 
 
-def clusters_from_directories(directories):
+def clusters_from_directories(directories: List[str]) -> List[Dict[str, Any]]:
     clusters_data_list = []
     for directory in directories:
         for root, dirs, files in os.walk(directory):
@@ -45,7 +50,7 @@ def clusters_from_directories(directories):
     return clusters_data_list
 
 
-def get_destroy_clusters_kwargs(clusters_data_list, user_input):
+def get_destroy_clusters_kwargs(clusters_data_list: List[Dict[str, Any]], user_input: UserInput) -> UserInput:
     user_input.action = DESTROY_STR
     clusters = []
 
@@ -58,7 +63,7 @@ def get_destroy_clusters_kwargs(clusters_data_list, user_input):
     return user_input
 
 
-def prepare_clusters_directory_from_s3_bucket(s3_bucket_name, s3_bucket_path=None, query=None):
+def prepare_clusters_directory_from_s3_bucket(s3_bucket_name: str, s3_bucket_path: str = "", query: str = "") -> None:
     download_futures = []
     extract_futures = []
     target_files_paths = []
@@ -69,8 +74,8 @@ def prepare_clusters_directory_from_s3_bucket(s3_bucket_name, s3_bucket_path=Non
         s3_bucket_path=s3_bucket_path,
         query=query,
     ):
-        extracted_zip_filename = os.path.split(cluster_zip_file)[-1]
-        extract_target_dir = os.path.join(
+        extracted_zip_filename: str = os.path.split(cluster_zip_file)[-1]
+        extract_target_dir: str = os.path.join(
             DESTROY_CLUSTERS_FROM_S3_BASE_DATA_DIRECTORY,
             extracted_zip_filename.split(".")[0],
         )
@@ -102,7 +107,7 @@ def prepare_clusters_directory_from_s3_bucket(s3_bucket_name, s3_bucket_path=Non
             extract_futures.append(
                 extract_executor.submit(
                     shutil.unpack_archive,
-                    **{
+                    **{  # type: ignore[arg-type]
                         "filename": zip_file_path,
                         "extract_dir": os.path.split(zip_file_path)[0],
                         "format": "zip",
@@ -117,7 +122,12 @@ def prepare_clusters_directory_from_s3_bucket(s3_bucket_name, s3_bucket_path=Non
                 """
 
 
-def get_all_zip_files_from_s3_bucket(client, s3_bucket_name, s3_bucket_path=None, query=None):
+def get_all_zip_files_from_s3_bucket(
+    client: "botocore.client.S3",
+    s3_bucket_name: str,
+    s3_bucket_path: str = "",
+    query: str | None = None,
+) -> Generator[str, None, None]:
     for _object in client.list_objects(Bucket=s3_bucket_name, Prefix=s3_bucket_path).get("Contents", []):
         _object_key = _object["Key"]
         if _object_key.endswith(".zip"):
@@ -125,7 +135,7 @@ def get_all_zip_files_from_s3_bucket(client, s3_bucket_name, s3_bucket_path=None
                 yield os.path.split(_object_key)[-1] if s3_bucket_path else _object_key
 
 
-def destroy_clusters_from_s3_bucket_or_local_directory(user_input):
+def destroy_clusters_from_s3_bucket_or_local_directory(user_input: UserInput) -> UserInput:
     s3_clusters_data_list = []
     data_directory_clusters_data_list = []
 
@@ -147,10 +157,10 @@ def destroy_clusters_from_s3_bucket_or_local_directory(user_input):
         elif s3_from_clusters_data_directory:
             for _cluster in clusters_from_directory:
                 prepare_clusters_directory_from_s3_bucket(
-                    s3_bucket_name=_cluster.get("s3_bucket_name"),
-                    s3_bucket_path=_cluster.get("s3_bucket_path"),
+                    s3_bucket_name=_cluster.get("s3_bucket_name", ""),
+                    s3_bucket_path=_cluster.get("s3_bucket_path", ""),
                     query=os.path.split(
-                        _cluster["cluster_info"].get("s3-object-name"),
+                        _cluster["cluster_info"].get("s3-object-name", ""),
                     )[-1],
                 )
 

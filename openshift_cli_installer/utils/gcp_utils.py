@@ -2,14 +2,17 @@ import os
 import shutil
 from pathlib import Path
 import tempfile
+from typing import Dict
 
 from simple_logger.logger import get_logger
+
+from openshift_cli_installer.libs.user_input import UserInput
 from openshift_cli_installer.utils.const import GCP_STR
 
 LOGGER = get_logger(name=__name__)
 
 
-def set_gcp_configuration(user_input):
+def set_gcp_configuration(user_input: UserInput) -> Dict[str, str]:
     """
     Saves provided GCP Service Account file at location '~/.gcp/osServiceAccount.json'
 
@@ -29,7 +32,8 @@ def set_gcp_configuration(user_input):
         if os.path.exists(openshift_installer_gcp_sa_file_path):
             gcp_params["backup_existing_gcp_sa_file_path"] = tempfile.NamedTemporaryFile(suffix="-installer.json").name
             LOGGER.info(
-                f"File {openshift_installer_gcp_sa_file_path} already exists. Copying to {gcp_params['backup_existing_gcp_sa_file_path']}"
+                f"File {openshift_installer_gcp_sa_file_path} already exists. "
+                f"Copying to {gcp_params['backup_existing_gcp_sa_file_path']}"
             )
             shutil.copy(openshift_installer_gcp_sa_file_path, gcp_params["backup_existing_gcp_sa_file_path"])
         else:
@@ -40,7 +44,7 @@ def set_gcp_configuration(user_input):
     return gcp_params
 
 
-def restore_gcp_configuration(gcp_params):
+def restore_gcp_configuration(gcp_params: Dict[str, str]) -> None:
     """
     Restores location '~/.gcp/osServiceAccount.json'
 

@@ -1,5 +1,5 @@
 import re
-from typing import Dict, List
+from typing import Any, Dict, List
 
 import click
 from simple_logger.logger import get_logger
@@ -26,7 +26,11 @@ LOGGER = get_logger(name=__name__)
 
 
 def get_cluster_version_to_install(
-    wanted_version: str, base_versions_dict: Dict, platform: str, stream: str, log_prefix: str
+    wanted_version: str,
+    base_versions_dict: Dict[str, Dict[str, List[str]]],
+    platform: str,
+    stream: str,
+    log_prefix: str,
 ) -> str:
     wanted_version_len = len(wanted_version.split("."))
     if wanted_version_len < 2:
@@ -60,7 +64,7 @@ def get_cluster_version_to_install(
     return match
 
 
-def get_cluster_stream(cluster_data):
+def get_cluster_stream(cluster_data: Dict[str, Any]) -> str:
     _platform = cluster_data["platform"]
     return cluster_data["stream"] if _platform in IPI_BASED_PLATFORMS else cluster_data["channel-group"]
 
@@ -70,16 +74,16 @@ def get_ipi_cluster_versions() -> Dict[str, Dict[str, List[str]]]:
     _source = "openshift-release.apps.ci.l2s4.p1.openshiftapps.com"
     _accepted_version_dict: Dict[str, Dict[str, List[str]]] = {_source: {}}
     for tr in parse_openshift_release_url():
-        version, status = [_tr for _tr in tr.text.splitlines() if _tr][:2]
+        _version, status = [_tr for _tr in tr.text.splitlines() if _tr][:2]
         if status == "Accepted":
-            _version_key = re.findall(r"^\d+.\d+", version)[0]
-            _accepted_version_dict[_source].setdefault(_version_key, []).append(version)
+            _version_key = re.findall(r"^\d+.\d+", _version)[0]
+            _accepted_version_dict[_source].setdefault(_version_key, []).append(_version)
 
     return _accepted_version_dict
 
 
 @cache
-def parse_openshift_release_url():
+def parse_openshift_release_url() -> List[BeautifulSoup]:
     url = "https://openshift-release.apps.ci.l2s4.p1.openshiftapps.com"
     LOGGER.info(f"Parsing {url}")
     req = requests.get(url)

@@ -1,16 +1,20 @@
+from __future__ import annotations
 import os
 import re
 import shlex
 from contextlib import contextmanager
+from typing import Any, Dict, Generator, List, Tuple
 
 import click
 import requests
 import yaml
 import tempfile
-from ocp_utilities.utils import run_command
+
+from pyhelper_utils.shell import run_command
 from simple_logger.logger import get_logger
 
 from openshift_cli_installer.libs.clusters.ocp_cluster import OCPCluster
+from openshift_cli_installer.libs.user_input import UserInput
 from openshift_cli_installer.utils.cluster_versions import (
     get_cluster_version_to_install,
     get_ipi_cluster_versions,
@@ -27,13 +31,13 @@ from openshift_cli_installer.utils.general import get_dict_from_json
 
 
 class IpiCluster(OCPCluster):
-    def __init__(self, ocp_cluster, user_input):
+    def __init__(self, ocp_cluster: Dict[str, Any], user_input: UserInput) -> None:
         super().__init__(ocp_cluster=ocp_cluster, user_input=user_input)
         self.logger = get_logger(f"{self.__class__.__module__}-{self.__class__.__name__}")
         self.log_level = self.cluster.get("log_level", "error")
 
-        self.platform = None
-        self.gcp_project_id = None
+        self.platform = ""
+        self.gcp_project_id = ""
         self.unified_pull_secret = generate_unified_pull_secret(
             registry_config_file=self.user_input.registry_config_file,
             docker_config_file=self.user_input.docker_config_file,
@@ -41,11 +45,11 @@ class IpiCluster(OCPCluster):
         if self.user_input.destroy_from_s3_bucket_or_local_directory:
             self._ipi_download_installer()
         else:
-            self.openshift_install_binary_path = None
-            self.ipi_base_available_versions = None
+            self.openshift_install_binary_path = ""
+            self.ipi_base_available_versions: Dict[str, Dict[str, List[str]]]
             self.cluster["ocm-env"] = self.cluster_info["ocm-env"] = PRODUCTION_STR
 
-    def _prepare_ipi_cluster(self):
+    def _prepare_ipi_cluster(self) -> None:
         self.ipi_base_available_versions = get_ipi_cluster_versions()
         self.cluster["version"] = get_cluster_version_to_install(
             wanted_version=self.cluster_info["user-requested-version"],
@@ -59,7 +63,7 @@ class IpiCluster(OCPCluster):
         if self.user_input.create:
             self._create_install_config_file()
 
-    def _ipi_download_installer(self):
+    def _ipi_download_installer(self) -> None:
         openshift_install_str = "openshift-install"
         version_url = self.cluster_info["version-url"]
         binary_dir = os.path.join(tempfile.TemporaryDirectory().name, version_url)
@@ -81,7 +85,7 @@ class IpiCluster(OCPCluster):
                 )
                 raise click.Abort()
 
-    def _create_install_config_file(self):
+    def _create_install_config_file(self) -> None:
         terraform_parameters = {
             "name": self.cluster_info["name"],
             "region": self.cluster_info["region"],
@@ -112,22 +116,23 @@ class IpiCluster(OCPCluster):
             fd.write(yaml.dump(cluster_install_config))
 
     @contextmanager
-    def _set_docker_config_file(self):
+    def _set_docker_config_file(self) -> Generator[str, None, None]:
         with tempfile.NamedTemporaryFile(prefix="pull-secret-") as fp:
             fp.write(bytes(self.unified_pull_secret, "utf-8"))
             yield fp.name
 
-    def _set_install_version_url(self):
+    def _set_install_version_url(self) -> None:
         version_url = None
         cluster_version = self.cluster["version"]
         for tr in parse_openshift_release_url():
             version = any(_tr for _tr in tr.text.splitlines() if cluster_version == _tr)
             if version:
                 href = tr.find_all("a", attrs={"class": "text-success"})[0]["href"]
-                version_url = re.search(
+                version_url_match = re.search(
                     r"oc adm release extract --tools (.*?)<",
                     requests.get(f"https://{[*self.ipi_base_available_versions][0]}{href}").text,
-                ).group(1)
+                )
+                version_url = version_url_match.group(1) if version_url_match else None
 
         if version_url:
             self.cluster_info["version-url"] = version_url
@@ -138,7 +143,7 @@ class IpiCluster(OCPCluster):
             )
             raise click.Abort()
 
-    def run_installer_command(self, action, raise_on_failure):
+    def run_installer_command(self, action: str, raise_on_failure: bool) -> Tuple[bool, str, str]:
         run_after_failed_create_str = (
             " after cluster creation failed" if action == DESTROY_STR and self.user_input.action == CREATE_STR else ""
         )
@@ -161,8 +166,8 @@ class IpiCluster(OCPCluster):
 
         return res, out, err
 
-    def create_cluster(self):
-        def _rollback_on_error(_ex=None):
+    def create_cluster(self) -> None:
+        def _rollback_on_error(_ex: Exception | None = None) -> None:
             self.logger.error(f"{self.log_prefix}: Failed to create cluster: {_ex or 'No exception'}")
             if self.user_input.must_gather_output_dir:
                 self.collect_must_gather()
@@ -191,7 +196,7 @@ class IpiCluster(OCPCluster):
                 s3_bucket_object_name=self.cluster_info["s3-object-name"],
             )
 
-    def destroy_cluster(self):
+    def destroy_cluster(self) -> None:
         self.timeout_watch = self.start_time_watcher()
         self.run_installer_command(action=DESTROY_STR, raise_on_failure=True)
         self.logger.success(f"{self.log_prefix}: Cluster destroyed")
@@ -199,7 +204,7 @@ class IpiCluster(OCPCluster):
 
 
 class AwsIpiCluster(IpiCluster):
-    def __init__(self, ocp_cluster, user_input):
+    def __init__(self, ocp_cluster: Dict[str, Any], user_input: UserInput) -> None:
         super().__init__(ocp_cluster=ocp_cluster, user_input=user_input)
         self.logger = get_logger(f"{self.__class__.__module__}-{self.__class__.__name__}")
         self.platform = AWS_STR
@@ -211,7 +216,7 @@ class AwsIpiCluster(IpiCluster):
 
 
 class GcpIpiCluster(IpiCluster):
-    def __init__(self, ocp_cluster, user_input):
+    def __init__(self, ocp_cluster: Dict[str, Any], user_input: UserInput) -> None:
         super().__init__(ocp_cluster=ocp_cluster, user_input=user_input)
         self.logger = get_logger(f"{self.__class__.__module__}-{self.__class__.__name__}")
         self.platform = GCP_STR

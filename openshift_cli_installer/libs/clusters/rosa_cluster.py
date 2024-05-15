@@ -1,6 +1,7 @@
 import os
 import re
 import shutil
+from typing import Any, Dict
 
 import click
 import rosa.cli
@@ -9,6 +10,7 @@ from simple_logger.logger import get_logger
 import secrets
 import string
 from openshift_cli_installer.libs.clusters.ocm_cluster import OcmCluster
+from openshift_cli_installer.libs.user_input import UserInput
 from openshift_cli_installer.utils.cluster_versions import get_cluster_version_to_install
 from openshift_cli_installer.utils.const import HYPERSHIFT_STR
 from openshift_cli_installer.utils.general import (
@@ -21,7 +23,7 @@ from clouds.aws.roles.roles import get_roles
 
 
 class RosaCluster(OcmCluster):
-    def __init__(self, ocp_cluster, user_input):
+    def __init__(self, ocp_cluster: Dict[str, Any], user_input: UserInput) -> None:
         super().__init__(ocp_cluster=ocp_cluster, user_input=user_input)
         self.logger = get_logger(f"{self.__class__.__module__}-{self.__class__.__name__}")
         if self.user_input.create:
@@ -38,16 +40,17 @@ class RosaCluster(OcmCluster):
 
         if not self.user_input.destroy_from_s3_bucket_or_local_directory:
             if self.cluster_info["platform"] == HYPERSHIFT_STR:
-                self.terraform = None
+                self.terraform = Terraform()
                 self.cluster["tags"] = "dns:external"
                 self.cluster["machine-cidr"] = self.cluster.get("cidr", "10.0.0.0/16")
 
             self.dump_cluster_data_to_file()
 
-    def terraform_init(self):
+    def terraform_init(self) -> None:
         self.logger.info(f"{self.log_prefix}: Init Terraform")
         # az_id example: us-east-2 -> ["use2-az1", "use2-az2"]
-        az_id_prefix = "".join(re.match(r"(.*)-(\w).*-(\d)", self.cluster_info["region"]).groups())
+        az_id_prefix_match = re.match(r"(.*)-(\w).*-(\d)", self.cluster_info["region"])
+        az_id_prefix = "".join(az_id_prefix_match.groups()) if az_id_prefix_match else ""
         cluster_parameters = {
             "aws_region": self.cluster_info["region"],
             "az_ids": [f"{az_id_prefix}-az1", f"{az_id_prefix}-az2"],
@@ -75,7 +78,7 @@ class RosaCluster(OcmCluster):
             self.logger.error(f"{self.log_prefix}: Terraform init failed. Err: {err}, Out: {out}")
             raise click.Abort()
 
-    def create_oidc(self):
+    def create_oidc(self) -> None:
         self.logger.info(f"{self.log_prefix}: Create OIDC config")
         res = rosa.cli.execute(
             command="create oidc-config --managed=true",
@@ -89,7 +92,7 @@ class RosaCluster(OcmCluster):
 
         self.cluster["oidc-config-id"] = self.cluster_info["oidc-config-id"] = oidc_id
 
-    def delete_oidc(self):
+    def delete_oidc(self) -> None:
         self.logger.info(f"{self.log_prefix}: Delete OIDC config")
         oidc_config_id = self.cluster_info.get("oidc-config-id")
         if not oidc_config_id:
@@ -102,7 +105,7 @@ class RosaCluster(OcmCluster):
             ocm_client=self.ocm_client,
         )
 
-    def create_operator_role(self):
+    def create_operator_role(self) -> None:
         self.logger.info(f"{self.log_prefix}: Create operator role")
         rosa.cli.execute(
             command=(
@@ -116,7 +119,7 @@ class RosaCluster(OcmCluster):
             ocm_client=self.ocm_client,
         )
 
-    def delete_operator_role(self):
+    def delete_operator_role(self) -> None:
         self.logger.info(f"{self.log_prefix}: Delete operator role")
         name = self.cluster_info["name"]
         rosa.cli.execute(
@@ -125,7 +128,7 @@ class RosaCluster(OcmCluster):
             ocm_client=self.ocm_client,
         )
 
-    def destroy_hypershift_vpc(self):
+    def destroy_hypershift_vpc(self) -> None:
         self.terraform_init()
         self.logger.info(f"{self.log_prefix}: Destroy hypershift VPCs")
         rc, _, err = self.terraform.destroy(
@@ -137,7 +140,7 @@ class RosaCluster(OcmCluster):
             self.logger.error(f"{self.log_prefix}: Failed to destroy hypershift VPCs with error: {err}")
             raise click.Abort()
 
-    def prepare_hypershift_vpc(self):
+    def prepare_hypershift_vpc(self) -> None:
         self.terraform_init()
         self.logger.info(f"{self.log_prefix}: Preparing hypershift VPCs")
         self.terraform.plan(dir_or_plan="hypershift.plan")
@@ -157,7 +160,7 @@ class RosaCluster(OcmCluster):
         public_subnet = terraform_output["cluster-public-subnet"]["value"]
         self.cluster["subnet-ids"] = f'"{public_subnet},{private_subnet}"'
 
-    def build_rosa_command(self):
+    def build_rosa_command(self) -> str:
         ignore_keys = (
             "name",
             "platform",
@@ -193,8 +196,8 @@ class RosaCluster(OcmCluster):
 
         return command
 
-    def create_cluster(self):
-        idp_user, idp_password = None, None
+    def create_cluster(self) -> None:
+        idp_user, idp_password = "", ""
 
         self.timeout_watch = self.start_time_watcher()
         if self.cluster_info["platform"] == HYPERSHIFT_STR:
@@ -240,9 +243,11 @@ class RosaCluster(OcmCluster):
                 s3_bucket_object_name=self.cluster_info["s3-object-name"],
             )
 
-    def destroy_cluster(self):
+    def destroy_cluster(self) -> None:
         self.timeout_watch = self.start_time_watcher()
         should_raise = False
+        exception = None
+
         try:
             res = rosa.cli.execute(
                 command=f"delete cluster --cluster={self.cluster_info['name']}",
@@ -250,10 +255,11 @@ class RosaCluster(OcmCluster):
                 aws_region=self.cluster_info["region"],
             )
             self.cluster_object.wait_for_cluster_deletion(wait_timeout=self.timeout_watch.remaining_time())
-            self.remove_leftovers(res=res)
+            self.remove_leftovers(out=res.get("out", ""))
 
         except Exception as ex:
-            should_raise = ex
+            should_raise = True
+            exception = ex
 
         if self.cluster_info["platform"] == HYPERSHIFT_STR:
             self.destroy_hypershift_vpc()
@@ -261,19 +267,19 @@ class RosaCluster(OcmCluster):
             self.delete_operator_role()
 
         if should_raise:
-            self.logger.error(f"{self.log_prefix}: Failed to run cluster destroy\n{should_raise}")
+            self.logger.error(f"{self.log_prefix}: Failed to run cluster destroy\n{exception}")
             raise click.Abort()
 
         self.logger.success(f"{self.log_prefix}: Cluster destroyed successfully")
         self.delete_cluster_s3_buckets()
 
-    def remove_leftovers(self, res):
+    def remove_leftovers(self, out: str) -> None:
         leftovers = re.search(
             r"INFO: Once the cluster is uninstalled use the following commands to"
             r" remove"
             r" the above "
             r"aws resources(.*?)INFO:",
-            res.get("out", ""),
+            out,
             re.DOTALL,
         )
         if leftovers:
@@ -290,7 +296,7 @@ class RosaCluster(OcmCluster):
                         aws_region=self.cluster_info["region"],
                     )
 
-    def assert_hypershift_missing_roles(self):
+    def assert_hypershift_missing_roles(self) -> None:
         if self.cluster_info["platform"] == HYPERSHIFT_STR:
             hcp_roles = {
                 "ManagedOpenShift-HCP-ROSA-Installer-Role",
@@ -302,9 +308,9 @@ class RosaCluster(OcmCluster):
                 self.logger.error(f"The following roles are missing for {HYPERSHIFT_STR} deployment: {missing_roles}")
                 raise click.Abort()
 
-    def create_hypershift_idp(self):
+    def create_hypershift_idp(self) -> tuple[str, str]:
         """
-        For hypershift cluster create IDP to be able to login to the cluster with user and password.
+        For hypershift cluster create IDP to be able to log in to the cluster with user and password.
 
         Returns:
             tuple: idp_user and idp_password.
@@ -313,7 +319,8 @@ class RosaCluster(OcmCluster):
         idp_password = self.generate_hypershift_password()
         aws_region = self.cluster_info["region"]
         commands = [
-            f"create idp -c {self.cluster_object.cluster_id} --type htpasswd --name rosa-htpasswd --username={idp_user} --password={idp_password}",
+            f"create idp -c {self.cluster_object.cluster_id} --type htpasswd --name rosa-htpasswd "
+            f"--username={idp_user} --password={idp_password}",
             f"grant user cluster-admin --user={idp_user} --cluster={self.cluster_object.cluster_id}",
         ]
         rosa_command_success = True
@@ -346,6 +353,7 @@ class RosaCluster(OcmCluster):
 
         return idp_user, idp_password
 
-    def generate_hypershift_password(self):
+    @staticmethod
+    def generate_hypershift_password() -> str:
         alphabet = string.ascii_letters + string.digits
         return "".join(secrets.choice(alphabet) for _ in range(20))
