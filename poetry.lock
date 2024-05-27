@@ -1228,12 +1228,12 @@ urllib3 = ">=1.25.3"
 
 [[package]]
 name = "openshift-cluster-management-python-wrapper"
-version = "1.0.114"
+version = "1.0.115"
 description = "Wrapper around https://github.com/openshift/openshift-cluster-management-python-client"
 optional = false
 python-versions = "<4.0,>=3.8"
 files = [
-    {file = "openshift_cluster_management_python_wrapper-1.0.114.tar.gz", hash = "sha256:b0a6ffd452e7adeab536df981c3a72d341fb8eb8c4f2202340931eea1ed1b3a9"},
+    {file = "openshift_cluster_management_python_wrapper-1.0.115.tar.gz", hash = "sha256:1cb5c97643564cb2f0e7162d067505d01f283468a5ded409c34b9783d32b3fa5"},
 ]
 
 [package.dependencies]
@@ -1274,12 +1274,12 @@ timeout-sampler = ">=0.0.17"
 
 [[package]]
 name = "openshift-python-wrapper"
-version = "10.0.51"
+version = "10.0.52"
 description = "Wrapper around https://github.com/kubernetes-client/python"
 optional = false
 python-versions = "<4.0,>=3.8"
 files = [
-    {file = "openshift_python_wrapper-10.0.51.tar.gz", hash = "sha256:61731a2ddfdcf8200413c0bd6518f6b208d58af997da4e7bd4a913ba74bcf330"},
+    {file = "openshift_python_wrapper-10.0.52.tar.gz", hash = "sha256:6309a2680c2eca22cf9db9a1112c984f3817a673d4d4e0e50cf63d7bd6675462"},
 ]
 
 [package.dependencies]
@@ -1896,12 +1896,12 @@ files = [
 
 [[package]]
 name = "redhat-qe-cloud-tools"
-version = "1.0.78"
+version = "1.0.79"
 description = "Python utilities to manage cloud services, such as AWS."
 optional = false
 python-versions = "<4.0,>=3.8"
 files = [
-    {file = "redhat_qe_cloud_tools-1.0.78.tar.gz", hash = "sha256:bdcad0b81e23b6ad02b536299e5885bcfff3801154b46465bd3e817f72bb505a"},
+    {file = "redhat_qe_cloud_tools-1.0.79.tar.gz", hash = "sha256:1e8e736bcb847d1edc014e80e80c26814368e7c0801a79c4b0b15c4b67a1f2a7"},
 ]
 
 [package.dependencies]
@@ -1980,12 +1980,12 @@ jupyter = ["ipywidgets (>=7.5.1,<9)"]
 
 [[package]]
 name = "rosa-python-client"
-version = "1.0.95"
+version = "1.0.96"
 description = "Wrapper for rosa cli"
 optional = false
 python-versions = "<4.0,>=3.8"
 files = [
-    {file = "rosa_python_client-1.0.95.tar.gz", hash = "sha256:d7be1dbcd79a2a4dcc8676354e1b46ceebe07e55f5aff272a47532dc4c71bcb8"},
+    {file = "rosa_python_client-1.0.96.tar.gz", hash = "sha256:3c395fc2493ae12259eb71fe23cf5cca5cb74ab8661d30c3d65a7fd5b67538a1"},
 ]
 
 [package.dependencies]
