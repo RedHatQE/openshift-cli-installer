@@ -138,7 +138,6 @@ class RosaCluster(OcmCluster):
         )
         if rc != 0:
             self.logger.error(f"{self.log_prefix}: Failed to destroy hypershift VPCs with error: {err}")
-            raise click.Abort()
 
     def prepare_hypershift_vpc(self) -> None:
         self.terraform_init()

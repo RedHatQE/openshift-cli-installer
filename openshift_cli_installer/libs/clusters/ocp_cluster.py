@@ -306,7 +306,7 @@ class OCPCluster:
         self.dump_cluster_data_to_file()
 
     def delete_cluster_s3_buckets(self) -> None:
-        if s3_file := self.cluster_info.get("s3-object-name"):
+        if self.s3_bucket_name and (s3_file := self.cluster_info.get("s3-object-name")):
             self.logger.info(f"{self.log_prefix}: Deleting S3 file {s3_file} from {self.s3_bucket_name}")
             s3_client().delete_object(Bucket=self.s3_bucket_name, Key=s3_file)
             self.logger.success(f"{self.log_prefix}: {s3_file} deleted ")
