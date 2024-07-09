@@ -112,7 +112,8 @@ class OCPCluster:
             self.cluster_info["auth-path"] = auth_path = os.path.join(cluster_dir, "auth")
             self.cluster_info["kubeconfig-path"] = os.path.join(auth_path, "kubeconfig")
             Path(auth_path).mkdir(parents=True, exist_ok=True)
-            self._add_s3_bucket_data()
+            if self.s3_bucket_name:
+                self._add_s3_bucket_data()
 
         self.log_prefix = (
             f"[C:{self.cluster_info['name']}|P:{self.cluster_info['platform']}|"
@@ -306,7 +307,7 @@ class OCPCluster:
         self.dump_cluster_data_to_file()
 
     def delete_cluster_s3_buckets(self) -> None:
-        if self.s3_bucket_name and (s3_file := self.cluster_info.get("s3-object-name")):
+        if s3_file := self.cluster_info.get("s3-object-name"):
             self.logger.info(f"{self.log_prefix}: Deleting S3 file {s3_file} from {self.s3_bucket_name}")
             s3_client().delete_object(Bucket=self.s3_bucket_name, Key=s3_file)
             self.logger.success(f"{self.log_prefix}: {s3_file} deleted ")
