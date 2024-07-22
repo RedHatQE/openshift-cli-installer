@@ -40,7 +40,7 @@ class OsdCluster(OcmCluster):
             ocp_version = (
                 self.cluster["version"]
                 if self.cluster_info["channel-group"] == "stable"
-                else f"{self.cluster_info['version']}-{self.cluster_info['channel-group']}"
+                else f"{self.cluster['version']}-{self.cluster_info['channel-group']}"
             )
             provision_osd_kwargs = {
                 "wait_for_ready": True,
