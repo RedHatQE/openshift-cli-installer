@@ -60,13 +60,13 @@ pyaml-env = "^1.2.1"
 google-cloud-compute = "^1.14.1"
 redhat-qe-cloud-tools = ">=1.0.46"
 python-simple-logger = ">=1.0.7"
-ruff = "^0.4.0"
+ruff = "^0.6.0"
 timeout-sampler = ">=0.0.1"
 openshift-python-wrapper = ">=10.0.0"
 pytest-testconfig = "^0.2.0"
 beautifulsoup4 = "^4.12.3"
 requests = "^2.31.0"
-pyhelper-utils = "^0.0.22"
+pyhelper-utils = "^0.0.35"
 
 
 [tool.poetry.group.dev.dependencies]
