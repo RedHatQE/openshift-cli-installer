@@ -342,21 +342,6 @@ files = [
 colorama = {version = "*", markers = "platform_system == \"Windows\""}
 
 [[package]]
-name = "cloup"
-version = "3.0.5"
-description = "Adds features to Click: option groups, constraints, subcommand sections and help themes."
-optional = false
-python-versions = ">=3.7"
-files = [
-    {file = "cloup-3.0.5-py2.py3-none-any.whl", hash = "sha256:bf122036066584eb0db113561167c29969cc015972b7b7ee03158d9bc7de87f8"},
-    {file = "cloup-3.0.5.tar.gz", hash = "sha256:c92b261c7bb7e13004930f3fb4b3edad8de2d1f12994dcddbe05bc21990443c5"},
-]
-
-[package.dependencies]
-click = ">=8.0,<9.0"
-typing-extensions = {version = "*", markers = "python_version <= \"3.8\""}
-
-[[package]]
 name = "colorama"
 version = "0.4.6"
 description = "Cross-platform colored terminal text."
@@ -1126,27 +1111,21 @@ timeout-sampler = ">=0.0.17"
 
 [[package]]
 name = "openshift-python-wrapper"
-version = "10.0.74"
+version = "10.0.65"
 description = "Wrapper around https://github.com/kubernetes-client/python"
 optional = false
 python-versions = "<4.0,>=3.8"
 files = [
-    {file = "openshift_python_wrapper-10.0.74.tar.gz", hash = "sha256:d4a5928443c8e902436981f335cbe85644b0baf3c3e294a9f171a4cc910df099"},
+    {file = "openshift_python_wrapper-10.0.65.tar.gz", hash = "sha256:cbaa7d5785474d2d05325e4f2893d38b1d85815bbf476a22e18c635786ef5690"},
 ]
 
 [package.dependencies]
-click = ">=8.1.7,<9.0.0"
-cloup = ">=3.0.5,<4.0.0"
 colorlog = ">=6.7.0,<7.0.0"
 jinja2 = ">=3.1.2,<4.0.0"
 kubernetes = ">=30.0.0,<31.0.0"
 packaging = ">=23.1,<24.0"
-pyhelper-utils = ">=0.0.36,<0.0.37"
-pytest = ">=8.0.0,<9.0.0"
 python-benedict = ">=0.33.0,<0.34.0"
 python-simple-logger = ">=1.0.6"
-rich = ">=13.7.1,<14.0.0"
-ruff = ">=0.6.0,<0.7.0"
 timeout-sampler = ">=0.0.17"
 xmltodict = ">=0.13.0,<0.14.0"
 
@@ -1409,12 +1388,12 @@ windows-terminal = ["colorama (>=0.4.6)"]
 
 [[package]]
 name = "pyhelper-utils"
-version = "0.0.36"
+version = "0.0.37"
 description = "Collective utility functions for python projects"
 optional = false
 python-versions = "<4.0,>=3.8"
 files = [
-    {file = "pyhelper_utils-0.0.36.tar.gz", hash = "sha256:574c92ba0643811f2053f192893ac8ac0807b104e86fa324bfcf3ec7e427552a"},
+    {file = "pyhelper_utils-0.0.37.tar.gz", hash = "sha256:b5585dbcf7ab779435b218ce2b14c02e69d6d4256bc53adac8297120a550c0b5"},
 ]
 
 [package.dependencies]
@@ -2042,4 +2021,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.8"
-content-hash = "39e261a9f0a9e5b847971509db0462dbbebfd07ad5463411c97ec092284e2111"
+content-hash = "6df18bfc6349ebc5b4a320bd035ee682259f6507f115589b18aac238bdcec954"
