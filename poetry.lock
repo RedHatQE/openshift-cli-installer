@@ -1103,12 +1103,12 @@ timeout-sampler = ">=0.0.2"
 
 [[package]]
 name = "openshift-python-utilities"
-version = "5.0.62"
+version = "5.0.63"
 description = "A utilities repository for https://github.com/RedHatQE/openshift-python-wrapper"
 optional = false
 python-versions = "<4.0,>=3.8"
 files = [
-    {file = "openshift_python_utilities-5.0.62.tar.gz", hash = "sha256:6eb32e973412cfb0df4d0ad2e619862d7d486c72fa28d8b81bc5c1e4d23966e0"},
+    {file = "openshift_python_utilities-5.0.63.tar.gz", hash = "sha256:22aff50631bb17489f6d3cf7eac25145befa5440999dd16fd8460116f337d3e6"},
 ]
 
 [package.dependencies]
