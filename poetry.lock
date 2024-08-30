@@ -469,6 +469,21 @@ files = [
 colorama = {version = "*", markers = "platform_system == \"Windows\""}
 
 [[package]]
+name = "cloup"
+version = "3.0.5"
+description = "Adds features to Click: option groups, constraints, subcommand sections and help themes."
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "cloup-3.0.5-py2.py3-none-any.whl", hash = "sha256:bf122036066584eb0db113561167c29969cc015972b7b7ee03158d9bc7de87f8"},
+    {file = "cloup-3.0.5.tar.gz", hash = "sha256:c92b261c7bb7e13004930f3fb4b3edad8de2d1f12994dcddbe05bc21990443c5"},
+]
+
+[package.dependencies]
+click = ">=8.0,<9.0"
+typing-extensions = {version = "*", markers = "python_version <= \"3.8\""}
+
+[[package]]
 name = "colorama"
 version = "0.4.6"
 description = "Cross-platform colored terminal text."
@@ -1260,12 +1275,12 @@ urllib3 = ">=1.25.3"
 
 [[package]]
 name = "openshift-cluster-management-python-wrapper"
-version = "1.0.132"
+version = "1.0.133"
 description = "Wrapper around https://github.com/openshift/openshift-cluster-management-python-client"
 optional = false
 python-versions = "<4.0,>=3.8"
 files = [
-    {file = "openshift_cluster_management_python_wrapper-1.0.132.tar.gz", hash = "sha256:c24e8bf4663a91ed11ab55a5d2a4329cafde8b04df8d3bd11b27df764b9e00c3"},
+    {file = "openshift_cluster_management_python_wrapper-1.0.133.tar.gz", hash = "sha256:3ba5b0d7abae49570ad0d26b4e62a15188b39d62d9fd5bb8779d75f73a8361fa"},
 ]
 
 [package.dependencies]
@@ -1307,21 +1322,27 @@ timeout-sampler = ">=0.0.17"
 
 [[package]]
 name = "openshift-python-wrapper"
-version = "10.0.65"
+version = "10.0.81"
 description = "Wrapper around https://github.com/kubernetes-client/python"
 optional = false
 python-versions = "<4.0,>=3.8"
 files = [
-    {file = "openshift_python_wrapper-10.0.65.tar.gz", hash = "sha256:cbaa7d5785474d2d05325e4f2893d38b1d85815bbf476a22e18c635786ef5690"},
+    {file = "openshift_python_wrapper-10.0.81.tar.gz", hash = "sha256:4511d1d1d66b4539e5f5be5c58d507a35baf9f1b37688c7ebf50bf599f3a1b7c"},
 ]
 
 [package.dependencies]
+click = ">=8.1.7,<9.0.0"
+cloup = ">=3.0.5,<4.0.0"
 colorlog = ">=6.7.0,<7.0.0"
 jinja2 = ">=3.1.2,<4.0.0"
 kubernetes = ">=30.0.0,<31.0.0"
 packaging = ">=23.1,<24.0"
+pyhelper-utils = ">=0.0.39,<0.0.40"
+pytest = ">=8.0.0,<9.0.0"
 python-benedict = ">=0.33.0,<0.34.0"
 python-simple-logger = ">=1.0.6"
+rich = ">=13.7.1,<14.0.0"
+ruff = ">=0.6.0,<0.7.0"
 timeout-sampler = ">=0.0.17"
 xmltodict = ">=0.13.0,<0.14.0"
 
@@ -2013,12 +2034,12 @@ jupyter = ["ipywidgets (>=7.5.1,<9)"]
 
 [[package]]
 name = "rosa-python-client"
-version = "1.0.113"
+version = "1.0.114"
 description = "Wrapper for rosa cli"
 optional = false
 python-versions = "<4.0,>=3.8"
 files = [
-    {file = "rosa_python_client-1.0.113.tar.gz", hash = "sha256:1fd616e0cd4b6b87b1630d38bc17b7b53308b2ffa4a06c3299a238916c520709"},
+    {file = "rosa_python_client-1.0.114.tar.gz", hash = "sha256:8000817d97ea47a648a4827c1ec37bc4057a966200beb0a66b5716bc1777c155"},
 ]
 
 [package.dependencies]
