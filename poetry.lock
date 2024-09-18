@@ -1064,12 +1064,12 @@ urllib3 = ">=1.25.3"
 
 [[package]]
 name = "openshift-cluster-management-python-wrapper"
-version = "1.0.134"
+version = "1.0.135"
 description = "Wrapper around https://github.com/openshift/openshift-cluster-management-python-client"
 optional = false
 python-versions = "<4.0,>=3.8"
 files = [
-    {file = "openshift_cluster_management_python_wrapper-1.0.134.tar.gz", hash = "sha256:917b1ec3e0c07af4248dca30dec6e2cd341cfaa1f2c749672f46eb2c57b18e9b"},
+    {file = "openshift_cluster_management_python_wrapper-1.0.135.tar.gz", hash = "sha256:6436c94abbb77dad0fddd84ebe34d7aeb8b277a28ac944adef6a2a8219fdf4e6"},
 ]
 
 [package.dependencies]
@@ -1088,12 +1088,12 @@ timeout-sampler = ">=0.0.2"
 
 [[package]]
 name = "openshift-python-utilities"
-version = "5.0.65"
+version = "5.0.66"
 description = "A utilities repository for https://github.com/RedHatQE/openshift-python-wrapper"
 optional = false
 python-versions = "<4.0,>=3.8"
 files = [
-    {file = "openshift_python_utilities-5.0.65.tar.gz", hash = "sha256:dfa08598f21a4066be61b60e1b5d54aa14995386ee0a479c9f865288d092ed61"},
+    {file = "openshift_python_utilities-5.0.66.tar.gz", hash = "sha256:ff01faf0bdc33b2bdb8f15c94e8bfb593f8c1bcc2af9e0c060208bc8afe8dc53"},
 ]
 
 [package.dependencies]
@@ -1388,12 +1388,12 @@ windows-terminal = ["colorama (>=0.4.6)"]
 
 [[package]]
 name = "pyhelper-utils"
-version = "0.0.40"
+version = "0.0.41"
 description = "Collective utility functions for python projects"
 optional = false
 python-versions = "<4.0,>=3.8"
 files = [
-    {file = "pyhelper_utils-0.0.40.tar.gz", hash = "sha256:20f8c2a7d0c9ae3983fcfb60249e74ee0d674cbe742d375357474fa990a497ed"},
+    {file = "pyhelper_utils-0.0.41.tar.gz", hash = "sha256:cbe67c1f4b7385605f65ae7dfc254d6aa651958203fa69e935e1fd48cd01a44e"},
 ]
 
 [package.dependencies]
@@ -1571,12 +1571,12 @@ six = "*"
 
 [[package]]
 name = "python-simple-logger"
-version = "1.0.38"
+version = "1.0.39"
 description = "A simple logger for python"
 optional = false
 python-versions = "<4.0,>=3.8"
 files = [
-    {file = "python_simple_logger-1.0.38.tar.gz", hash = "sha256:3e88a22f31485b1ab5d1c4da56ffe8dd27d6453f79f6f9859978ecd76083f58e"},
+    {file = "python_simple_logger-1.0.39.tar.gz", hash = "sha256:e66957ec05d03fd064d1753d6477da7864fe108c6c7ed9aad3b0f03d6d210e24"},
 ]
 
 [package.dependencies]
@@ -1748,12 +1748,12 @@ jupyter = ["ipywidgets (>=7.5.1,<9)"]
 
 [[package]]
 name = "rosa-python-client"
-version = "1.0.115"
+version = "1.0.116"
 description = "Wrapper for rosa cli"
 optional = false
 python-versions = "<4.0,>=3.8"
 files = [
-    {file = "rosa_python_client-1.0.115.tar.gz", hash = "sha256:c03266262a443ebb3a5032625fb0bd6acc95e1673d184d10fe11194deffb26e9"},
+    {file = "rosa_python_client-1.0.116.tar.gz", hash = "sha256:52c88b7feeb18a04d2d78d5eced5b42db1702a000ee692faf0495dc9e3024fdc"},
 ]
 
 [package.dependencies]
@@ -1899,12 +1899,12 @@ files = [
 
 [[package]]
 name = "timeout-sampler"
-version = "0.0.44"
+version = "0.0.45"
 description = "Timeout utility class to wait for any function output and interact with it in given time"
 optional = false
 python-versions = "<4.0,>=3.8"
 files = [
-    {file = "timeout_sampler-0.0.44.tar.gz", hash = "sha256:5552d30cf222f5cd3bae519b861ad255982fdb690cdb2b0c0bfd0ccbd45a20af"},
+    {file = "timeout_sampler-0.0.45.tar.gz", hash = "sha256:07c5b439c9240312fc4074114093823c0b017a568325cdd1c122a0233628ec37"},
 ]
 
 [package.dependencies]
@@ -2021,4 +2021,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.8"
-content-hash = "209af110c1ad5fafa1dd037caae1b38497e9c88cefa6a5d9eb8fd55ecd27977b"
+content-hash = "c0928f745594cc03407abb52a8009ec9ddf00da9282a5e806a0ca5a614a6762e"
