@@ -1748,12 +1748,12 @@ jupyter = ["ipywidgets (>=7.5.1,<9)"]
 
 [[package]]
 name = "rosa-python-client"
-version = "1.0.116"
+version = "1.0.117"
 description = "Wrapper for rosa cli"
 optional = false
 python-versions = "<4.0,>=3.8"
 files = [
-    {file = "rosa_python_client-1.0.116.tar.gz", hash = "sha256:52c88b7feeb18a04d2d78d5eced5b42db1702a000ee692faf0495dc9e3024fdc"},
+    {file = "rosa_python_client-1.0.117.tar.gz", hash = "sha256:77a9ee6de0659e27b79a441d6ce551951725247cbb4d627d4c409b86a80da26b"},
 ]
 
 [package.dependencies]
