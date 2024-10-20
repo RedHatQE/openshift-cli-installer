@@ -1109,12 +1109,12 @@ urllib3 = ">=1.25.3"
 
 [[package]]
 name = "openshift-cluster-management-python-wrapper"
-version = "1.0.139"
+version = "1.0.145"
 description = "Wrapper around https://github.com/openshift/openshift-cluster-management-python-client"
 optional = false
 python-versions = "<4.0,>=3.8"
 files = [
-    {file = "openshift_cluster_management_python_wrapper-1.0.139.tar.gz", hash = "sha256:37d0a14c5fa9fedea65f0c6313063edc4792922808b213939b7643d038b65673"},
+    {file = "openshift_cluster_management_python_wrapper-1.0.145.tar.gz", hash = "sha256:8f530c3aaa2180291cc6b56d2a9a9b795f87d9aabccbe2d5f44cfb7682da6a05"},
 ]
 
 [package.dependencies]
@@ -1128,7 +1128,7 @@ python-simple-logger = ">=1.0.5"
 pyyaml = ">=6.0.1,<7.0.0"
 redhat-qe-cloud-tools = ">=1.0.10"
 requests = ">=2.31.0,<3.0.0"
-rosa-python-client = ">=1.0.28"
+rosa-python-client = ">=1.0.125,<2.0.0"
 timeout-sampler = ">=0.0.2"
 
 [[package]]
@@ -1812,20 +1812,20 @@ jupyter = ["ipywidgets (>=7.5.1,<9)"]
 
 [[package]]
 name = "rosa-python-client"
-version = "1.0.120"
+version = "1.0.125"
 description = "Wrapper for rosa cli"
 optional = false
 python-versions = "<4.0,>=3.8"
 files = [
-    {file = "rosa_python_client-1.0.120.tar.gz", hash = "sha256:12307746ce4808609cdaee93c2270f207eecf49645c941ccce9a9c7506fbd7eb"},
+    {file = "rosa_python_client-1.0.125.tar.gz", hash = "sha256:409318dad68414b676606a27151350b0376b3e0300767e9f50519878548f762a"},
 ]
 
 [package.dependencies]
 coverage = ">=7.6.0,<8.0.0"
-openshift-cluster-management-python-wrapper = ">=1.0.86,<2.0.0"
+openshift-cluster-management-python-wrapper = ">=1.0.140,<2.0.0"
 pytest-cov = ">=5.0.0,<6.0.0"
 pytest-mock = ">=3.14.0,<4.0.0"
-python-benedict = ">=0.33.0,<0.34.0"
+python-benedict = "0.33.2"
 python-simple-logger = ">=1.0.5"
 redhat-qe-cloud-tools = ">=1.0.19"
 
