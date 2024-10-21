@@ -1109,12 +1109,12 @@ urllib3 = ">=1.25.3"
 
 [[package]]
 name = "openshift-cluster-management-python-wrapper"
-version = "1.0.145"
+version = "1.0.147"
 description = "Wrapper around https://github.com/openshift/openshift-cluster-management-python-client"
 optional = false
 python-versions = "<4.0,>=3.8"
 files = [
-    {file = "openshift_cluster_management_python_wrapper-1.0.145.tar.gz", hash = "sha256:8f530c3aaa2180291cc6b56d2a9a9b795f87d9aabccbe2d5f44cfb7682da6a05"},
+    {file = "openshift_cluster_management_python_wrapper-1.0.147.tar.gz", hash = "sha256:de74ae1a5003d71f7ddd23495d7f51b128c9f06f1df61ffe8ee9eb7804bd5299"},
 ]
 
 [package.dependencies]
@@ -1812,12 +1812,12 @@ jupyter = ["ipywidgets (>=7.5.1,<9)"]
 
 [[package]]
 name = "rosa-python-client"
-version = "1.0.125"
+version = "1.0.127"
 description = "Wrapper for rosa cli"
 optional = false
 python-versions = "<4.0,>=3.8"
 files = [
-    {file = "rosa_python_client-1.0.125.tar.gz", hash = "sha256:409318dad68414b676606a27151350b0376b3e0300767e9f50519878548f762a"},
+    {file = "rosa_python_client-1.0.127.tar.gz", hash = "sha256:bdc2f2b523d01ccef7b96d3bd3b1238dfe1a0b1cb63bfedef3e429a358f8c0cb"},
 ]
 
 [package.dependencies]
