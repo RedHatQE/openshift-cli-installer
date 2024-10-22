@@ -1109,12 +1109,12 @@ urllib3 = ">=1.25.3"
 
 [[package]]
 name = "openshift-cluster-management-python-wrapper"
-version = "1.0.147"
+version = "1.0.149"
 description = "Wrapper around https://github.com/openshift/openshift-cluster-management-python-client"
 optional = false
 python-versions = "<4.0,>=3.8"
 files = [
-    {file = "openshift_cluster_management_python_wrapper-1.0.147.tar.gz", hash = "sha256:de74ae1a5003d71f7ddd23495d7f51b128c9f06f1df61ffe8ee9eb7804bd5299"},
+    {file = "openshift_cluster_management_python_wrapper-1.0.149.tar.gz", hash = "sha256:e3ad3c5721088e28109a41a61ed20a7f7dbfe49c4894b131b93e82a737a87d52"},
 ]
 
 [package.dependencies]
@@ -1128,17 +1128,17 @@ python-simple-logger = ">=1.0.5"
 pyyaml = ">=6.0.1,<7.0.0"
 redhat-qe-cloud-tools = ">=1.0.10"
 requests = ">=2.31.0,<3.0.0"
-rosa-python-client = ">=1.0.125,<2.0.0"
+rosa-python-client = "*"
 timeout-sampler = ">=0.0.2"
 
 [[package]]
 name = "openshift-python-utilities"
-version = "5.0.70"
+version = "5.0.71"
 description = "A utilities repository for https://github.com/RedHatQE/openshift-python-wrapper"
 optional = false
 python-versions = "<4.0,>=3.8"
 files = [
-    {file = "openshift_python_utilities-5.0.70.tar.gz", hash = "sha256:dcc8e31f263f04584cda6e327415e72ac00f5a563e7eecbd401b0cc9a6abc382"},
+    {file = "openshift_python_utilities-5.0.71.tar.gz", hash = "sha256:4a52c065e43285659b80ca32f6621e19f0edc7903e855b32f3a48d893315c066"},
 ]
 
 [package.dependencies]
@@ -1156,12 +1156,12 @@ timeout-sampler = ">=0.0.17"
 
 [[package]]
 name = "openshift-python-wrapper"
-version = "10.0.99"
+version = "10.0.100"
 description = "Wrapper around https://github.com/kubernetes-client/python"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "openshift_python_wrapper-10.0.99.tar.gz", hash = "sha256:c7c59b035532ab5447a0f6b2b83eb340042c309f74dd6bf7f3fee52b83a4417d"},
+    {file = "openshift_python_wrapper-10.0.100.tar.gz", hash = "sha256:eeaea53eda20658312d7cb91bf5a7dbcb66eeb7e02435ebc104d2853b25afca7"},
 ]
 
 [package.dependencies]
@@ -1452,12 +1452,12 @@ windows-terminal = ["colorama (>=0.4.6)"]
 
 [[package]]
 name = "pyhelper-utils"
-version = "0.0.43"
+version = "0.0.44"
 description = "Collective utility functions for python projects"
 optional = false
 python-versions = "<4.0,>=3.8"
 files = [
-    {file = "pyhelper_utils-0.0.43.tar.gz", hash = "sha256:a90694f9f9df8bcd5369c53f222dfbcd1946650a5f1255a87184f3c03b4bca30"},
+    {file = "pyhelper_utils-0.0.44.tar.gz", hash = "sha256:de21bc9de7eea02bc4e1b85686e18eb49dde3d7f41b45f1cfc498df0e47abc17"},
 ]
 
 [package.dependencies]
@@ -1635,12 +1635,12 @@ six = "*"
 
 [[package]]
 name = "python-simple-logger"
-version = "1.0.41"
+version = "1.0.42"
 description = "A simple logger for python"
 optional = false
 python-versions = "<4.0,>=3.8"
 files = [
-    {file = "python_simple_logger-1.0.41.tar.gz", hash = "sha256:9890bf0698fc670eaff6430462ac1da16baad51f3139395e9c8056a2df1e7174"},
+    {file = "python_simple_logger-1.0.42.tar.gz", hash = "sha256:ad8ffd2019bcf824377d4ac2ac295b29210de0572ac85b45a8e250acf9ca0053"},
 ]
 
 [package.dependencies]
@@ -1812,17 +1812,17 @@ jupyter = ["ipywidgets (>=7.5.1,<9)"]
 
 [[package]]
 name = "rosa-python-client"
-version = "1.0.127"
+version = "1.0.129"
 description = "Wrapper for rosa cli"
 optional = false
 python-versions = "<4.0,>=3.8"
 files = [
-    {file = "rosa_python_client-1.0.127.tar.gz", hash = "sha256:bdc2f2b523d01ccef7b96d3bd3b1238dfe1a0b1cb63bfedef3e429a358f8c0cb"},
+    {file = "rosa_python_client-1.0.129.tar.gz", hash = "sha256:9e00cabb8a9bf60b1921e7ced54205765696adb4a9c86dc49acacb08aeffdc1a"},
 ]
 
 [package.dependencies]
 coverage = ">=7.6.0,<8.0.0"
-openshift-cluster-management-python-wrapper = ">=1.0.140,<2.0.0"
+openshift-cluster-management-python-wrapper = "*"
 pytest-cov = ">=5.0.0,<6.0.0"
 pytest-mock = ">=3.14.0,<4.0.0"
 python-benedict = "0.33.2"
@@ -1963,12 +1963,12 @@ files = [
 
 [[package]]
 name = "timeout-sampler"
-version = "0.0.47"
+version = "0.0.48"
 description = "Timeout utility class to wait for any function output and interact with it in given time"
 optional = false
 python-versions = "<4.0,>=3.8"
 files = [
-    {file = "timeout_sampler-0.0.47.tar.gz", hash = "sha256:1922eb3417bff24cd3c0dda984fec8f669d0784332b09f179bad2d78b47eca99"},
+    {file = "timeout_sampler-0.0.48.tar.gz", hash = "sha256:8c878876ea90949e511a206ac7b7b1ca1a3481e7d0965b1a255f18822cce5605"},
 ]
 
 [package.dependencies]
@@ -2085,4 +2085,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.8"
-content-hash = "d2d18d0d2f155461393668d6452d72fa21f584e0b51c40f61324980b45ba6602"
+content-hash = "11e167acc99df7e2ce7ae15a3b6feaae36559ddbc107fcfdad357236219830c9"
