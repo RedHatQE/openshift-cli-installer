@@ -178,7 +178,7 @@ class UserInput:
                 missing_platforms.append(f"Cluster {_cluster['name']} is missing platform")
 
             elif _platform not in SUPPORTED_PLATFORMS:
-                unsupported_platforms.append(f"Cluster {_cluster['name']} platform '{_platform}' is not" " supported.")
+                unsupported_platforms.append(f"Cluster {_cluster['name']} platform '{_platform}' is not supported.")
 
         if unsupported_platforms or missing_platforms:
             if unsupported_platforms:
@@ -345,7 +345,7 @@ class UserInput:
             if not cluster.get("aws-access-key-id"):
                 missing_storage_data.append(f"{base_error_str} is missing `acm-observability-s3-access-key-id`")
             if not cluster.get("aws-secret-access-key"):
-                missing_storage_data.append(f"{base_error_str} is missing" " `acm-observability-s3-secret-access-key`")
+                missing_storage_data.append(f"{base_error_str} is missing `acm-observability-s3-secret-access-key`")
 
         return missing_storage_data
 

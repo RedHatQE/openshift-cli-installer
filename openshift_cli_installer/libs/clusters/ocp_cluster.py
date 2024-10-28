@@ -238,7 +238,7 @@ class OCPCluster:
         try:
             kubeconfig_path = self.cluster_info["kubeconfig-path"]
             if not os.path.exists(kubeconfig_path):
-                self.logger.error(f"{self.log_prefix}: kubeconfig does not exist; cannot run" " must-gather.")
+                self.logger.error(f"{self.log_prefix}: kubeconfig does not exist; cannot run must-gather.")
                 return
 
             self.logger.info(f"{self.log_prefix}: Prepare must-gather target extracted directory {target_dir}.")
