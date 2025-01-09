@@ -1343,12 +1343,12 @@ timeout-sampler = ">=0.0.2"
 
 [[package]]
 name = "openshift-python-utilities"
-version = "5.0.73"
+version = "6.0.3"
 description = "A utilities repository for https://github.com/RedHatQE/openshift-python-wrapper"
 optional = false
-python-versions = "<4.0,>=3.8"
+python-versions = "<4.0,>=3.9"
 files = [
-    {file = "openshift_python_utilities-5.0.73.tar.gz", hash = "sha256:56ef35996b6f46f4589442bcc52074a536ed3c2625b8acdad58df50906369588"},
+    {file = "openshift_python_utilities-6.0.3.tar.gz", hash = "sha256:95a963df5b0a4d66073d4a27118e19c025b7bc95e21ebde3d8b148c5eb635173"},
 ]
 
 [package.dependencies]
@@ -1671,18 +1671,18 @@ windows-terminal = ["colorama (>=0.4.6)"]
 
 [[package]]
 name = "pyhelper-utils"
-version = "0.0.44"
+version = "1.0.4"
 description = "Collective utility functions for python projects"
 optional = false
-python-versions = "<4.0,>=3.8"
+python-versions = "<4.0,>=3.9"
 files = [
-    {file = "pyhelper_utils-0.0.44.tar.gz", hash = "sha256:de21bc9de7eea02bc4e1b85686e18eb49dde3d7f41b45f1cfc498df0e47abc17"},
+    {file = "pyhelper_utils-1.0.4.tar.gz", hash = "sha256:ca1d80a3617a3992147bd4f3ae9769343d09553a007af26f52940b2f09ee36cf"},
 ]
 
 [package.dependencies]
 ipdb = ">=0.13.13,<0.14.0"
 python-rrmngmnt = ">=0.1.32,<0.2.0"
-python-simple-logger = ">=1.0.19,<2.0.0"
+python-simple-logger = ">=2.0.0,<3.0.0"
 requests = ">=2.31.0,<3.0.0"
 rich = ">=13.7.1,<14.0.0"
 
@@ -1888,12 +1888,12 @@ six = "*"
 
 [[package]]
 name = "python-simple-logger"
-version = "1.0.42"
+version = "2.0.2"
 description = "A simple logger for python"
 optional = false
-python-versions = "<4.0,>=3.8"
+python-versions = "<4.0,>=3.9"
 files = [
-    {file = "python_simple_logger-1.0.42.tar.gz", hash = "sha256:ad8ffd2019bcf824377d4ac2ac295b29210de0572ac85b45a8e250acf9ca0053"},
+    {file = "python_simple_logger-2.0.2.tar.gz", hash = "sha256:c40ba618245d3286d06e5e0780b36df5f83c7512018c7034a83e1eb010ab9793"},
 ]
 
 [package.dependencies]
@@ -2017,12 +2017,12 @@ files = [
 
 [[package]]
 name = "redhat-qe-cloud-tools"
-version = "2.0.0"
+version = "2.0.4"
 description = "Python utilities to manage cloud services, such as AWS."
 optional = false
 python-versions = "<4.0,>=3.9"
 files = [
-    {file = "redhat_qe_cloud_tools-2.0.0.tar.gz", hash = "sha256:7abe6f9c3f02a46492d043668913a68a5de8f7eec8001bed6cb0c4a7c5a0cbf5"},
+    {file = "redhat_qe_cloud_tools-2.0.4.tar.gz", hash = "sha256:dabe25520fe88e09388f0232020f04fcc61439b211421ab257a12841449d4639"},
 ]
 
 [package.dependencies]
@@ -2037,8 +2037,8 @@ click = ">=8.1.4,<9.0.0"
 colorlog = ">=6.7.0,<7.0.0"
 configparser = ">=7.0.0,<8.0.0"
 google-cloud-compute = ">=1.14.1,<2.0.0"
-openshift-python-utilities = ">=5.0.49,<6.0.0"
-pyhelper-utils = ">=0.0.44,<0.0.45"
+openshift-python-utilities = ">=6.0.0,<7.0.0"
+pyhelper-utils = ">=1.0.0,<2.0.0"
 python-simple-logger = ">=1.0.5"
 
 [[package]]
@@ -2531,4 +2531,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9"
-content-hash = "7fc48b0b622bb97873ba29d5e1ad6022e04131c59109de25409494fd79fe6e97"
+content-hash = "ad5b1faf952a61c107d856d157c6732cd39ffe50359891d4448764656aa2e71c"
