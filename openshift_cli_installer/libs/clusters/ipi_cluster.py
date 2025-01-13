@@ -42,8 +42,8 @@ class IpiCluster(OCPCluster):
             registry_config_file=self.user_input.registry_config_file,
             docker_config_file=self.user_input.docker_config_file,
         )
-        self.fips = self.cluster_info.get("fips")
-        if self.fips is True:
+        self.fips = True if self.cluster_info.get("fips").lower() == 'true' else False
+        if self.fips:
             os.environ["OPENSHIFT_INSTALL_SKIP_HOSTCRYPT_VALIDATION"] = "true"
 
         if self.user_input.destroy_from_s3_bucket_or_local_directory:
@@ -68,7 +68,7 @@ class IpiCluster(OCPCluster):
             self._create_install_config_file()
 
     def _ipi_download_installer(self) -> None:
-        openshift_install_binary = f"openshift-install{'-fips' if self.fips is True else ''}"
+        openshift_install_binary = f"openshift-install{'-fips' if self.fips else ''}"
         version_url = self.cluster_info["version-url"]
         binary_dir = os.path.join(tempfile.TemporaryDirectory().name, version_url)
         self.openshift_install_binary_path = os.path.join(binary_dir, openshift_install_binary)
