@@ -42,7 +42,7 @@ class IpiCluster(OCPCluster):
             registry_config_file=self.user_input.registry_config_file,
             docker_config_file=self.user_input.docker_config_file,
         )
-        self.fips = True if self.cluster_info.get("fips").lower() == 'true' else False
+        self.fips = True if self.cluster_info.get("fips").lower() == "true" else False
         if self.fips:
             os.environ["OPENSHIFT_INSTALL_SKIP_HOSTCRYPT_VALIDATION"] = "true"
 
