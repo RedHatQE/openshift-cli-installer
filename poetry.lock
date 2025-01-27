@@ -808,13 +808,13 @@ requests = ["requests (>=2.20.0,<3.0.0.dev0)"]
 
 [[package]]
 name = "google-cloud-compute"
-version = "1.23.0"
+version = "1.24.0"
 description = "Google Cloud Compute API client library"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "google_cloud_compute-1.23.0-py2.py3-none-any.whl", hash = "sha256:785b94b4bb948494d6a0fa77c2b1cfc4092f08840099b5b4d9caddd599365eb8"},
-    {file = "google_cloud_compute-1.23.0.tar.gz", hash = "sha256:2cb02563af528f7460f2c8c905230996873e284fffe69ccfe2e47890f9e5490b"},
+    {file = "google_cloud_compute-1.24.0-py2.py3-none-any.whl", hash = "sha256:e50b4827b6d7027eaf480f472f4a0d4b097d38a6d3cc10704bc9135dca69e190"},
+    {file = "google_cloud_compute-1.24.0.tar.gz", hash = "sha256:3538830f77cdae6e4ac5d9cee1827180c36a2a4574c4ce4a4ffef7562b23c078"},
 ]
 
 [package.dependencies]
@@ -1319,59 +1319,59 @@ urllib3 = ">=1.25.3"
 
 [[package]]
 name = "openshift-cluster-management-python-wrapper"
-version = "2.0.10"
+version = "2.0.11"
 description = "Wrapper around https://github.com/openshift/openshift-cluster-management-python-client"
 optional = false
-python-versions = "<4.0,>=3.9"
+python-versions = "~=3.9"
 files = [
-    {file = "openshift_cluster_management_python_wrapper-2.0.10.tar.gz", hash = "sha256:919b71bb55523dc20510a0b463e860ad9f1304ad59507170dee6de99cf114a71"},
+    {file = "openshift_cluster_management_python_wrapper-2.0.11.tar.gz", hash = "sha256:c83fb700678b28ec65092e2bf6ca2f933795a9133605f796be818d2332ecea7d"},
 ]
 
 [package.dependencies]
-colorlog = ">=6.7.0,<7.0.0"
-importlib = ">=1.0.4,<2.0.0"
+colorlog = ">=6.7.0,<7"
+importlib = ">=1.0.4,<2"
 openshift-cluster-management-python-client = ">=1.0.23"
 openshift-python-utilities = ">=5.0.0"
 openshift-python-wrapper = ">=11.0.14"
 python-benedict = "0.33.2"
 python-simple-logger = ">=1.0.5"
-pyyaml = ">=6.0.1,<7.0.0"
+pyyaml = ">=6.0.1,<7"
 redhat-qe-cloud-tools = ">=1.0.10"
-requests = ">=2.31.0,<3.0.0"
+requests = ">=2.31.0,<3"
 rosa-python-client = "*"
 timeout-sampler = ">=0.0.2"
 
 [[package]]
 name = "openshift-python-utilities"
-version = "6.0.4"
+version = "6.0.6"
 description = "A utilities repository for https://github.com/RedHatQE/openshift-python-wrapper"
 optional = false
-python-versions = "<4.0,>=3.9"
+python-versions = "~=3.9"
 files = [
-    {file = "openshift_python_utilities-6.0.4.tar.gz", hash = "sha256:18c5a7cf4415755e9f4df159a5ad58660f8c0a5107f4ce8b079b8ac5322156e0"},
+    {file = "openshift_python_utilities-6.0.6.tar.gz", hash = "sha256:ad4f1f1c9a9a78f1332ed7330fa4b5fa2db1c7e069cd12242c1f445f922bf6b2"},
 ]
 
 [package.dependencies]
-beautifulsoup4 = ">=4.12.3,<5.0.0"
-colorlog = ">=6.7.0,<7.0.0"
-deprecation = ">=2.1.0,<3.0.0"
+beautifulsoup4 = ">=4.12.3,<5"
+colorlog = ">=6.7.0,<7"
+deprecation = ">=2.1.0,<3"
 openshift-python-wrapper = "*"
 openshift-python-wrapper-data-collector = ">=1.0.4"
 pyhelper-utils = ">=0.0.22"
 python-simple-logger = ">=1.0.5"
-pyyaml = ">=6.0.1,<7.0.0"
-requests = ">=2.31.0,<3.0.0"
-semver = ">=3.0.2,<4.0.0"
+pyyaml = ">=6.0.1,<7"
+requests = ">=2.31.0,<3"
+semver = ">=3.0.2,<4"
 timeout-sampler = ">=0.0.17"
 
 [[package]]
 name = "openshift-python-wrapper"
-version = "11.0.19"
+version = "11.0.22"
 description = "Wrapper around https://github.com/kubernetes-client/python"
 optional = false
 python-versions = ">=3.9"
 files = [
-    {file = "openshift_python_wrapper-11.0.19.tar.gz", hash = "sha256:b5d7bdddac47bf5f80d3b51e288b3e67efbb0515fc55e8e4ba9059395b5ae9ae"},
+    {file = "openshift_python_wrapper-11.0.22.tar.gz", hash = "sha256:bb0d3fa2227b797ef2c342ee8848fcb89fc60a7ec1822cdff3091e5660b6a931"},
 ]
 
 [package.dependencies]
@@ -1671,20 +1671,20 @@ windows-terminal = ["colorama (>=0.4.6)"]
 
 [[package]]
 name = "pyhelper-utils"
-version = "1.0.5"
+version = "1.0.8"
 description = "Collective utility functions for python projects"
 optional = false
-python-versions = "<4.0,>=3.9"
+python-versions = "~=3.9"
 files = [
-    {file = "pyhelper_utils-1.0.5.tar.gz", hash = "sha256:f2b2ae669bac81491d563e1eb8e67e6a0d479241cfe86da91d677b201336c576"},
+    {file = "pyhelper_utils-1.0.8.tar.gz", hash = "sha256:8c0d09f4c4b707c238e6b4744f1e60a9841c70f9ec1423ac8fdfa38fafa0e087"},
 ]
 
 [package.dependencies]
-ipdb = ">=0.13.13,<0.14.0"
-python-rrmngmnt = ">=0.1.32,<0.2.0"
-python-simple-logger = ">=2.0.0,<3.0.0"
-requests = ">=2.31.0,<3.0.0"
-rich = ">=13.7.1,<14.0.0"
+ipdb = ">=0.13.13,<0.14"
+python-rrmngmnt = ">=0.1.32,<0.2"
+python-simple-logger = ">=2.0.0,<3"
+requests = ">=2.31.0,<3"
+rich = ">=13.7.1,<14"
 
 [[package]]
 name = "pyjwt"
@@ -1888,16 +1888,16 @@ six = "*"
 
 [[package]]
 name = "python-simple-logger"
-version = "2.0.3"
+version = "2.0.5"
 description = "A simple logger for python"
 optional = false
-python-versions = "<4.0,>=3.9"
+python-versions = "~=3.9"
 files = [
-    {file = "python_simple_logger-2.0.3.tar.gz", hash = "sha256:8bc1b66ef567dd700945c7103287e5284dd1941d117c6d66f6a66a63b214d7da"},
+    {file = "python_simple_logger-2.0.5.tar.gz", hash = "sha256:22f75d7c2ea306c3184c99b9e9818b84a0320a6f2f77509fd8255b9f3cf96667"},
 ]
 
 [package.dependencies]
-colorlog = ">=6.7.0,<7.0.0"
+colorlog = ">=6.7.0,<7"
 
 [[package]]
 name = "python-slugify"
@@ -2017,12 +2017,12 @@ files = [
 
 [[package]]
 name = "redhat-qe-cloud-tools"
-version = "2.0.7"
+version = "2.0.8"
 description = "Python utilities to manage cloud services, such as AWS."
 optional = false
 python-versions = "<4.0,>=3.9"
 files = [
-    {file = "redhat_qe_cloud_tools-2.0.7.tar.gz", hash = "sha256:bcb4f4eee1fd27bc7db8d3a220a3d590a00069a80e1007acda95aa8f60d21145"},
+    {file = "redhat_qe_cloud_tools-2.0.8.tar.gz", hash = "sha256:e1f3c29f55fb0759fcd9726447f14b3fd636ed1444b3c30b61fd2d71635ea616"},
 ]
 
 [package.dependencies]
@@ -2101,12 +2101,12 @@ jupyter = ["ipywidgets (>=7.5.1,<9)"]
 
 [[package]]
 name = "rosa-python-client"
-version = "2.0.5"
+version = "2.0.6"
 description = "Wrapper for rosa cli"
 optional = false
 python-versions = "<4.0,>=3.9"
 files = [
-    {file = "rosa_python_client-2.0.5.tar.gz", hash = "sha256:5e34d288631ec4b409dc119641836b4d9ba26c15a202b48a58d90aa32ff0d0f3"},
+    {file = "rosa_python_client-2.0.6.tar.gz", hash = "sha256:cce451d9cbf4a11140daf3fbddb00aa160874b24c2bcca9039852c2796c251d7"},
 ]
 
 [package.dependencies]
@@ -2305,12 +2305,12 @@ files = [
 
 [[package]]
 name = "timeout-sampler"
-version = "1.0.6"
+version = "1.0.7"
 description = "Timeout utility class to wait for any function output and interact with it in given time"
 optional = false
 python-versions = ">=3.9"
 files = [
-    {file = "timeout_sampler-1.0.6.tar.gz", hash = "sha256:99a9553139271e7fda6cef8c061e8911483f2fdc8c3c13fff67573f895ecf978"},
+    {file = "timeout_sampler-1.0.7.tar.gz", hash = "sha256:b82254a69c587a086876b46fc48de3ffe99c134f36c493af1a1feee868e01128"},
 ]
 
 [package.dependencies]
