@@ -18,14 +18,14 @@ To pull the image: `podman pull quay.io/redhat_msi/openshift-cli-installer`
 
 ### Command line
 
-##### Install inside poetry venv:
+##### Install inside uv venv
 
 ```bash
-poetry install
-poetry run python openshift_cli_installer/cli.py --help
+uv install
+uv run openshift_cli_installer/cli.py --help
 ```
 
-##### Install as system cli:
+##### Install as system cli
 
 ```bash
 pipx install .
@@ -133,9 +133,9 @@ Every call to the openshift installer cli must have at least one `--cluster` opt
 
 To create the file, create a service account and download it:
 
-1.  Go to https://console.cloud.google.com/iam-admin/serviceaccounts?project=<project>
-2.  Select the service account -> "Create Key"
-3.  Select the Key Type as `JSON` and click Create
+1. Go to <https://console.cloud.google.com/iam-admin/serviceaccounts?project=><project>
+2. Select the service account -> "Create Key"
+3. Select the Key Type as `JSON` and click Create
 
 ### ACM (Advanced Cluster Management)
 
@@ -211,7 +211,7 @@ Clone the [repository](https://github.com/RedHatQE/openshift-cli-installer)
 git clone https://github.com/RedHatQE/openshift-cli-installer.git
 ```
 
-Install [poetry](https://github.com/python-poetry/poetry)
+Install [uv](https://github.com/astral-sh/uv)
 
 Install [regctl](https://github.com/regclient/regclient)
 
@@ -222,16 +222,16 @@ sudo dnf config-manager --add-repo https://rpm.releases.hashicorp.com/fedora/has
 sudo dnf install terraform
 ```
 
-Use `poetry run python openshift_cli_installer/cli.py` to execute the cli.
+Use `uv run openshift_cli_installer/cli.py` to execute the cli.
 
 ```
-poetry install
-poetry run python openshift_cli_installer/cli.py --help
+uv install
+uv run openshift_cli_installer/cli.py --help
 ```
 
 ### Create Clusters
 
-Each command can be run via container `podman run quay.io/redhat_msi/openshift-cli-installer` or via poetry command `poetry run python openshift_cli_installer/cli.py`
+Each command can be run via container `podman run quay.io/redhat_msi/openshift-cli-installer` or via uv command `uv run openshift_cli_installer/cli.py`
 When using the container pass:
 `-e AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID`
 `-e AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY`
