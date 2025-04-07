@@ -59,4 +59,6 @@ ENV UV_CACHE_DIR=${APP_DIR}/.cache
 
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /usr/bin/
 RUN uv sync
+RUN chgrp -R 0 ${APP_DIR}/.cache && \
+    chmod -R g=u ${APP_DIR}/.cache
 ENTRYPOINT ["uv", "run", "openshift_cli_installer/cli.py"]
