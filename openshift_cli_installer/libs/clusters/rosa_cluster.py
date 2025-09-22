@@ -47,7 +47,7 @@ class RosaCluster(OcmCluster):
         if not self.user_input.destroy_from_s3_bucket_or_local_directory:
             if self.cluster_info["platform"] == HYPERSHIFT_STR:
                 self.terraform = Terraform()
-                user_tags = self.user_input.user_kwargs.get("tags", "")
+                user_tags = self.cluster_info.get("tags", "")
                 if user_tags:
                     user_tags = "," + user_tags
                 self.cluster["tags"] = "dns:external" + user_tags
