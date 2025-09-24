@@ -49,7 +49,7 @@ class RosaCluster(OcmCluster):
                 self.terraform = Terraform()
                 user_tags = self.cluster_info.get("tags", "")
                 if user_tags:
-                    user_tags = "," + user_tags
+                    user_tags = f",{user_tags}"
                 self.cluster["tags"] = f"dns:external{user_tags}"
                 self.cluster["machine-cidr"] = self.cluster.get("cidr", "10.0.0.0/16")
 
