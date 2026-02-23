@@ -91,10 +91,11 @@ class OCPClusters:
     def check_ocm_managed_existing_clusters(self) -> None:
         if self.ocm_managed_clusters:
             self.logger.info("Check for existing OCM-managed clusters.")
-            existing_clusters_list = []
-            for _cluster in self.ocm_managed_clusters:
-                if _cluster.cluster_object.exists:
-                    existing_clusters_list.append(_cluster.cluster_info["name"])
+            existing_clusters_list = [
+                _cluster.cluster_info["name"]
+                for _cluster in self.ocm_managed_clusters
+                if _cluster.cluster_object.exists
+            ]
 
             if existing_clusters_list:
                 self.logger.error(

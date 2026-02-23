@@ -22,14 +22,16 @@ def set_gcp_configuration(user_input: UserInput) -> dict[str, str]:
 
     """
     gcp_params = {}
-    if any([_cluster["platform"] == GCP_STR for _cluster in user_input.clusters]):
+    if any(_cluster["platform"] == GCP_STR for _cluster in user_input.clusters):
         gcp_sa_file_dir = os.path.join(os.path.expanduser("~"), ".gcp")
         openshift_installer_gcp_sa_file_path = os.path.join(gcp_sa_file_dir, "osServiceAccount.json")
         gcp_params["gcp_sa_file_dir"] = gcp_sa_file_dir
         gcp_params["openshift_installer_gcp_sa_file_path"] = openshift_installer_gcp_sa_file_path
 
         if os.path.exists(openshift_installer_gcp_sa_file_path):
-            gcp_params["backup_existing_gcp_sa_file_path"] = tempfile.NamedTemporaryFile(suffix="-installer.json").name
+            _fd, _tmp_path = tempfile.mkstemp(suffix="-installer.json")
+            os.close(_fd)
+            gcp_params["backup_existing_gcp_sa_file_path"] = _tmp_path
             LOGGER.info(
                 f"File {openshift_installer_gcp_sa_file_path} already exists. "
                 f"Copying to {gcp_params['backup_existing_gcp_sa_file_path']}"

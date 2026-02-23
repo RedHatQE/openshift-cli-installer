@@ -107,11 +107,9 @@ def prepare_clusters_directory_from_s3_bucket(s3_bucket_name: str, s3_bucket_pat
             extract_futures.append(
                 extract_executor.submit(
                     shutil.unpack_archive,
-                    **{  # type: ignore[arg-type]
-                        "filename": zip_file_path,
-                        "extract_dir": os.path.split(zip_file_path)[0],
-                        "format": "zip",
-                    },
+                    filename=zip_file_path,
+                    extract_dir=os.path.split(zip_file_path)[0],
+                    format="zip",
                 )
             )
 
@@ -130,9 +128,8 @@ def get_all_zip_files_from_s3_bucket(
 ) -> Generator[str, None, None]:
     for _object in client.list_objects(Bucket=s3_bucket_name, Prefix=s3_bucket_path).get("Contents", []):
         _object_key = _object["Key"]
-        if _object_key.endswith(".zip"):
-            if query is None or query in _object_key:
-                yield os.path.split(_object_key)[-1] if s3_bucket_path else _object_key
+        if _object_key.endswith(".zip") and (query is None or query in _object_key):
+            yield os.path.split(_object_key)[-1] if s3_bucket_path else _object_key
 
 
 def destroy_clusters_from_s3_bucket_or_local_directory(user_input: UserInput) -> UserInput:

@@ -45,7 +45,7 @@ class IpiCluster(OCPCluster):
         )
         self.fips = self.cluster_info.get("fips")
         if self.fips:
-            self.fips = True if self.fips.lower() == "true" else False
+            self.fips = self.fips.lower() == "true"
             os.environ["OPENSHIFT_INSTALL_SKIP_HOSTCRYPT_VALIDATION"] = "true"
 
         if self.user_input.destroy_from_s3_bucket_or_local_directory:
@@ -136,7 +136,7 @@ class IpiCluster(OCPCluster):
                 href = tr.find_all("a", attrs={"class": "text-success"})[0]["href"]
                 version_url_match = re.search(
                     r"oc adm release extract --tools (.*?)<",
-                    requests.get(f"https://{[*self.ipi_base_available_versions][0]}{href}").text,
+                    requests.get(f"https://{next(iter(self.ipi_base_available_versions))}{href}").text,
                 )
                 version_url = version_url_match.group(1) if version_url_match else None
 
@@ -192,7 +192,7 @@ class IpiCluster(OCPCluster):
             self.add_cluster_info_to_cluster_object()
             self.logger.success(f"{self.log_prefix}: Cluster created successfully")
 
-        except Exception as ex:
+        except Exception as ex:  # noqa: BLE001
             _rollback_on_error(_ex=ex)
 
         if self.user_input.s3_bucket_name:

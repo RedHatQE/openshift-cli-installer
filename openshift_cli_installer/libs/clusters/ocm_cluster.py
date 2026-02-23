@@ -1,6 +1,6 @@
 import re
 import sys
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
 from ocm_python_wrapper.cluster import Cluster
@@ -47,10 +47,10 @@ class OcmCluster(OCPCluster):
         if expiration_time:
             _expiration_time = tts(ts=expiration_time)
             self.cluster["expiration-time"] = self.cluster_info["expiration-time"] = (
-                f"{(datetime.now() + timedelta(seconds=_expiration_time)).isoformat()}Z"
+                f"{(datetime.now(tz=UTC) + timedelta(seconds=_expiration_time)).isoformat()}Z"
             )
 
-    @cache
+    @cache  # noqa: B019
     def get_osd_versions(self) -> None:
         updated_versions_dict: dict[str, dict[str, list[str]]] = {}
         for channel, versions in (

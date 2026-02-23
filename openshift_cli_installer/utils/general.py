@@ -21,11 +21,9 @@ def remove_terraform_folder_from_install_dir(install_dir: str) -> None:
     """
     .terraform folder created when call terraform.init() and it's take more space.
     """
-    folders_to_remove = []
-    for root, dirs, files in os.walk(install_dir):
-        for _dir in dirs:
-            if _dir == ".terraform":
-                folders_to_remove.append(os.path.join(root, _dir))
+    folders_to_remove = [
+        os.path.join(root, _dir) for root, dirs, files in os.walk(install_dir) for _dir in dirs if _dir == ".terraform"
+    ]
 
     for folder in folders_to_remove:
         shutil.rmtree(folder)

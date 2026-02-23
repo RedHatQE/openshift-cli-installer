@@ -230,7 +230,7 @@ class OCPCluster:
                 name,
             )
 
-        except Exception as ex:
+        except Exception as ex:  # noqa: BLE001
             self.logger.error(f"{self.log_prefix}: Failed to get data; must-gather could not be executed on: {ex}")
             return
 
@@ -250,7 +250,7 @@ class OCPCluster:
             )
             self.logger.success(f"{self.log_prefix}: must-gather collected")
 
-        except Exception as ex:
+        except Exception as ex:  # noqa: BLE001
             self.logger.error(
                 f"{self.log_prefix}: Failed to run must-gather \n{ex}",
             )
@@ -397,7 +397,7 @@ class OCPCluster:
                 timeout=self.timeout_watch.remaining_time(),
             )
             self.logger.success(f"{self.log_prefix}: Observability enabled")
-        except Exception as ex:
+        except Exception as ex:  # noqa: BLE001
             self.logger.error(f"{self.log_prefix}: Failed to enable observability. error: {ex}")
 
             if self.cluster_info["acm-observability-storage-type"] == S3_STR:

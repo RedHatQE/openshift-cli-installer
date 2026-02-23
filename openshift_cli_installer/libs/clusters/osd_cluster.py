@@ -73,7 +73,7 @@ class OsdCluster(OcmCluster):
 
             self.logger.success(f"{self.log_prefix}: Cluster created successfully")
 
-        except Exception as ex:
+        except Exception as ex:  # noqa: BLE001
             self.logger.error(
                 f"{self.log_prefix}: Failed to run cluster create \n{ex}",
             )
@@ -98,6 +98,6 @@ class OsdCluster(OcmCluster):
             self.cluster_object.delete(timeout=self.timeout_watch.remaining_time())
             self.logger.success(f"{self.log_prefix}: Cluster destroyed successfully")
             self.delete_cluster_s3_buckets()
-        except Exception as ex:
+        except Exception as ex:  # noqa: BLE001
             self.logger.error(f"{self.log_prefix}: Failed to run cluster destroy\n{ex}")
             raise click.Abort()

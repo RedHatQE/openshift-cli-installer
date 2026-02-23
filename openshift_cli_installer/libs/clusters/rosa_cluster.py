@@ -35,7 +35,7 @@ class RosaCluster(OcmCluster):
                 ocm_client=self.ocm_client,
                 aws_region=self.cluster_info["region"],
                 channel_group=self.cluster_info["channel-group"],
-                hosted_cp=True if self.cluster_info["platform"] == HYPERSHIFT_STR else False,
+                hosted_cp=self.cluster_info["platform"] == HYPERSHIFT_STR,
             )
             self.cluster["version"] = get_cluster_version_to_install(
                 wanted_version=self.cluster_info["user-requested-version"],
@@ -231,7 +231,7 @@ class RosaCluster(OcmCluster):
             self.set_cluster_auth(idp_user=idp_user, idp_password=idp_password)
             self.logger.success(f"{self.log_prefix}: Cluster created successfully")
 
-        except Exception as ex:
+        except Exception as ex:  # noqa: BLE001
             self.logger.error(
                 f"{self.log_prefix}: Failed to run cluster create\n{ex}",
             )
@@ -263,7 +263,7 @@ class RosaCluster(OcmCluster):
             self.cluster_object.wait_for_cluster_deletion(wait_timeout=self.timeout_watch.remaining_time())
             self.remove_leftovers(out=res.get("out", ""))
 
-        except Exception as ex:
+        except Exception as ex:  # noqa: BLE001
             should_raise = True
             exception = ex
 
@@ -337,7 +337,7 @@ class RosaCluster(OcmCluster):
                     ocm_client=self.ocm_client,
                     aws_region=aws_region,
                 )
-            except Exception as ex:
+            except Exception as ex:  # noqa: BLE001
                 rosa_command_success = False
                 self.logger.error(f"{self.log_prefix}: Failed to create IDP\n{ex}")
                 break
@@ -354,7 +354,7 @@ class RosaCluster(OcmCluster):
                     if sampler and idp_user in sampler.instance.users:
                         break
 
-            except Exception as ex:
+            except Exception as ex:  # noqa: BLE001
                 self.logger.error(f"{self.log_prefix}: {idp_user} is not part of cluster-admins\n{ex}")
 
         return idp_user, idp_password

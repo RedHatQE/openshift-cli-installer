@@ -205,7 +205,7 @@ class UserInput:
                         raise UserInputError(f"Managed ACM clusters: Cluster not found {managed_acm_cluster}")
 
     def assert_ipi_installer_user_input(self) -> None:
-        if any([_cluster["platform"] in IPI_BASED_PLATFORMS for _cluster in self.clusters]):
+        if any(_cluster["platform"] in IPI_BASED_PLATFORMS for _cluster in self.clusters):
             self.assert_registry_config_file_exists()
             self.assert_docker_config_file_exists()
             if self.create:
@@ -259,7 +259,7 @@ class UserInput:
             raise UserInputError(f"{self.registry_config_file} file does not exist.")
 
     def assert_aws_osd_hypershift_user_input(self) -> None:
-        if any([_cluster["platform"] in (AWS_OSD_STR, HYPERSHIFT_STR) for _cluster in self.clusters]):
+        if any(_cluster["platform"] in (AWS_OSD_STR, HYPERSHIFT_STR) for _cluster in self.clusters):
             self.assert_aws_credentials_exist()
             if not self.aws_account_id and self.create:
                 raise UserInputError("--aws-account-id required for AWS OSD or Hypershift installations.")
@@ -281,7 +281,7 @@ class UserInput:
     def assert_gcp_user_input(self) -> None:
         if (
             self.create
-            and any([cluster["platform"] in (GCP_OSD_STR, GCP_STR) for cluster in self.clusters])
+            and any(cluster["platform"] in (GCP_OSD_STR, GCP_STR) for cluster in self.clusters)
             and not self.gcp_service_account_file
         ):
             raise UserInputError(
