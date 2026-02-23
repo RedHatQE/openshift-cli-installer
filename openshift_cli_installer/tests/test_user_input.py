@@ -1,7 +1,9 @@
 import re
+
 import pytest
+
 from openshift_cli_installer.libs.user_input import UserInput, UserInputError
-from openshift_cli_installer.utils.const import AWS_STR, AWS_OSD_STR, HYPERSHIFT_STR, GCP_STR, S3_STR
+from openshift_cli_installer.utils.const import AWS_OSD_STR, AWS_STR, GCP_STR, HYPERSHIFT_STR, S3_STR
 
 TEST_CL = {"name": "test-cl", "platform": AWS_STR}
 CLUSTER_DATA_DIR = "/tmp/cinstall"

@@ -1,15 +1,16 @@
 from __future__ import annotations
+
 import os
 import re
 import shlex
+import tempfile
+from collections.abc import Generator
 from contextlib import contextmanager
-from typing import Any, Dict, Generator, List, Tuple
+from typing import Any
 
 import click
 import requests
 import yaml
-import tempfile
-
 from pyhelper_utils.shell import run_command
 from simple_logger.logger import get_logger
 
@@ -20,18 +21,18 @@ from openshift_cli_installer.utils.cluster_versions import (
     get_ipi_cluster_versions,
     parse_openshift_release_url,
 )
-from openshift_cli_installer.utils.const import CREATE_STR, DESTROY_STR, PRODUCTION_STR, GCP_STR, AWS_STR
+from openshift_cli_installer.utils.const import AWS_STR, CREATE_STR, DESTROY_STR, GCP_STR, PRODUCTION_STR
 from openshift_cli_installer.utils.general import (
     generate_unified_pull_secret,
+    get_dict_from_json,
     get_install_config_j2_template,
     get_local_ssh_key,
     zip_and_upload_to_s3,
 )
-from openshift_cli_installer.utils.general import get_dict_from_json
 
 
 class IpiCluster(OCPCluster):
-    def __init__(self, ocp_cluster: Dict[str, Any], user_input: UserInput) -> None:
+    def __init__(self, ocp_cluster: dict[str, Any], user_input: UserInput) -> None:
         super().__init__(ocp_cluster=ocp_cluster, user_input=user_input)
         self.logger = get_logger(f"{self.__class__.__module__}-{self.__class__.__name__}")
         self.log_level = self.cluster.get("log_level", "error")
@@ -51,7 +52,7 @@ class IpiCluster(OCPCluster):
             self._ipi_download_installer()
         else:
             self.openshift_install_binary_path = ""
-            self.ipi_base_available_versions: Dict[str, Dict[str, List[str]]]
+            self.ipi_base_available_versions: dict[str, dict[str, list[str]]]
             self.cluster["ocm-env"] = self.cluster_info["ocm-env"] = PRODUCTION_STR
 
     def _prepare_ipi_cluster(self) -> None:
@@ -148,7 +149,7 @@ class IpiCluster(OCPCluster):
             )
             raise click.Abort()
 
-    def run_installer_command(self, action: str, raise_on_failure: bool) -> Tuple[bool, str, str]:
+    def run_installer_command(self, action: str, raise_on_failure: bool) -> tuple[bool, str, str]:
         run_after_failed_create_str = (
             " after cluster creation failed" if action == DESTROY_STR and self.user_input.action == CREATE_STR else ""
         )
@@ -209,7 +210,7 @@ class IpiCluster(OCPCluster):
 
 
 class AwsIpiCluster(IpiCluster):
-    def __init__(self, ocp_cluster: Dict[str, Any], user_input: UserInput) -> None:
+    def __init__(self, ocp_cluster: dict[str, Any], user_input: UserInput) -> None:
         super().__init__(ocp_cluster=ocp_cluster, user_input=user_input)
         self.logger = get_logger(f"{self.__class__.__module__}-{self.__class__.__name__}")
         self.platform = AWS_STR
@@ -221,7 +222,7 @@ class AwsIpiCluster(IpiCluster):
 
 
 class GcpIpiCluster(IpiCluster):
-    def __init__(self, ocp_cluster: Dict[str, Any], user_input: UserInput) -> None:
+    def __init__(self, ocp_cluster: dict[str, Any], user_input: UserInput) -> None:
         super().__init__(ocp_cluster=ocp_cluster, user_input=user_input)
         self.logger = get_logger(f"{self.__class__.__module__}-{self.__class__.__name__}")
         self.platform = GCP_STR

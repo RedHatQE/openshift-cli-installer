@@ -1,4 +1,4 @@
-from typing import Any, Dict
+from typing import Any
 
 import click
 from simple_logger.logger import get_logger
@@ -7,11 +7,11 @@ from openshift_cli_installer.libs.clusters.ocm_cluster import OcmCluster
 from openshift_cli_installer.libs.user_input import UserInput
 from openshift_cli_installer.utils.cluster_versions import get_cluster_version_to_install
 from openshift_cli_installer.utils.const import AWS_OSD_STR, GCP_OSD_STR
-from openshift_cli_installer.utils.general import zip_and_upload_to_s3, get_dict_from_json
+from openshift_cli_installer.utils.general import get_dict_from_json, zip_and_upload_to_s3
 
 
 class OsdCluster(OcmCluster):
-    def __init__(self, ocp_cluster: Dict[str, Any], user_input: UserInput) -> None:
+    def __init__(self, ocp_cluster: dict[str, Any], user_input: UserInput) -> None:
         super().__init__(ocp_cluster, user_input)
         self.logger = get_logger(f"{self.__class__.__module__}-{self.__class__.__name__}")
 

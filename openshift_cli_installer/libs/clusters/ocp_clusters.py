@@ -1,5 +1,5 @@
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from typing import Any, Dict, List
+from typing import Any
 
 import click
 import rosa.cli
@@ -19,11 +19,11 @@ from openshift_cli_installer.utils.const import (
     AWS_OSD_STR,
     AWS_STR,
     GCP_OSD_STR,
+    GCP_STR,
     HYPERSHIFT_STR,
     PRODUCTION_STR,
     ROSA_STR,
     STAGE_STR,
-    GCP_STR,
 )
 
 
@@ -31,14 +31,14 @@ class OCPClusters:
     def __init__(self, user_input: UserInput) -> None:
         self.user_input = user_input
         self.logger = get_logger(f"{self.__class__.__module__}-{self.__class__.__name__}")
-        self.aws_ipi_clusters: List[AwsIpiCluster] = []
-        self.gcp_ipi_clusters: List[GcpIpiCluster] = []
-        self.aws_osd_clusters: List[OsdCluster] = []
-        self.rosa_clusters: List[RosaCluster] = []
-        self.hypershift_clusters: List[RosaCluster] = []
-        self.gcp_osd_clusters: List[OsdCluster] = []
+        self.aws_ipi_clusters: list[AwsIpiCluster] = []
+        self.gcp_ipi_clusters: list[GcpIpiCluster] = []
+        self.aws_osd_clusters: list[OsdCluster] = []
+        self.rosa_clusters: list[RosaCluster] = []
+        self.hypershift_clusters: list[RosaCluster] = []
+        self.gcp_osd_clusters: list[OsdCluster] = []
 
-        self.s3_target_dirs: List[str] = []
+        self.s3_target_dirs: list[str] = []
 
         for _cluster in user_input.clusters:
             self.add_to_cluster_lists(ocp_cluster=_cluster)
@@ -49,7 +49,7 @@ class OCPClusters:
             self.is_region_support_aws()
             self.is_region_support_gcp()
 
-    def add_to_cluster_lists(self, ocp_cluster: Dict[str, Any]) -> None:
+    def add_to_cluster_lists(self, ocp_cluster: dict[str, Any]) -> None:
         _cluster_platform = ocp_cluster["platform"]
         if _cluster_platform == AWS_STR:
             self.aws_ipi_clusters.append(AwsIpiCluster(ocp_cluster=ocp_cluster, user_input=self.user_input))
@@ -70,7 +70,7 @@ class OCPClusters:
             self.gcp_osd_clusters.append(OsdCluster(ocp_cluster=ocp_cluster, user_input=self.user_input))
 
     @property
-    def list_clusters(self) -> List[Any]:
+    def list_clusters(self) -> list[Any]:
         return (
             self.aws_ipi_clusters
             + self.aws_osd_clusters
@@ -81,11 +81,11 @@ class OCPClusters:
         )
 
     @property
-    def aws_managed_clusters(self) -> List[Any]:
+    def aws_managed_clusters(self) -> list[Any]:
         return self.rosa_clusters + self.hypershift_clusters + self.aws_osd_clusters
 
     @property
-    def ocm_managed_clusters(self) -> List[Any]:
+    def ocm_managed_clusters(self) -> list[Any]:
         return self.aws_managed_clusters + self.gcp_osd_clusters
 
     def check_ocm_managed_existing_clusters(self) -> None:
@@ -103,7 +103,7 @@ class OCPClusters:
                 raise click.Abort()
 
     @staticmethod
-    def _hypershift_regions(ocm_client: OCMPythonClient) -> List[str]:
+    def _hypershift_regions(ocm_client: OCMPythonClient) -> list[str]:
         rosa_regions = rosa.cli.execute(
             command="list regions",
             aws_region="us-west-2",
@@ -115,11 +115,11 @@ class OCPClusters:
         if self.hypershift_clusters:
             self.logger.info(f"Check if regions are {HYPERSHIFT_STR}-supported.")
             unsupported_regions = []
-            hypershift_regions_dict: Dict[str, List[str]] = {PRODUCTION_STR: [], STAGE_STR: []}
+            hypershift_regions_dict: dict[str, list[str]] = {PRODUCTION_STR: [], STAGE_STR: []}
             for _cluster in self.hypershift_clusters:
                 region = _cluster.cluster_info["region"]
                 ocm_env = _cluster.cluster_info["ocm-env"]
-                _hypershift_regions: List[str] = hypershift_regions_dict[ocm_env]
+                _hypershift_regions: list[str] = hypershift_regions_dict[ocm_env]
                 if not _hypershift_regions:
                     _hypershift_regions = self._hypershift_regions(ocm_client=_cluster.ocm_client)
                     hypershift_regions_dict[ocm_env] = _hypershift_regions
@@ -161,7 +161,7 @@ class OCPClusters:
                 raise click.Abort()
 
     def run_create_or_destroy_clusters(self) -> None:
-        futures: List[Any] = []
+        futures: list[Any] = []
         action_str = "create_cluster" if self.user_input.create else "destroy_cluster"
 
         with ThreadPoolExecutor() as executor:
@@ -179,7 +179,7 @@ class OCPClusters:
             if futures:
                 self.process_create_destroy_clusters_threads_results(futures=futures)
 
-    def process_create_destroy_clusters_threads_results(self, futures: List[Any]) -> None:
+    def process_create_destroy_clusters_threads_results(self, futures: list[Any]) -> None:
         create_clusters_error = False
         for result in as_completed(futures):
             _exception = result.exception()

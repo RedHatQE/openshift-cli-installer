@@ -1,14 +1,19 @@
 import os
 import re
+import secrets
 import shutil
-from typing import Any, Dict
+import string
+from typing import Any
 
 import click
 import rosa.cli
+from clouds.aws.roles.roles import get_roles
+from ocp_resources.group import Group
 from python_terraform import IsNotFlagged, Terraform
+from rosa.rosa_versions import get_rosa_versions
 from simple_logger.logger import get_logger
-import secrets
-import string
+from timeout_sampler import TimeoutSampler
+
 from openshift_cli_installer.libs.clusters.ocm_cluster import OcmCluster
 from openshift_cli_installer.libs.user_input import UserInput
 from openshift_cli_installer.utils.cluster_versions import get_cluster_version_to_install
@@ -17,14 +22,10 @@ from openshift_cli_installer.utils.general import (
     get_manifests_path,
     zip_and_upload_to_s3,
 )
-from ocp_resources.group import Group
-from rosa.rosa_versions import get_rosa_versions
-from timeout_sampler import TimeoutSampler
-from clouds.aws.roles.roles import get_roles
 
 
 class RosaCluster(OcmCluster):
-    def __init__(self, ocp_cluster: Dict[str, Any], user_input: UserInput) -> None:
+    def __init__(self, ocp_cluster: dict[str, Any], user_input: UserInput) -> None:
         super().__init__(ocp_cluster=ocp_cluster, user_input=user_input)
         self.logger = get_logger(f"{self.__class__.__module__}-{self.__class__.__name__}")
         if self.user_input.create:

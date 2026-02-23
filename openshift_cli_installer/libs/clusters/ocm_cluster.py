@@ -1,16 +1,16 @@
-from datetime import datetime, timedelta
 import re
-from typing import Any, Dict, List
 import sys
+from datetime import datetime, timedelta
+from typing import Any
+
 from ocm_python_wrapper.cluster import Cluster
 from ocm_python_wrapper.versions import Versions
+from pyhelper_utils.general import tts
 from simple_logger.logger import get_logger
 
 from openshift_cli_installer.libs.clusters.ocp_cluster import OCPCluster
 from openshift_cli_installer.libs.user_input import UserInput
 from openshift_cli_installer.utils.const import STAGE_STR
-from pyhelper_utils.general import tts
-
 
 version = sys.version_info
 if version[0] == 3 and version[1] < 9:
@@ -20,13 +20,13 @@ else:
 
 
 class OcmCluster(OCPCluster):
-    def __init__(self, ocp_cluster: Dict[str, Any], user_input: UserInput) -> None:
+    def __init__(self, ocp_cluster: dict[str, Any], user_input: UserInput) -> None:
         super().__init__(ocp_cluster=ocp_cluster, user_input=user_input)
         self.logger = get_logger(f"{self.__class__.__module__}-{self.__class__.__name__}")
 
         if not self.user_input.destroy_from_s3_bucket_or_local_directory:
-            self.osd_base_available_versions_dict: Dict[str, Dict[str, List[str]]] = {}
-            self.rosa_base_available_versions_dict: Dict[str, Dict[str, List[str]]] = {}
+            self.osd_base_available_versions_dict: dict[str, dict[str, list[str]]] = {}
+            self.rosa_base_available_versions_dict: dict[str, dict[str, list[str]]] = {}
             self.cluster["channel-group"] = self.cluster_info["channel-group"] = self.cluster.get(
                 "channel-group", "stable"
             )
@@ -52,7 +52,7 @@ class OcmCluster(OCPCluster):
 
     @cache
     def get_osd_versions(self) -> None:
-        updated_versions_dict: Dict[str, Dict[str, List[str]]] = {}
+        updated_versions_dict: dict[str, dict[str, list[str]]] = {}
         for channel, versions in (
             Versions(client=self.ocm_client).get(channel_group=self.cluster_info["channel-group"]).items()
         ):

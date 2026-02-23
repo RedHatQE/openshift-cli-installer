@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 # Taken from https://gist.github.com/welel/9cf860dd3f4d3e09f9b4305878b3a04e
-from typing import Any, Dict
+from typing import Any
 
 import click
 from click import Parameter
@@ -40,7 +40,7 @@ class DictParamType(click.ParamType):
         cli_value: Any,
         param: Parameter | None = None,
         ctx: click.Context | None = None,
-    ) -> Dict[Any, Any]:
+    ) -> dict[Any, Any]:
         """Converts CLI value to the dictionary structure.
 
         Args:

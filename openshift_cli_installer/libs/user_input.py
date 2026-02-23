@@ -1,6 +1,6 @@
 import ast
 import os
-from typing import Any, Dict, List
+from typing import Any
 
 from pyaml_env import parse_config
 from simple_logger.logger import get_logger
@@ -13,16 +13,16 @@ from openshift_cli_installer.utils.cli_utils import (
 from openshift_cli_installer.utils.const import (
     AWS_OSD_STR,
     CREATE_STR,
-    GCP_STR,
     GCP_OSD_STR,
+    GCP_STR,
     HYPERSHIFT_STR,
+    IPI_BASED_PLATFORMS,
     OBSERVABILITY_SUPPORTED_STORAGE_TYPES,
     ROSA_STR,
     S3_STR,
     SUPPORTED_ACTIONS,
     SUPPORTED_PLATFORMS,
     USER_INPUT_CLUSTER_BOOLEAN_KEYS,
-    IPI_BASED_PLATFORMS,
 )
 
 
@@ -84,7 +84,7 @@ class UserInput:
         self.logger.info("Initializing User Input")
         self.verify_user_input()
 
-    def get_clusters_from_user_input(self) -> List[Dict[str, Any]]:
+    def get_clusters_from_user_input(self) -> list[dict[str, Any]]:
         # From CLI, we get `cluster`, from YAML file we get `clusters`
         clusters = self.user_kwargs.get("cluster", [])
         if not clusters:
@@ -336,9 +336,9 @@ class UserInput:
 
     @staticmethod
     def check_missing_observability_storage_data(
-        cluster: Dict[str, Any],
+        cluster: dict[str, Any],
         storage_type: str,
-    ) -> List[str]:
+    ) -> list[str]:
         missing_storage_data = []
         base_error_str = f"cluster: {cluster['name']} - storage type: {storage_type}"
         if storage_type == S3_STR:

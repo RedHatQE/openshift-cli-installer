@@ -1,9 +1,11 @@
 from __future__ import annotations
+
 import os
 import shutil
+from collections.abc import Generator
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
-from typing import Any, Dict, Generator, List
+from typing import Any
 
 import botocore
 import click
@@ -32,7 +34,7 @@ def get_ocm_client(ocm_token: str, ocm_env: str) -> DefaultApi:
     ).client
 
 
-def clusters_from_directories(directories: List[str]) -> List[Dict[str, Any]]:
+def clusters_from_directories(directories: list[str]) -> list[dict[str, Any]]:
     clusters_data_list = []
     for directory in directories:
         for root, dirs, files in os.walk(directory):
@@ -50,7 +52,7 @@ def clusters_from_directories(directories: List[str]) -> List[Dict[str, Any]]:
     return clusters_data_list
 
 
-def get_destroy_clusters_kwargs(clusters_data_list: List[Dict[str, Any]], user_input: UserInput) -> UserInput:
+def get_destroy_clusters_kwargs(clusters_data_list: list[dict[str, Any]], user_input: UserInput) -> UserInput:
     user_input.action = DESTROY_STR
     clusters = []
 
@@ -87,11 +89,9 @@ def prepare_clusters_directory_from_s3_bucket(s3_bucket_name: str, s3_bucket_pat
             download_futures.append(
                 download_executor.submit(
                     _s3_client.download_file,
-                    **{
-                        "Bucket": s3_bucket_name,
-                        "Key": s3_bucket_cluster_zip_path,
-                        "Filename": target_file_path,
-                    },
+                    Bucket=s3_bucket_name,
+                    Key=s3_bucket_cluster_zip_path,
+                    Filename=target_file_path,
                 )
             )
             target_files_paths.append(target_file_path)
@@ -123,7 +123,7 @@ def prepare_clusters_directory_from_s3_bucket(s3_bucket_name: str, s3_bucket_pat
 
 
 def get_all_zip_files_from_s3_bucket(
-    client: "botocore.client.S3",
+    client: botocore.client.S3,
     s3_bucket_name: str,
     s3_bucket_path: str = "",
     query: str | None = None,
