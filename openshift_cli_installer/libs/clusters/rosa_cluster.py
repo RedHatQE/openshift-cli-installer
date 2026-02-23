@@ -1,14 +1,19 @@
 import os
 import re
+import secrets
 import shutil
-from typing import Any, Dict
+import string
+from typing import Any
 
 import click
 import rosa.cli
+from clouds.aws.roles.roles import get_roles
+from ocp_resources.group import Group
 from python_terraform import IsNotFlagged, Terraform
+from rosa.rosa_versions import get_rosa_versions
 from simple_logger.logger import get_logger
-import secrets
-import string
+from timeout_sampler import TimeoutSampler
+
 from openshift_cli_installer.libs.clusters.ocm_cluster import OcmCluster
 from openshift_cli_installer.libs.user_input import UserInput
 from openshift_cli_installer.utils.cluster_versions import get_cluster_version_to_install
@@ -17,14 +22,10 @@ from openshift_cli_installer.utils.general import (
     get_manifests_path,
     zip_and_upload_to_s3,
 )
-from ocp_resources.group import Group
-from rosa.rosa_versions import get_rosa_versions
-from timeout_sampler import TimeoutSampler
-from clouds.aws.roles.roles import get_roles
 
 
 class RosaCluster(OcmCluster):
-    def __init__(self, ocp_cluster: Dict[str, Any], user_input: UserInput) -> None:
+    def __init__(self, ocp_cluster: dict[str, Any], user_input: UserInput) -> None:
         super().__init__(ocp_cluster=ocp_cluster, user_input=user_input)
         self.logger = get_logger(f"{self.__class__.__module__}-{self.__class__.__name__}")
         if self.user_input.create:
@@ -34,7 +35,7 @@ class RosaCluster(OcmCluster):
                 ocm_client=self.ocm_client,
                 aws_region=self.cluster_info["region"],
                 channel_group=self.cluster_info["channel-group"],
-                hosted_cp=True if self.cluster_info["platform"] == HYPERSHIFT_STR else False,
+                hosted_cp=self.cluster_info["platform"] == HYPERSHIFT_STR,
             )
             self.cluster["version"] = get_cluster_version_to_install(
                 wanted_version=self.cluster_info["user-requested-version"],
@@ -230,7 +231,7 @@ class RosaCluster(OcmCluster):
             self.set_cluster_auth(idp_user=idp_user, idp_password=idp_password)
             self.logger.success(f"{self.log_prefix}: Cluster created successfully")
 
-        except Exception as ex:
+        except Exception as ex:  # noqa: BLE001
             self.logger.error(
                 f"{self.log_prefix}: Failed to run cluster create\n{ex}",
             )
@@ -262,7 +263,7 @@ class RosaCluster(OcmCluster):
             self.cluster_object.wait_for_cluster_deletion(wait_timeout=self.timeout_watch.remaining_time())
             self.remove_leftovers(out=res.get("out", ""))
 
-        except Exception as ex:
+        except Exception as ex:  # noqa: BLE001
             should_raise = True
             exception = ex
 
@@ -336,7 +337,7 @@ class RosaCluster(OcmCluster):
                     ocm_client=self.ocm_client,
                     aws_region=aws_region,
                 )
-            except Exception as ex:
+            except Exception as ex:  # noqa: BLE001
                 rosa_command_success = False
                 self.logger.error(f"{self.log_prefix}: Failed to create IDP\n{ex}")
                 break
@@ -353,7 +354,7 @@ class RosaCluster(OcmCluster):
                     if sampler and idp_user in sampler.instance.users:
                         break
 
-            except Exception as ex:
+            except Exception as ex:  # noqa: BLE001
                 self.logger.error(f"{self.log_prefix}: {idp_user} is not part of cluster-admins\n{ex}")
 
         return idp_user, idp_password

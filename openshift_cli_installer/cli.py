@@ -1,9 +1,8 @@
 import os
 from typing import Any
 
-from pyhelper_utils.runners import function_runner_with_pdb
-
 import click
+from pyhelper_utils.runners import function_runner_with_pdb
 
 from openshift_cli_installer.cli_entrypoint import cli_entrypoint
 from openshift_cli_installer.utils.click_dict_type import DictParamType

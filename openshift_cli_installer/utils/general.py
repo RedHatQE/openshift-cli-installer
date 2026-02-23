@@ -1,10 +1,11 @@
 from __future__ import annotations
+
 import json
 import os
 import shutil
 from importlib.util import find_spec
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any
 
 import click
 import yaml
@@ -13,7 +14,6 @@ from jinja2 import DebugUndefined, Environment, FileSystemLoader, meta
 from pyhelper_utils.general import ignore_exceptions
 from simple_logger.logger import get_logger
 
-
 LOGGER = get_logger(name=__name__)
 
 
@@ -21,11 +21,9 @@ def remove_terraform_folder_from_install_dir(install_dir: str) -> None:
     """
     .terraform folder created when call terraform.init() and it's take more space.
     """
-    folders_to_remove = []
-    for root, dirs, files in os.walk(install_dir):
-        for _dir in dirs:
-            if _dir == ".terraform":
-                folders_to_remove.append(os.path.join(root, _dir))
+    folders_to_remove = [
+        os.path.join(root, _dir) for root, dirs, files in os.walk(install_dir) for _dir in dirs if _dir == ".terraform"
+    ]
 
     for folder in folders_to_remove:
         shutil.rmtree(folder)
@@ -53,7 +51,7 @@ def get_manifests_path() -> str:
     return manifests_path
 
 
-def get_install_config_j2_template(jinja_dict: Dict[str, str], platform: str) -> Dict[str, Any]:
+def get_install_config_j2_template(jinja_dict: dict[str, str], platform: str) -> dict[str, Any]:
     env = Environment(
         loader=FileSystemLoader(get_manifests_path()),
         trim_blocks=True,
@@ -79,7 +77,7 @@ def generate_unified_pull_secret(registry_config_file: str, docker_config_file: 
     return json.dumps(docker_config)
 
 
-def get_pull_secret_data(registry_config_file: str) -> Dict[str, Any]:
+def get_pull_secret_data(registry_config_file: str) -> dict[str, Any]:
     with open(registry_config_file) as fd:
         return json.load(fd)
 
@@ -89,6 +87,6 @@ def get_local_ssh_key(ssh_key_file: str) -> str:
         return fd.read().strip()
 
 
-def get_dict_from_json(gcp_service_account_file: str) -> Dict[str, Any]:
+def get_dict_from_json(gcp_service_account_file: str) -> dict[str, Any]:
     with open(gcp_service_account_file) as fd:
         return json.loads(fd.read())

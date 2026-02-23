@@ -1,8 +1,7 @@
 import os
 import shutil
-from pathlib import Path
 import tempfile
-from typing import Dict
+from pathlib import Path
 
 from simple_logger.logger import get_logger
 
@@ -12,7 +11,7 @@ from openshift_cli_installer.utils.const import GCP_STR
 LOGGER = get_logger(name=__name__)
 
 
-def set_gcp_configuration(user_input: UserInput) -> Dict[str, str]:
+def set_gcp_configuration(user_input: UserInput) -> dict[str, str]:
     """
     Saves provided GCP Service Account file at location '~/.gcp/osServiceAccount.json'
 
@@ -23,14 +22,16 @@ def set_gcp_configuration(user_input: UserInput) -> Dict[str, str]:
 
     """
     gcp_params = {}
-    if any([_cluster["platform"] == GCP_STR for _cluster in user_input.clusters]):
+    if any(_cluster["platform"] == GCP_STR for _cluster in user_input.clusters):
         gcp_sa_file_dir = os.path.join(os.path.expanduser("~"), ".gcp")
         openshift_installer_gcp_sa_file_path = os.path.join(gcp_sa_file_dir, "osServiceAccount.json")
         gcp_params["gcp_sa_file_dir"] = gcp_sa_file_dir
         gcp_params["openshift_installer_gcp_sa_file_path"] = openshift_installer_gcp_sa_file_path
 
         if os.path.exists(openshift_installer_gcp_sa_file_path):
-            gcp_params["backup_existing_gcp_sa_file_path"] = tempfile.NamedTemporaryFile(suffix="-installer.json").name
+            _fd, _tmp_path = tempfile.mkstemp(suffix="-installer.json")
+            os.close(_fd)
+            gcp_params["backup_existing_gcp_sa_file_path"] = _tmp_path
             LOGGER.info(
                 f"File {openshift_installer_gcp_sa_file_path} already exists. "
                 f"Copying to {gcp_params['backup_existing_gcp_sa_file_path']}"
@@ -44,7 +45,7 @@ def set_gcp_configuration(user_input: UserInput) -> Dict[str, str]:
     return gcp_params
 
 
-def restore_gcp_configuration(gcp_params: Dict[str, str]) -> None:
+def restore_gcp_configuration(gcp_params: dict[str, str]) -> None:
     """
     Restores location '~/.gcp/osServiceAccount.json'
 

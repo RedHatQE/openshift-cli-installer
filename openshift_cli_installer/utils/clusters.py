@@ -1,9 +1,11 @@
 from __future__ import annotations
+
 import os
 import shutil
+from collections.abc import Generator
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
-from typing import Any, Dict, Generator, List
+from typing import Any
 
 import botocore
 import click
@@ -32,7 +34,7 @@ def get_ocm_client(ocm_token: str, ocm_env: str) -> DefaultApi:
     ).client
 
 
-def clusters_from_directories(directories: List[str]) -> List[Dict[str, Any]]:
+def clusters_from_directories(directories: list[str]) -> list[dict[str, Any]]:
     clusters_data_list = []
     for directory in directories:
         for root, dirs, files in os.walk(directory):
@@ -50,7 +52,7 @@ def clusters_from_directories(directories: List[str]) -> List[Dict[str, Any]]:
     return clusters_data_list
 
 
-def get_destroy_clusters_kwargs(clusters_data_list: List[Dict[str, Any]], user_input: UserInput) -> UserInput:
+def get_destroy_clusters_kwargs(clusters_data_list: list[dict[str, Any]], user_input: UserInput) -> UserInput:
     user_input.action = DESTROY_STR
     clusters = []
 
@@ -87,11 +89,9 @@ def prepare_clusters_directory_from_s3_bucket(s3_bucket_name: str, s3_bucket_pat
             download_futures.append(
                 download_executor.submit(
                     _s3_client.download_file,
-                    **{
-                        "Bucket": s3_bucket_name,
-                        "Key": s3_bucket_cluster_zip_path,
-                        "Filename": target_file_path,
-                    },
+                    Bucket=s3_bucket_name,
+                    Key=s3_bucket_cluster_zip_path,
+                    Filename=target_file_path,
                 )
             )
             target_files_paths.append(target_file_path)
@@ -107,11 +107,9 @@ def prepare_clusters_directory_from_s3_bucket(s3_bucket_name: str, s3_bucket_pat
             extract_futures.append(
                 extract_executor.submit(
                     shutil.unpack_archive,
-                    **{  # type: ignore[arg-type]
-                        "filename": zip_file_path,
-                        "extract_dir": os.path.split(zip_file_path)[0],
-                        "format": "zip",
-                    },
+                    filename=zip_file_path,
+                    extract_dir=os.path.split(zip_file_path)[0],
+                    format="zip",
                 )
             )
 
@@ -123,16 +121,15 @@ def prepare_clusters_directory_from_s3_bucket(s3_bucket_name: str, s3_bucket_pat
 
 
 def get_all_zip_files_from_s3_bucket(
-    client: "botocore.client.S3",
+    client: botocore.client.S3,
     s3_bucket_name: str,
     s3_bucket_path: str = "",
     query: str | None = None,
 ) -> Generator[str, None, None]:
     for _object in client.list_objects(Bucket=s3_bucket_name, Prefix=s3_bucket_path).get("Contents", []):
         _object_key = _object["Key"]
-        if _object_key.endswith(".zip"):
-            if query is None or query in _object_key:
-                yield os.path.split(_object_key)[-1] if s3_bucket_path else _object_key
+        if _object_key.endswith(".zip") and (query is None or query in _object_key):
+            yield os.path.split(_object_key)[-1] if s3_bucket_path else _object_key
 
 
 def destroy_clusters_from_s3_bucket_or_local_directory(user_input: UserInput) -> UserInput:

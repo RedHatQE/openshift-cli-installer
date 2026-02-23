@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 import base64
 import copy
 import os
@@ -7,12 +8,13 @@ import shutil
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import timedelta
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import TYPE_CHECKING, Any
 
 import botocore
 import click
 import shortuuid
 import yaml
+from clouds.aws.aws_utils import aws_region_names, get_least_crowded_aws_vpc_region
 from clouds.aws.session_clients import s3_client
 from kubernetes.dynamic import DynamicClient
 from ocm_python_client.api.default_api import DefaultApi
@@ -24,12 +26,12 @@ from ocp_resources.multi_cluster_observability import MultiClusterObservability
 from ocp_resources.namespace import Namespace
 from ocp_resources.route import Route
 from ocp_resources.secret import Secret
-from pyhelper_utils.shell import run_command
-from timeout_sampler import TimeoutWatch
 from ocp_utilities.infra import get_client
 from ocp_utilities.must_gather import run_must_gather
+from pyhelper_utils.general import tts
+from pyhelper_utils.shell import run_command
 from simple_logger.logger import get_logger
-from clouds.aws.aws_utils import aws_region_names, get_least_crowded_aws_vpc_region
+from timeout_sampler import TimeoutWatch
 
 from openshift_cli_installer.libs.user_input import UserInput
 from openshift_cli_installer.utils.cluster_versions import (
@@ -39,23 +41,19 @@ from openshift_cli_installer.utils.const import (
     AWS_OSD_STR,
     AWS_STR,
     CLUSTER_DATA_YAML_FILENAME,
+    HYPERSHIFT_STR,
     PRODUCTION_STR,
     S3_STR,
     STAGE_STR,
     TIMEOUT_60MIN,
-    HYPERSHIFT_STR,
 )
-from pyhelper_utils.general import tts
-
-from typing import TYPE_CHECKING
-
 
 if TYPE_CHECKING:
     from openshift_cli_installer.libs.clusters.ocp_clusters import OCPClusters
 
 
 class OCPCluster:
-    def __init__(self, ocp_cluster: Dict[str, Any], user_input: UserInput) -> None:
+    def __init__(self, ocp_cluster: dict[str, Any], user_input: UserInput) -> None:
         self.user_input = user_input
         self.logger = get_logger(f"{self.__class__.__module__}-{self.__class__.__name__}")
         self.cluster = ocp_cluster
@@ -67,7 +65,7 @@ class OCPCluster:
             "s3_bucket_path", ""
         )
 
-        self.cluster_info: Dict[str, Any] = (
+        self.cluster_info: dict[str, Any] = (
             self.cluster["cluster_info"]
             if self.user_input.destroy_from_s3_bucket_or_local_directory
             else copy.deepcopy(self.cluster)
@@ -98,7 +96,7 @@ class OCPCluster:
                     "acm-observability-s3-region", self.cluster_info["region"]
                 )
 
-            self.all_available_versions: Dict[str, Dict[str, List[str]]] = self.cluster.get(
+            self.all_available_versions: dict[str, dict[str, list[str]]] = self.cluster.get(
                 "all_available_versions", {}
             )
             self.cluster_info["stream"] = get_cluster_stream(cluster_data=self.cluster)
@@ -133,7 +131,7 @@ class OCPCluster:
         self.ocp_client: DynamicClient = None
 
     @property
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return self.__dict__
 
     def start_time_watcher(self) -> TimeoutWatch:
@@ -232,7 +230,7 @@ class OCPCluster:
                 name,
             )
 
-        except Exception as ex:
+        except Exception as ex:  # noqa: BLE001
             self.logger.error(f"{self.log_prefix}: Failed to get data; must-gather could not be executed on: {ex}")
             return
 
@@ -252,7 +250,7 @@ class OCPCluster:
             )
             self.logger.success(f"{self.log_prefix}: must-gather collected")
 
-        except Exception as ex:
+        except Exception as ex:  # noqa: BLE001
             self.logger.error(
                 f"{self.log_prefix}: Failed to run must-gather \n{ex}",
             )
@@ -337,7 +335,7 @@ class OCPCluster:
 
     def enable_observability(self) -> None:
         thanos_secret_data = None
-        _s3_client: "botocore.client.S3" = None
+        _s3_client: botocore.client.S3 = None
         bucket_name = f"{self.cluster_info['name']}-observability-{self.cluster_info['shortuuid']}"
 
         if self.cluster_info["acm-observability-storage-type"] == S3_STR:
@@ -399,7 +397,7 @@ class OCPCluster:
                 timeout=self.timeout_watch.remaining_time(),
             )
             self.logger.success(f"{self.log_prefix}: Observability enabled")
-        except Exception as ex:
+        except Exception as ex:  # noqa: BLE001
             self.logger.error(f"{self.log_prefix}: Failed to enable observability. error: {ex}")
 
             if self.cluster_info["acm-observability-storage-type"] == S3_STR:

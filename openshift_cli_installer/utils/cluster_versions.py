@@ -1,18 +1,18 @@
 import re
-from typing import Any, Dict, List
+import sys
+from typing import Any
 
 import click
-from simple_logger.logger import get_logger
 import requests
 from bs4 import BeautifulSoup
-import sys
+from simple_logger.logger import get_logger
 
 from openshift_cli_installer.utils.const import (
     AWS_OSD_STR,
     GCP_OSD_STR,
     HYPERSHIFT_STR,
-    ROSA_STR,
     IPI_BASED_PLATFORMS,
+    ROSA_STR,
 )
 
 version = sys.version_info
@@ -27,7 +27,7 @@ LOGGER = get_logger(name=__name__)
 
 def get_cluster_version_to_install(
     wanted_version: str,
-    base_versions_dict: Dict[str, Dict[str, List[str]]],
+    base_versions_dict: dict[str, dict[str, list[str]]],
     platform: str,
     stream: str,
     log_prefix: str,
@@ -64,15 +64,15 @@ def get_cluster_version_to_install(
     return match
 
 
-def get_cluster_stream(cluster_data: Dict[str, Any]) -> str:
+def get_cluster_stream(cluster_data: dict[str, Any]) -> str:
     _platform = cluster_data["platform"]
     return cluster_data["stream"] if _platform in IPI_BASED_PLATFORMS else cluster_data["channel-group"]
 
 
 @cache
-def get_ipi_cluster_versions() -> Dict[str, Dict[str, List[str]]]:
+def get_ipi_cluster_versions() -> dict[str, dict[str, list[str]]]:
     _source = "openshift-release.apps.ci.l2s4.p1.openshiftapps.com"
-    _accepted_version_dict: Dict[str, Dict[str, List[str]]] = {_source: {}}
+    _accepted_version_dict: dict[str, dict[str, list[str]]] = {_source: {}}
     for tr in parse_openshift_release_url():
         _version, status = [_tr for _tr in tr.text.splitlines() if _tr][:2]
         if status == "Accepted":
@@ -83,7 +83,7 @@ def get_ipi_cluster_versions() -> Dict[str, Dict[str, List[str]]]:
 
 
 @cache
-def parse_openshift_release_url() -> List[BeautifulSoup]:
+def parse_openshift_release_url() -> list[BeautifulSoup]:
     url = "https://openshift-release.apps.ci.l2s4.p1.openshiftapps.com"
     LOGGER.info(f"Parsing {url}")
     req = requests.get(url)
