@@ -6,6 +6,7 @@ import string
 from typing import Any
 
 import click
+from clouds.aws.session_clients import ec2_client
 import rosa.cli
 from clouds.aws.roles.roles import get_roles
 from ocp_resources.group import Group
@@ -28,6 +29,7 @@ class RosaCluster(OcmCluster):
     def __init__(self, ocp_cluster: dict[str, Any], user_input: UserInput) -> None:
         super().__init__(ocp_cluster=ocp_cluster, user_input=user_input)
         self.logger = get_logger(f"{self.__class__.__module__}-{self.__class__.__name__}")
+        self.cluster_parameters = {}
         if self.user_input.create:
             self.cluster_info["aws-account-id"] = self.user_input.aws_account_id
             self.assert_hypershift_missing_roles()
@@ -58,24 +60,24 @@ class RosaCluster(OcmCluster):
         # az_id example: us-east-2 -> ["use2-az1", "use2-az2"]
         az_id_prefix_match = re.match(r"(.*)-(\w).*-(\d)", self.cluster_info["region"])
         az_id_prefix = "".join(az_id_prefix_match.groups()) if az_id_prefix_match else ""
-        cluster_parameters = {
+        self.cluster_parameters = {
             "aws_region": self.cluster_info["region"],
             "az_ids": [f"{az_id_prefix}-az1", f"{az_id_prefix}-az2"],
             "cluster_name": self.cluster_info["name"],
         }
         cidr = self.cluster.get("cidr")
         if cidr:
-            cluster_parameters["cidr"] = cidr
+            self.cluster_parameters["cidr"] = cidr
 
         private_subnets = self.cluster.get("private-subnets")
         if private_subnets:
-            cluster_parameters["private_subnets"] = private_subnets
+            self.cluster_parameters["private_subnets"] = private_subnets
 
         public_subnets = self.cluster.get("public-subnets")
         if public_subnets:
-            cluster_parameters["public_subnets"] = public_subnets
+            self.cluster_parameters["public_subnets"] = public_subnets
 
-        self.terraform = Terraform(working_dir=self.cluster_info["cluster-dir"], variables=cluster_parameters)
+        self.terraform = Terraform(working_dir=self.cluster_info["cluster-dir"], variables=self.cluster_parameters)
         shutil.copy(
             os.path.join(get_manifests_path(), "setup-vpc.tf"),
             self.cluster_info["cluster-dir"],
@@ -137,6 +139,7 @@ class RosaCluster(OcmCluster):
 
     def destroy_hypershift_vpc(self) -> None:
         self.terraform_init()
+        self.update_security_groups_tf()
         self.logger.info(f"{self.log_prefix}: Destroy hypershift VPCs")
         rc, _, err = self.terraform.destroy(
             force=IsNotFlagged,
@@ -358,6 +361,57 @@ class RosaCluster(OcmCluster):
                 self.logger.error(f"{self.log_prefix}: {idp_user} is not part of cluster-admins\n{ex}")
 
         return idp_user, idp_password
+    
+    def update_security_groups_tf(self) -> None:
+        self.logger.info(f"{self.log_prefix}: Updating security groups in Terraform before VPC deletion")
+        self.terraform.read_state_file()
+        tfstate = self.terraform.tfstate
+        vpc_id = None
+        if tfstate and hasattr(tfstate, 'resources'):
+            resources = tfstate.resources
+            for resource in resources:
+                if resource.get("type") == "aws_vpc" and resource.get("instances"):
+                    vpc_id = resource["instances"][0].get("attributes", {}).get("id")
+                    break
+
+        if vpc_id:
+            self.logger.info(f"{self.log_prefix}:VPC ID: {vpc_id}")
+            region = self.cluster_parameters["aws_region"]
+            try:
+                client = ec2_client(region_name=region)
+                response = client.describe_security_groups(
+                    Filters=[{"Name": "vpc-id", "Values": [vpc_id]}]
+                )
+                security_groups = [
+                    sg for sg in response.get("SecurityGroups", [])
+                    if sg.get("GroupName") != "default"
+                ]
+                if not security_groups:
+                    self.logger.warning(f"{self.log_prefix}: No security groups found for the VPC.")
+                    return
+                setup_vpc_tf = os.path.join(self.cluster_info["cluster-dir"], "setup-vpc.tf")
+                with open(setup_vpc_tf, "a") as fd:
+                    for idx, sg in enumerate(security_groups):
+                        resource_name = f"rosa_sg_{idx}"
+                        fd.write(f'\nresource "aws_security_group" "{resource_name}" {{}}\n')
+
+                for idx, sg in enumerate(security_groups):
+                    sg_id = sg["GroupId"]
+                    resource_name = f"rosa_sg_{idx}"
+                    self.logger.info(f"{self.log_prefix}: Importing security group {sg_id}")
+                    rc, out, err = self.terraform.import_cmd(
+                        f"aws_security_group.{resource_name}",
+                        sg_id,
+                        var=self.cluster_parameters,
+                        input=False,
+                        capture_output=True
+                    )
+                    if rc != 0:
+                        print(f"Failed to import security group {sg_id}: {err}")
+            except Exception as ex:
+                self.logger.error(f"{self.log_prefix}: Failed to get security groups: {ex}")
+        else:
+            self.logger.error(f"{self.log_prefix}: Could not find VPC ID in Terraform state")
 
     @staticmethod
     def generate_hypershift_password() -> str:
