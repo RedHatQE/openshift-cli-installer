@@ -47,7 +47,7 @@ class OcmCluster(OCPCluster):
         if expiration_time:
             _expiration_time = tts(ts=expiration_time)
             self.cluster["expiration-time"] = self.cluster_info["expiration-time"] = (
-                f"{(datetime.now(tz=UTC) + timedelta(seconds=_expiration_time)).isoformat()}Z"
+                f"{(datetime.now(tz=UTC) + timedelta(seconds=_expiration_time)).isoformat()}"
             )
 
     @cache  # noqa: B019
