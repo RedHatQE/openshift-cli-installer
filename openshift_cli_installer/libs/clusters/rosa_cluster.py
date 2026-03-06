@@ -30,7 +30,7 @@ class RosaCluster(OcmCluster):
     def __init__(self, ocp_cluster: dict[str, Any], user_input: UserInput) -> None:
         super().__init__(ocp_cluster=ocp_cluster, user_input=user_input)
         self.logger = get_logger(f"{self.__class__.__module__}-{self.__class__.__name__}")
-        self.cluster_parameters: Dict[str, Any] = {}
+        self.cluster_parameters: dict[str, Any] = {}
         if self.user_input.create:
             self.cluster_info["aws-account-id"] = self.user_input.aws_account_id
             self.assert_hypershift_missing_roles()
