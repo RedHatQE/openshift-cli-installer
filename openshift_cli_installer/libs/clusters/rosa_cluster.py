@@ -6,6 +6,7 @@ import string
 from typing import Any
 
 import click
+from botocore.exceptions import ClientError
 from clouds.aws.session_clients import ec2_client
 import rosa.cli
 from clouds.aws.roles.roles import get_roles
@@ -29,7 +30,7 @@ class RosaCluster(OcmCluster):
     def __init__(self, ocp_cluster: dict[str, Any], user_input: UserInput) -> None:
         super().__init__(ocp_cluster=ocp_cluster, user_input=user_input)
         self.logger = get_logger(f"{self.__class__.__module__}-{self.__class__.__name__}")
-        self.cluster_parameters = {}
+        self.cluster_parameters: Dict[str, Any] = {}
         if self.user_input.create:
             self.cluster_info["aws-account-id"] = self.user_input.aws_account_id
             self.assert_hypershift_missing_roles()
@@ -382,34 +383,35 @@ class RosaCluster(OcmCluster):
                 response = client.describe_security_groups(
                     Filters=[{"Name": "vpc-id", "Values": [vpc_id]}]
                 )
-                security_groups = [
-                    sg for sg in response.get("SecurityGroups", [])
-                    if sg.get("GroupName") != "default"
-                ]
-                if not security_groups:
-                    self.logger.warning(f"{self.log_prefix}: No security groups found for the VPC.")
-                    return
-                setup_vpc_tf = os.path.join(self.cluster_info["cluster-dir"], "setup-vpc.tf")
-                with open(setup_vpc_tf, "a") as fd:
-                    for idx, sg in enumerate(security_groups):
-                        resource_name = f"rosa_sg_{idx}"
-                        fd.write(f'\nresource "aws_security_group" "{resource_name}" {{}}\n')
-
-                for idx, sg in enumerate(security_groups):
-                    sg_id = sg["GroupId"]
-                    resource_name = f"rosa_sg_{idx}"
-                    self.logger.info(f"{self.log_prefix}: Importing security group {sg_id}")
-                    rc, out, err = self.terraform.import_cmd(
-                        f"aws_security_group.{resource_name}",
-                        sg_id,
-                        var=self.cluster_parameters,
-                        input=False,
-                        capture_output=True
-                    )
-                    if rc != 0:
-                        print(f"Failed to import security group {sg_id}: {err}")
-            except Exception as ex:
+            except (ClientError, ConnectionError, TimeoutError) as ex:
                 self.logger.error(f"{self.log_prefix}: Failed to get security groups: {ex}")
+                raise click.Abort()
+            security_groups = [
+                sg for sg in response.get("SecurityGroups", [])
+                if sg.get("GroupName") != "default"
+            ]
+            if not security_groups:
+                self.logger.warning(f"{self.log_prefix}: No security groups found for the VPC.")
+                return
+            setup_vpc_tf = os.path.join(self.cluster_info["cluster-dir"], "setup-vpc.tf")
+            with open(setup_vpc_tf, "a") as fd:
+                for idx, sg in enumerate(security_groups):
+                    resource_name = f"rosa_sg_{idx}"
+                    fd.write(f'\nresource "aws_security_group" "{resource_name}" {{}}\n')
+
+            for idx, sg in enumerate(security_groups):
+                sg_id = sg["GroupId"]
+                resource_name = f"rosa_sg_{idx}"
+                self.logger.info(f"{self.log_prefix}: Importing security group {sg_id}")
+                rc, _, err = self.terraform.import_cmd(
+                    f"aws_security_group.{resource_name}",
+                    sg_id,
+                    var=self.cluster_parameters,
+                    input=False,
+                    capture_output=True
+                )
+                if rc != 0:
+                    print(f"Failed to import security group {sg_id}: {err}")
         else:
             self.logger.error(f"{self.log_prefix}: Could not find VPC ID in Terraform state")
 
