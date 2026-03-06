@@ -398,7 +398,8 @@ class RosaCluster(OcmCluster):
                 sg_id = sg["GroupId"]
                 resource_name = f"rosa_sg_{idx}"
                 self.logger.info(f"{self.log_prefix}: Importing security group {sg_id}")
-                rc, _, err = self.terraform.import_cmd(
+                rc, _, err = self.terraform.cmd(
+                    "import",
                     f"aws_security_group.{resource_name}",
                     sg_id,
                     var=self.cluster_parameters,
