@@ -6,10 +6,10 @@ import string
 from typing import Any
 
 import click
-from botocore.exceptions import ClientError
-from clouds.aws.session_clients import ec2_client
 import rosa.cli
+from botocore.exceptions import ClientError
 from clouds.aws.roles.roles import get_roles
+from clouds.aws.session_clients import ec2_client
 from ocp_resources.group import Group
 from python_terraform import IsNotFlagged, Terraform
 from rosa.rosa_versions import get_rosa_versions
@@ -362,13 +362,13 @@ class RosaCluster(OcmCluster):
                 self.logger.error(f"{self.log_prefix}: {idp_user} is not part of cluster-admins\n{ex}")
 
         return idp_user, idp_password
-    
+
     def update_security_groups_tf(self) -> None:
         self.logger.info(f"{self.log_prefix}: Updating security groups in Terraform before VPC deletion")
         self.terraform.read_state_file()
         tfstate = self.terraform.tfstate
         vpc_id = None
-        if tfstate and hasattr(tfstate, 'resources'):
+        if tfstate and hasattr(tfstate, "resources"):
             resources = tfstate.resources
             for resource in resources:
                 if resource.get("type") == "aws_vpc" and resource.get("instances"):
@@ -380,16 +380,11 @@ class RosaCluster(OcmCluster):
             region = self.cluster_parameters["aws_region"]
             try:
                 client = ec2_client(region_name=region)
-                response = client.describe_security_groups(
-                    Filters=[{"Name": "vpc-id", "Values": [vpc_id]}]
-                )
+                response = client.describe_security_groups(Filters=[{"Name": "vpc-id", "Values": [vpc_id]}])
             except (ClientError, ConnectionError, TimeoutError) as ex:
                 self.logger.error(f"{self.log_prefix}: Failed to get security groups: {ex}")
                 raise click.Abort()
-            security_groups = [
-                sg for sg in response.get("SecurityGroups", [])
-                if sg.get("GroupName") != "default"
-            ]
+            security_groups = [sg for sg in response.get("SecurityGroups", []) if sg.get("GroupName") != "default"]
             if not security_groups:
                 self.logger.warning(f"{self.log_prefix}: No security groups found for the VPC.")
                 return
@@ -408,7 +403,7 @@ class RosaCluster(OcmCluster):
                     sg_id,
                     var=self.cluster_parameters,
                     input=False,
-                    capture_output=True
+                    capture_output=True,
                 )
                 if rc != 0:
                     print(f"Failed to import security group {sg_id}: {err}")
