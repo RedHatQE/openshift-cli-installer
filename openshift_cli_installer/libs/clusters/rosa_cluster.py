@@ -399,13 +399,13 @@ class RosaCluster(OcmCluster):
                 resource_name = f"rosa_sg_{idx}"
                 self.logger.info(f"{self.log_prefix}: Importing security group {sg_id}")
                 rc, _, err = self.terraform.cmd(
-                    "import",   # noqa: FCN001
+                    "import",  # noqa: FCN001
                     f"aws_security_group.{resource_name}",  # noqa: FCN001
                     sg_id,  # noqa: FCN001
                     var=self.cluster_parameters,
                     input=False,
                     capture_output=True,
-                ) 
+                )
                 if rc != 0:
                     print(f"Failed to import security group {sg_id}: {err}")
         else:
