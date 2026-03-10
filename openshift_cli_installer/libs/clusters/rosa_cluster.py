@@ -405,7 +405,7 @@ class RosaCluster(OcmCluster):
                     var=self.cluster_parameters,
                     input=False,
                     capture_output=True,
-                )
+                ) # noqa: FCN001
                 if rc != 0:
                     print(f"Failed to import security group {sg_id}: {err}")
         else:
