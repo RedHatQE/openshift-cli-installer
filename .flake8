@@ -26,6 +26,7 @@ fcn_exclude_functions =
     BeautifulSoup,
     find_all,
     tr,
+    terraform.cmd,
 
 enable-extensions =
     FCN,
