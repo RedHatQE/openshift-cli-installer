@@ -402,9 +402,9 @@ class RosaCluster(OcmCluster):
                     "import",
                     f"aws_security_group.{resource_name}",
                     sg_id,
-                    var=self.cluster_parameters, 
-                    input=False, 
-                    capture_output=True, 
+                    var=self.cluster_parameters,
+                    input=False,
+                    capture_output=True,
                 )
                 if rc != 0:
                     print(f"Failed to import security group {sg_id}: {err}")
