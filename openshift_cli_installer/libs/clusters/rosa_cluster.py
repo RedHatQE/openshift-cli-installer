@@ -7,7 +7,6 @@ from typing import Any
 
 import click
 import rosa.cli
-from botocore.exceptions import ClientError
 from clouds.aws.roles.roles import get_roles
 from clouds.aws.session_clients import ec2_client
 from ocp_resources.group import Group
