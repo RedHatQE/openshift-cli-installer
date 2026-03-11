@@ -381,9 +381,9 @@ class RosaCluster(OcmCluster):
             try:
                 client = ec2_client(region_name=region)
                 response = client.describe_security_groups(Filters=[{"Name": "vpc-id", "Values": [vpc_id]}])
-            except (ClientError, ConnectionError, TimeoutError) as ex:
-                self.logger.error(f"{self.log_prefix}: Failed to get security groups: {ex}")
-                raise click.Abort()
+            except Exception as ex:  # noqa: BLE001
+                self.logger.error(f"{self.log_prefix}: Failed to get security groups via AWS client: {ex}")
+                return
             security_groups = [sg for sg in response.get("SecurityGroups", []) if sg.get("GroupName") != "default"]
             if not security_groups:
                 self.logger.warning(f"{self.log_prefix}: No security groups found for the VPC.")
@@ -407,7 +407,7 @@ class RosaCluster(OcmCluster):
                     capture_output=True,
                 )
                 if rc != 0:
-                    print(f"Failed to import security group {sg_id}: {err}")
+                    self.logger.error(f"{self.log_prefix}: Failed to import security group {sg_id}: {err}")
         else:
             self.logger.error(f"{self.log_prefix}: Could not find VPC ID in Terraform state")
 
