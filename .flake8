@@ -26,6 +26,7 @@ fcn_exclude_functions =
     BeautifulSoup,
     find_all,
     tr,
+    cmd,
 
 enable-extensions =
     FCN,
