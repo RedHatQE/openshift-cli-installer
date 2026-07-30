@@ -325,8 +325,10 @@ class RosaCluster(OcmCluster):
         idp_password = self.generate_hypershift_password()
         aws_region = self.cluster_info["region"]
         commands = [
-            f"create idp -c {self.cluster_object.cluster_id} --type htpasswd --name rosa-htpasswd "
-            f"--username={idp_user} --password={idp_password}",
+            (
+                f"create idp -c {self.cluster_object.cluster_id} --type htpasswd --name rosa-htpasswd "
+                f"--username={idp_user} --password={idp_password}"
+            ),
             f"grant user cluster-admin --user={idp_user} --cluster={self.cluster_object.cluster_id}",
         ]
         rosa_command_success = True
