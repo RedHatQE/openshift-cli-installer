@@ -86,7 +86,7 @@ class RosaCluster(OcmCluster):
             raise click.Abort()
 
     def create_oidc(self) -> None:
-        existing = self.cluster.get("oidc-config-id") or self.cluster_info.get("oidc-config-id")
+        existing = self.cluster_info.get("oidc-config-id") or self.cluster.get("oidc-config-id")
         if existing:
             self.logger.info(f"{self.log_prefix}: Reusing provided OIDC config {existing}")
             self.cluster["oidc-config-id"] = self.cluster_info["oidc-config-id"] = existing
