@@ -79,7 +79,7 @@ def prepare_clusters_directory_from_s3_bucket(s3_bucket_name: str, s3_bucket_pat
         extracted_zip_filename: str = os.path.split(cluster_zip_file)[-1]
         extract_target_dir: str = os.path.join(
             DESTROY_CLUSTERS_FROM_S3_BASE_DATA_DIRECTORY,
-            extracted_zip_filename.split(".")[0],
+            extracted_zip_filename.split(".", maxsplit=1)[0],
         )
         Path(extract_target_dir).mkdir(parents=True, exist_ok=True)
         target_file_path = os.path.join(extract_target_dir, extracted_zip_filename)
