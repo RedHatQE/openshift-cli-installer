@@ -140,7 +140,7 @@ class OCPClusters:
         _clusters = self.aws_ipi_clusters + self.aws_managed_clusters
         if _clusters:
             self.logger.info(f"Check if regions are {AWS_STR}-supported.")
-            _regions_to_verify = set()
+            _regions_to_verify: set[str] = set()
             _regions_to_verify.update(
                 _cluster.cluster_info["region"] for _cluster in self.aws_ipi_clusters + self.aws_managed_clusters
             )
