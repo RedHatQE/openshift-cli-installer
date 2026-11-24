@@ -122,7 +122,7 @@ class IpiCluster(OCPCluster):
             fd.write(yaml.dump(cluster_install_config))
 
     @contextmanager
-    def _set_docker_config_file(self) -> Generator[str, None, None]:
+    def _set_docker_config_file(self) -> Generator[str]:
         with tempfile.NamedTemporaryFile(prefix="pull-secret-") as fp:
             fp.write(bytes(self.unified_pull_secret, "utf-8"))
             yield fp.name

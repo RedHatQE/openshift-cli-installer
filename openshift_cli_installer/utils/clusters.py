@@ -125,7 +125,7 @@ def get_all_zip_files_from_s3_bucket(
     s3_bucket_name: str,
     s3_bucket_path: str = "",
     query: str | None = None,
-) -> Generator[str, None, None]:
+) -> Generator[str]:
     for _object in client.list_objects(Bucket=s3_bucket_name, Prefix=s3_bucket_path).get("Contents", []):
         _object_key = _object["Key"]
         if _object_key.endswith(".zip") and (query is None or query in _object_key):
