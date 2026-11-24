@@ -15,8 +15,8 @@
       "groupName": "python-deps"
     },
     {
-      "description": "Python runtime version is managed manually; don't bump requires-python",
-      "matchManagers": ["pep621"],
+      "description": "Python runtime version is managed manually; don't bump requires-python or Dockerfile base image",
+      "matchManagers": ["pep621", "dockerfile"],
       "matchPackageNames": ["python"],
       "enabled": false
     }
